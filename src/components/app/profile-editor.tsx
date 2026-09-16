@@ -10,6 +10,7 @@ import {
   type FormEvent,
 } from "react";
 import { Avatar } from "@/components/ui/avatar";
+import { ChangePasswordForm } from "@/components/ui/change-password-form";
 import {
   removeAvatar,
   updateProfile,
@@ -402,6 +403,19 @@ export function ProfileEditor({
           </button>
         </div>
       </form>
+
+      <section className="mt-12 border-t border-line pt-10">
+        <h3 className="font-display text-xl font-semibold text-ink">
+          Mot de passe
+        </h3>
+        <p className="mt-2 text-sm text-muted">
+          Change ton mot de passe de connexion. Tu resteras connecté après la
+          mise à jour.
+        </p>
+        <div className="mt-6">
+          <ChangePasswordForm />
+        </div>
+      </section>
 
       <p className="mt-6 text-center text-sm text-muted">
         <Link href="/accueil" className="hover:text-ink">

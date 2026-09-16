@@ -11,6 +11,7 @@ const NAV = [
   { href: "/gestionnaire/residents", label: "Résidents", exact: false },
   { href: "/gestionnaire/annonces", label: "Annonces", exact: false },
   { href: "/gestionnaire/moderation", label: "Modération", exact: false },
+  { href: "/gestionnaire/compte", label: "Compte", exact: false },
 ] as const;
 
 export function ManagerShell({

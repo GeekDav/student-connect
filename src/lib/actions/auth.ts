@@ -3,7 +3,7 @@
 import bcrypt from "bcryptjs";
 import { MembershipStatus, Role } from "@prisma/client";
 import { z } from "zod";
-import { clearSessionCookie, setSessionCookie } from "@/lib/auth";
+import { clearSessionCookie, getSession, setSessionCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 const registerSchema = z.object({
@@ -156,6 +156,65 @@ export async function loginUser(
 export async function logoutUser(): Promise<AuthActionResult> {
   await clearSessionCookie();
   return { ok: true, redirectTo: "/" };
+}
+
+export type ChangePasswordResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function changePassword(input: {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}): Promise<ChangePasswordResult> {
+  const session = await getSession();
+  if (!session) {
+    return { ok: false, error: "Session expirée. Reconnecte-toi." };
+  }
+
+  const currentPassword = input.currentPassword;
+  const newPassword = input.newPassword;
+  const confirmPassword = input.confirmPassword;
+
+  if (!currentPassword) {
+    return { ok: false, error: "Indique ton mot de passe actuel." };
+  }
+  if (newPassword.length < 8) {
+    return {
+      ok: false,
+      error: "Le nouveau mot de passe doit faire au moins 8 caractères.",
+    };
+  }
+  if (newPassword !== confirmPassword) {
+    return { ok: false, error: "La confirmation ne correspond pas." };
+  }
+  if (newPassword === currentPassword) {
+    return {
+      ok: false,
+      error: "Le nouveau mot de passe doit être différent de l’actuel.",
+    };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { id: true, passwordHash: true },
+  });
+  if (!user) {
+    return { ok: false, error: "Compte introuvable." };
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) {
+    return { ok: false, error: "Mot de passe actuel incorrect." };
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash },
+  });
+
+  return { ok: true };
 }
 
 export async function listActiveResidences() {

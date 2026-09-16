@@ -8,6 +8,7 @@ import { LogoutButton } from "@/components/ui/logout-button";
 const NAV = [
   { href: "/super-admin", label: "Résidences", exact: true },
   { href: "/super-admin/nouvelle-residence", label: "Créer", exact: false },
+  { href: "/super-admin/compte", label: "Compte", exact: false },
 ] as const;
 
 export function SuperAdminShell({ children }: { children: ReactNode }) {
