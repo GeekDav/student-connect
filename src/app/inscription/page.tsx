@@ -3,6 +3,8 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { InscriptionForm } from "@/components/auth/inscription-form";
 import { listActiveResidences } from "@/lib/actions/auth";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Inscription — Student-Connect",
   description:

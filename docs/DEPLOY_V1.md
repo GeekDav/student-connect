@@ -41,7 +41,8 @@ Compte seed : `admin@student-connect.local` / `Admin123!`
 1. Pousse le repo sur GitHub (si pas déjà).
 2. [vercel.com](https://vercel.com) → Import project.
 3. Variables d’environnement :
-   - `DATABASE_URL` = URL Postgres prod
+   - `DATABASE_URL` = URL Neon **avec** `-pooler`
+   - `DIRECT_URL` = même URL **sans** `-pooler` (même user/mdp/db)
    - `AUTH_SECRET` = secret fort (différent du local)
 4. Build command (défaut OK) : `prisma generate && next build` (déjà dans `npm run build`).
 5. Après le 1er deploy réussi, lance les migrations une fois :
