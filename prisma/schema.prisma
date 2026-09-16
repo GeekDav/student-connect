@@ -1,0 +1,288 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  MANAGER
+  SUPER_ADMIN
+}
+
+enum ResidenceStatus {
+  ACTIVE
+  PAUSED
+}
+
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  LEFT
+  REFUSED
+}
+
+enum SosStatus {
+  OPEN
+  HELPED
+  CLOSED
+}
+
+enum MarketplaceType {
+  DON
+  VENTE
+}
+
+enum MarketplaceStatus {
+  AVAILABLE
+  RESERVED
+  GONE
+}
+
+enum ReportTargetType {
+  EVENT
+  SOS
+  RECYCLERIE
+  MESSAGE
+}
+
+enum ReportStatus {
+  OPEN
+  REMOVED
+  DISMISSED
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  firstName      String
+  lastName       String
+  role           Role     @default(STUDENT)
+  school         String?
+  fieldOfStudy   String?
+  interests      String?
+  roomNumber     String?
+  nationality    String?
+  showNationality Boolean @default(false)
+  bio            String?
+  avatarUrl      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  managedResidence Residence?
+  memberships      ResidenceMembership[]
+  eventsCreated    MicroEvent[]          @relation("EventAuthor")
+  eventJoins       EventParticipant[]
+  sosCreated       SosRequest[]          @relation("SosAuthor")
+  sosHelps         SosHelp[]
+  marketItems      MarketplaceItem[]     @relation("MarketAuthor")
+  marketInterests  MarketplaceInterest[]
+  messagesSent     Message[]             @relation("MessageSender")
+  conversationsA   Conversation[]        @relation("ConversationUserA")
+  conversationsB   Conversation[]        @relation("ConversationUserB")
+  reportsFiled     ModerationReport[]    @relation("ReportReporter")
+  announcements    OfficialAnnouncement[]
+}
+
+model Residence {
+  id        String          @id @default(cuid())
+  name      String
+  city      String
+  address   String
+  operator  String
+  status    ResidenceStatus @default(ACTIVE)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  managerId String? @unique
+  manager   User?   @relation(fields: [managerId], references: [id])
+
+  memberships   ResidenceMembership[]
+  events        MicroEvent[]
+  sosRequests   SosRequest[]
+  marketItems   MarketplaceItem[]
+  announcements OfficialAnnouncement[]
+  reports       ModerationReport[]
+  conversations Conversation[]
+}
+
+model ResidenceMembership {
+  id          String           @id @default(cuid())
+  status      MembershipStatus @default(PENDING)
+  leaveReason String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  decidedAt   DateTime?
+  leftAt      DateTime?
+
+  userId      String
+  residenceId String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, residenceId])
+  @@index([residenceId, status])
+}
+
+model OfficialAnnouncement {
+  id          String   @id @default(cuid())
+  title       String
+  body        String
+  imageUrl    String?
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  unpublishedAt DateTime?
+
+  residenceId String
+  authorId    String
+  residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  author      User      @relation(fields: [authorId], references: [id])
+
+  @@index([residenceId, published])
+}
+
+model MicroEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  whenLabel   String
+  location    String
+  spotsTotal  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  residenceId String
+  authorId    String
+  residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  author      User      @relation("EventAuthor", fields: [authorId], references: [id])
+  participants EventParticipant[]
+
+  @@index([residenceId])
+}
+
+model EventParticipant {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  eventId   String
+  userId    String
+  event     MicroEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+model SosRequest {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  status      SosStatus @default(OPEN)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  residenceId String
+  authorId    String
+  residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  author      User      @relation("SosAuthor", fields: [authorId], references: [id])
+  helpers     SosHelp[]
+
+  @@index([residenceId, status])
+}
+
+model SosHelp {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  sosId     String
+  userId    String
+  sos       SosRequest @relation(fields: [sosId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sosId, userId])
+}
+
+model MarketplaceItem {
+  id          String            @id @default(cuid())
+  title       String
+  description String
+  type        MarketplaceType
+  priceLabel  String?
+  location    String
+  status      MarketplaceStatus @default(AVAILABLE)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  residenceId String
+  authorId    String
+  residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  author      User      @relation("MarketAuthor", fields: [authorId], references: [id])
+  interests   MarketplaceInterest[]
+
+  @@index([residenceId, status])
+}
+
+model MarketplaceInterest {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  itemId    String
+  userId    String
+  item      MarketplaceItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, userId])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userALastReadAt DateTime @default(now())
+  userBLastReadAt DateTime @default(now())
+
+  residenceId String
+  userAId     String
+  userBId     String
+  residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  userA       User      @relation("ConversationUserA", fields: [userAId], references: [id])
+  userB       User      @relation("ConversationUserB", fields: [userBId], references: [id])
+  messages    Message[]
+
+  @@unique([residenceId, userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  body           String
+  createdAt      DateTime @default(now())
+  conversationId String
+  senderId       String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+}
+
+model ModerationReport {
+  id          String           @id @default(cuid())
+  targetType  ReportTargetType
+  targetId    String
+  targetLabel String
+  targetBody  String           @default("")
+  reason      String
+  status      ReportStatus     @default(OPEN)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  residenceId String
+  reporterId  String
+  residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  reporter    User      @relation("ReportReporter", fields: [reporterId], references: [id])
+
+  @@index([residenceId, status])
+  @@index([targetType, targetId])
+}

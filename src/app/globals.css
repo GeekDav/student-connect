@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+:root {
+  --background: #eef4f5;
+  --foreground: #132029;
+  --muted: #5a6b75;
+  --accent: #0c6b5c;
+  --accent-hover: #0a574b;
+  --surface: #ffffff;
+  --line: #d5dee3;
+  --ink: #132029;
+  --wash: #e1eaee;
+  --glow: color-mix(in oklab, #0c6b5c 14%, transparent);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-wash: var(--wash);
+  --font-sans: var(--font-karla);
+  --font-display: var(--font-bricolage);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(900px 420px at 8% -10%, var(--glow), transparent 60%),
+    radial-gradient(
+      700px 380px at 100% 0%,
+      color-mix(in oklab, #1d4f7a 10%, transparent),
+      transparent 55%
+    ),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-karla), sans-serif;
+  min-height: 100svh;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 28%, white);
+  color: var(--ink);
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-zoom {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes soft-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes avatar-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-hero-rise {
+  animation: hero-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-hero-rise-delay {
+  animation: hero-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.animate-hero-rise-delay-2 {
+  animation: hero-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.24s both;
+}
+
+.animate-hero-zoom {
+  animation: hero-zoom 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-nav {
+  animation: soft-fade 0.7s ease both;
+}
+
+.animate-avatar-pop {
+  animation: avatar-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html.sc-modal-open,
+html.sc-modal-open body {
+  overflow: hidden;
+}
+
+.sc-lightbox-backdrop {
+  animation: soft-fade 0.22s ease both;
+}
+
+.sc-lightbox-panel {
+  animation: lightbox-rise 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lightbox-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-rise,
+  .animate-hero-rise-delay,
+  .animate-hero-rise-delay-2,
+  .animate-hero-zoom,
+  .animate-nav,
+  .animate-avatar-pop,
+  .sc-lightbox-backdrop,
+  .sc-lightbox-panel {
+    animation: none;
+  }
+}
