@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { ConnexionForm } from "@/components/auth/connexion-form";
 
@@ -13,7 +14,9 @@ export default function ConnexionPage() {
       title="Connexion"
       subtitle="Accède à l’espace de ta résidence. Si ton compte n’est pas encore validé, tu resteras sur l’écran d’attente."
     >
-      <ConnexionForm />
+      <Suspense fallback={<p className="text-sm text-muted">Chargement…</p>}>
+        <ConnexionForm />
+      </Suspense>
     </AuthShell>
   );
 }

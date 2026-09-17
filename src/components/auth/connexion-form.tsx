@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { loginUser } from "@/lib/actions/auth";
 
@@ -10,8 +10,33 @@ const fieldClass =
 
 const labelClass = "block text-sm font-medium text-ink";
 
+function safeNextPath(next: string | null, roleHome: string) {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return roleHome;
+  if (roleHome === "/gestionnaire" && next.startsWith("/gestionnaire")) {
+    return next;
+  }
+  if (roleHome === "/super-admin" && next.startsWith("/super-admin")) {
+    return next;
+  }
+  if (
+    (roleHome === "/accueil" || roleHome === "/en-attente") &&
+    (next.startsWith("/accueil") ||
+      next.startsWith("/residents") ||
+      next.startsWith("/evenements") ||
+      next.startsWith("/sos") ||
+      next.startsWith("/recyclerie") ||
+      next.startsWith("/messages") ||
+      next.startsWith("/profil") ||
+      next === "/en-attente")
+  ) {
+    return next;
+  }
+  return roleHome;
+}
+
 export function ConnexionForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
@@ -45,7 +70,8 @@ export function ConnexionForm() {
       return;
     }
 
-    router.push(result.redirectTo);
+    const dest = safeNextPath(searchParams.get("next"), result.redirectTo);
+    router.push(dest);
     router.refresh();
   }
 

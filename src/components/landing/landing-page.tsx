@@ -84,7 +84,7 @@ export function LandingPage() {
               Rejoindre ma résidence
             </Link>
             <Link
-              href="/gestionnaire"
+              href="/connexion?next=/gestionnaire"
               className="inline-flex h-12 items-center justify-center rounded-lg border border-white/35 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur-sm transition-[background-color,border-color] duration-200 hover:border-white/55 hover:bg-white/18"
             >
               Espace gestionnaire
@@ -159,7 +159,7 @@ export function LandingPage() {
             ici, on n’est pas seul.
           </p>
           <Link
-            href="/gestionnaire"
+            href="/connexion?next=/gestionnaire"
             className="mt-8 inline-flex h-12 items-center justify-center rounded-lg bg-ink px-6 text-sm font-semibold text-white transition-[opacity,transform] duration-200 hover:opacity-90 hover:-translate-y-0.5"
           >
             Découvrir l’espace gestionnaire

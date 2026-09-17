@@ -53,7 +53,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (needsSuper && session?.role !== "SUPER_ADMIN") {
-    return NextResponse.redirect(new URL("/", request.url));
+    const url = request.nextUrl.clone();
+    url.pathname = "/connexion";
+    url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
   }
 
   if (
@@ -61,7 +64,10 @@ export async function middleware(request: NextRequest) {
     session?.role !== "MANAGER" &&
     session?.role !== "SUPER_ADMIN"
   ) {
-    return NextResponse.redirect(new URL("/", request.url));
+    const url = request.nextUrl.clone();
+    url.pathname = "/connexion";
+    url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
