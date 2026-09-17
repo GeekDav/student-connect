@@ -6,6 +6,7 @@ import { listStudentAnnouncements } from "@/lib/actions/announcements";
 import { listResidenceEvents } from "@/lib/actions/events";
 import { listResidenceMarket } from "@/lib/actions/marketplace";
 import { listResidenceSos } from "@/lib/actions/sos";
+import { listWallNotes } from "@/lib/actions/wall";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -23,12 +24,14 @@ export default async function AccueilPage() {
   });
   if (!membership) redirect("/en-attente");
 
-  const [announcements, events, sosItems, marketItems] = await Promise.all([
-    listStudentAnnouncements(),
-    listResidenceEvents(),
-    listResidenceSos(),
-    listResidenceMarket(),
-  ]);
+  const [announcements, events, sosItems, marketItems, wallNotes] =
+    await Promise.all([
+      listStudentAnnouncements(),
+      listResidenceEvents(),
+      listResidenceSos(),
+      listResidenceMarket(),
+      listWallNotes(),
+    ]);
 
   return (
     <AccueilFeed
@@ -37,6 +40,7 @@ export default async function AccueilPage() {
       events={events}
       sosItems={sosItems}
       marketItems={marketItems}
+      wallNotes={wallNotes}
     />
   );
 }

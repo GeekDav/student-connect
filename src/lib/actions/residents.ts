@@ -15,6 +15,7 @@ export type DirectoryResident = {
   bio?: string;
   avatarUrl?: string;
   isMine: boolean;
+  isAvailable: boolean;
 };
 
 function parseInterests(value: string | null | undefined): string[] {
@@ -53,11 +54,14 @@ export async function listResidenceDirectory(): Promise<DirectoryResident[]> {
           showNationality: true,
           bio: true,
           avatarUrl: true,
+          availableUntil: true,
         },
       },
     },
     orderBy: [{ user: { firstName: "asc" } }, { user: { lastName: "asc" } }],
   });
+
+  const now = Date.now();
 
   return rows.map((row) => ({
     id: row.user.id,
@@ -73,5 +77,8 @@ export async function listResidenceDirectory(): Promise<DirectoryResident[]> {
     bio: row.user.bio?.trim() || undefined,
     avatarUrl: row.user.avatarUrl ?? undefined,
     isMine: row.user.id === session.userId,
+    isAvailable: Boolean(
+      row.user.availableUntil && row.user.availableUntil.getTime() > now,
+    ),
   }));
 }

@@ -71,6 +71,8 @@ model User {
   showNationality Boolean @default(false)
   bio            String?
   avatarUrl      String?
+  /** Opt-in “dispo” jusqu’à cette date (ex. +7 jours). */
+  availableUntil DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -87,6 +89,7 @@ model User {
   conversationsB   Conversation[]        @relation("ConversationUserB")
   reportsFiled     ModerationReport[]    @relation("ReportReporter")
   announcements    OfficialAnnouncement[]
+  wallNotes        WallNote[]            @relation("WallNoteAuthor")
 }
 
 model Residence {
@@ -109,6 +112,7 @@ model Residence {
   announcements OfficialAnnouncement[]
   reports       ModerationReport[]
   conversations Conversation[]
+  wallNotes     WallNote[]
 }
 
 model ResidenceMembership {
@@ -269,6 +273,21 @@ model Message {
   sender         User         @relation("MessageSender", fields: [senderId], references: [id])
 
   @@index([conversationId, createdAt])
+}
+
+/** Petit mot du mur résidence (texte court, 1 / auteur / jour). */
+model WallNote {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+
+  residenceId String
+  authorId    String
+  residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  author      User      @relation("WallNoteAuthor", fields: [authorId], references: [id])
+
+  @@index([residenceId, createdAt])
+  @@index([authorId, createdAt])
 }
 
 model ModerationReport {

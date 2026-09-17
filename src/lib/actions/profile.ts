@@ -96,6 +96,32 @@ export async function updateProfile(
   return { ok: true };
 }
 
+export async function setAvailability(
+  enabled: boolean,
+): Promise<ProfileActionResult> {
+  const session = await getSession();
+  if (!session) {
+    return { ok: false, error: "Session expirée. Reconnecte-toi." };
+  }
+  if (session.role !== Role.STUDENT) {
+    return { ok: false, error: "Réservé aux étudiants." };
+  }
+
+  const availableUntil = enabled
+    ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    : null;
+
+  await prisma.user.update({
+    where: { id: session.userId },
+    data: { availableUntil },
+  });
+
+  revalidatePath("/profil");
+  revalidatePath("/residents");
+
+  return { ok: true };
+}
+
 export async function uploadAvatar(
   formData: FormData,
 ): Promise<ProfileActionResult & { avatarUrl?: string }> {

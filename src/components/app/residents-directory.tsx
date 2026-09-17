@@ -24,6 +24,7 @@ export function ResidentsDirectory({
   const [field, setField] = useState("");
   const [interest, setInterest] = useState("");
   const [nationality, setNationality] = useState("");
+  const [availableOnly, setAvailableOnly] = useState(false);
 
   const fields = useMemo(
     () =>
@@ -55,6 +56,7 @@ export function ResidentsDirectory({
       if (field && resident.fieldOfStudy !== field) return false;
       if (interest && !resident.interests.includes(interest)) return false;
       if (nationality && resident.nationality !== nationality) return false;
+      if (availableOnly && !resident.isAvailable) return false;
 
       if (!q) return true;
 
@@ -72,15 +74,18 @@ export function ResidentsDirectory({
 
       return haystack.includes(q);
     });
-  }, [initialResidents, search, field, interest, nationality]);
+  }, [initialResidents, search, field, interest, nationality, availableOnly]);
 
-  const activeFilters = [field, interest, nationality].filter(Boolean).length;
+  const activeFilters =
+    [field, interest, nationality].filter(Boolean).length +
+    (availableOnly ? 1 : 0);
 
   function resetFilters() {
     setSearch("");
     setField("");
     setInterest("");
     setNationality("");
+    setAvailableOnly(false);
   }
 
   return (
@@ -174,6 +179,16 @@ export function ResidentsDirectory({
           </div>
         </div>
 
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+          <input
+            type="checkbox"
+            className="size-4 rounded border-line accent-[var(--accent)]"
+            checked={availableOnly}
+            onChange={(e) => setAvailableOnly(e.target.checked)}
+          />
+          Uniquement les dispo
+        </label>
+
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm text-muted">
             {filtered.length} résident{filtered.length > 1 ? "s" : ""}
@@ -212,6 +227,11 @@ export function ResidentsDirectory({
                     </span>
                   ) : null}
                 </h2>
+                {resident.isAvailable ? (
+                  <span className="text-xs font-semibold text-accent">
+                    Dispo
+                  </span>
+                ) : null}
                 {resident.nationality ? (
                   <span className="text-sm text-muted">{resident.nationality}</span>
                 ) : null}

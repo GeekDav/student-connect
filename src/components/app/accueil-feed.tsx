@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { WallNotesSection } from "@/components/app/wall-notes-section";
 import { ViewAnnouncementImage } from "@/components/ui/view-announcement-image";
 import type { AnnouncementItem } from "@/lib/actions/announcements";
 import type { EventItem } from "@/lib/actions/events";
 import type { MarketItem } from "@/lib/actions/marketplace";
 import type { SosItem } from "@/lib/actions/sos";
+import type { WallNoteItem } from "@/lib/actions/wall";
 
 export function AccueilFeed({
   firstName,
@@ -11,15 +13,33 @@ export function AccueilFeed({
   events,
   sosItems,
   marketItems,
+  wallNotes,
 }: {
   firstName: string;
   announcements: AnnouncementItem[];
   events: EventItem[];
   sosItems: SosItem[];
   marketItems: MarketItem[];
+  wallNotes: WallNoteItem[];
 }) {
+  const openEvents = events.filter((e) => e.spotsTaken < e.spotsTotal);
   const openSos = sosItems.filter((s) => s.status !== "closed");
   const activeMarket = marketItems.filter((m) => m.status !== "gone");
+
+  const todayBits = [
+    openEvents.length > 0
+      ? `${openEvents.length} event${openEvents.length > 1 ? "s" : ""} ouvert${openEvents.length > 1 ? "s" : ""}`
+      : null,
+    openSos.length > 0
+      ? `${openSos.length} SOS`
+      : null,
+    activeMarket.length > 0
+      ? `${activeMarket.length} annonce${activeMarket.length > 1 ? "s" : ""} recyclerie`
+      : null,
+    announcements.length > 0
+      ? `${announcements.length} annonce${announcements.length > 1 ? "s" : ""} officielle${announcements.length > 1 ? "s" : ""}`
+      : null,
+  ].filter(Boolean) as string[];
 
   return (
     <div>
@@ -31,6 +51,32 @@ export function AccueilFeed({
         <p className="mt-2 max-w-md text-base leading-relaxed text-muted">
           Annonces, activités et coups de main — uniquement ici.
         </p>
+      </div>
+
+      <div className="animate-hero-rise-delay mt-6 rounded-2xl border border-line bg-wash/70 px-4 py-4 sm:px-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
+          Aujourd’hui
+        </p>
+        {todayBits.length > 0 ? (
+          <p className="mt-1.5 text-sm leading-relaxed text-ink">
+            {todayBits.join(" · ")}
+          </p>
+        ) : (
+          <p className="mt-1.5 text-sm text-muted">
+            Calme pour l’instant — propose un event, un SOS ou un petit mot.
+          </p>
+        )}
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+          <Link href="/evenements" className="font-medium text-accent hover:opacity-70">
+            Events
+          </Link>
+          <Link href="/sos" className="font-medium text-accent hover:opacity-70">
+            SOS
+          </Link>
+          <Link href="/recyclerie" className="font-medium text-accent hover:opacity-70">
+            Recyclerie
+          </Link>
+        </div>
       </div>
 
       <div className="animate-hero-rise-delay mt-8 flex gap-2 overflow-x-auto pb-1">
@@ -90,6 +136,8 @@ export function AccueilFeed({
         )}
       </section>
 
+      <WallNotesSection initialNotes={wallNotes} />
+
       <section className="mt-12">
         <div className="flex items-end justify-between gap-3">
           <h2 className="font-display text-sm font-semibold tracking-wide text-ink">
@@ -102,9 +150,9 @@ export function AccueilFeed({
             Tout voir
           </Link>
         </div>
-        {events.length > 0 ? (
+        {openEvents.length > 0 ? (
           <ul className="mt-2 divide-y divide-line border-y border-line">
-            {events.slice(0, 4).map((item) => (
+            {openEvents.slice(0, 4).map((item) => (
               <li key={item.id} className="py-6">
                 <p className="text-xs font-semibold text-ink">Micro-événement</p>
                 <h3 className="mt-2 font-display text-lg font-semibold text-ink">

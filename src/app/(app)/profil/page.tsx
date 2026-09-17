@@ -29,6 +29,11 @@ export default async function ProfilPage() {
   const residenceName =
     user.memberships[0]?.residence.name ?? "Résidence non assignée";
 
+  const availableUntil =
+    user.availableUntil && user.availableUntil.getTime() > Date.now()
+      ? user.availableUntil
+      : null;
+
   return (
     <ProfileEditor
       residenceName={residenceName}
@@ -45,6 +50,15 @@ export default async function ProfilPage() {
         bio: user.bio ?? "",
       }}
       initialAvatarUrl={user.avatarUrl}
+      initiallyAvailable={Boolean(availableUntil)}
+      availableUntilLabel={
+        availableUntil
+          ? availableUntil.toLocaleDateString("fr-FR", {
+              day: "numeric",
+              month: "short",
+            })
+          : null
+      }
     />
   );
 }

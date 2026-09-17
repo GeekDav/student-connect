@@ -14,6 +14,7 @@ import { ChangeEmailForm } from "@/components/ui/change-email-form";
 import { ChangePasswordForm } from "@/components/ui/change-password-form";
 import {
   removeAvatar,
+  setAvailability,
   updateProfile,
   uploadAvatar,
 } from "@/lib/actions/profile";
@@ -28,10 +29,14 @@ export function ProfileEditor({
   initialProfile,
   residenceName,
   initialAvatarUrl,
+  initiallyAvailable = false,
+  availableUntilLabel = null,
 }: {
   initialProfile: StudentProfile;
   residenceName: string;
   initialAvatarUrl?: string | null;
+  initiallyAvailable?: boolean;
+  availableUntilLabel?: string | null;
 }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -39,14 +44,20 @@ export function ProfileEditor({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(
     initialAvatarUrl ?? null,
   );
+  const [isAvailable, setIsAvailable] = useState(initiallyAvailable);
+  const [untilLabel, setUntilLabel] = useState(availableUntilLabel);
   const [errors, setErrors] = useState<
     Partial<Record<keyof StudentProfile, string>>
   >({});
   const [formError, setFormError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(
+    null,
+  );
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [avatarPending, startAvatarTransition] = useTransition();
+  const [availabilityPending, startAvailabilityTransition] = useTransition();
 
   function update<K extends keyof StudentProfile>(
     key: K,
@@ -132,6 +143,30 @@ export function ProfileEditor({
         return;
       }
       setAvatarUrl(null);
+      router.refresh();
+    });
+  }
+
+  function onToggleAvailability(enabled: boolean) {
+    setAvailabilityError(null);
+    startAvailabilityTransition(async () => {
+      const result = await setAvailability(enabled);
+      if (!result.ok) {
+        setAvailabilityError(result.error);
+        return;
+      }
+      setIsAvailable(enabled);
+      if (enabled) {
+        const until = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        setUntilLabel(
+          until.toLocaleDateString("fr-FR", {
+            day: "numeric",
+            month: "short",
+          }),
+        );
+      } else {
+        setUntilLabel(null);
+      }
       router.refresh();
     });
   }
@@ -379,6 +414,35 @@ export function ProfileEditor({
                 <p className="mt-1.5 text-sm text-red-700">{errors.nationality}</p>
               ) : null}
             </div>
+          ) : null}
+        </div>
+
+        <div className="rounded-xl border border-line bg-wash/70 px-4 py-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 rounded border-line accent-[var(--accent)]"
+              checked={isAvailable}
+              disabled={availabilityPending}
+              onChange={(e) => onToggleAvailability(e.target.checked)}
+            />
+            <span>
+              <span className="block text-sm font-medium text-ink">
+                Je suis dispo pour discuter / sortir (7 jours)
+              </span>
+              <span className="mt-1 block text-xs text-muted">
+                Opt-in visible dans l’annuaire. Tu peux le retirer à tout
+                moment.
+                {isAvailable && untilLabel
+                  ? ` Actif jusqu’au ${untilLabel}.`
+                  : ""}
+              </span>
+            </span>
+          </label>
+          {availabilityError ? (
+            <p className="mt-3 text-sm text-red-700" role="alert">
+              {availabilityError}
+            </p>
           ) : null}
         </div>
 
