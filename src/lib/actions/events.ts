@@ -217,3 +217,56 @@ export async function cancelEvent(eventId: string): Promise<EventActionResult> {
 
   return { ok: true };
 }
+
+/** L’auteur ajuste le nombre de places (ne peut pas descendre sous les inscrits). */
+export async function updateEventSpots(
+  eventId: string,
+  spotsTotal: number,
+): Promise<EventActionResult> {
+  const ctx = await getActiveStudentContext();
+  if (!ctx) {
+    return { ok: false, error: "Tu dois être un résident validé." };
+  }
+
+  if (!Number.isFinite(spotsTotal) || spotsTotal < 2 || spotsTotal > 30) {
+    return { ok: false, error: "Entre 2 et 30 places." };
+  }
+
+  const event = await prisma.microEvent.findFirst({
+    where: {
+      id: eventId,
+      residenceId: ctx.residenceId,
+      authorId: ctx.session.userId,
+    },
+    include: {
+      author: { select: { firstName: true, lastName: true } },
+      participants: { select: { userId: true } },
+    },
+  });
+
+  if (!event) {
+    return { ok: false, error: "Événement introuvable ou non autorisé." };
+  }
+
+  const taken = event.participants.length;
+  if (spotsTotal < taken) {
+    return {
+      ok: false,
+      error: `Tu as déjà ${taken} inscrit${taken > 1 ? "s" : ""}. Minimum ${taken} place${taken > 1 ? "s" : ""}.`,
+    };
+  }
+
+  const updated = await prisma.microEvent.update({
+    where: { id: event.id },
+    data: { spotsTotal },
+    include: {
+      author: { select: { firstName: true, lastName: true } },
+      participants: { select: { userId: true } },
+    },
+  });
+
+  revalidatePath("/evenements");
+  revalidatePath("/accueil");
+
+  return { ok: true, item: mapEvent(updated, ctx.session.userId) };
+}

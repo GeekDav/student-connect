@@ -4,6 +4,10 @@ import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { ContactAuthorLink } from "@/components/app/contact-author-link";
 import { ReportButton } from "@/components/app/report-button";
 import {
+  BoardScopeFilter,
+  type BoardScope,
+} from "@/components/ui/board-scope-filter";
+import {
   createMarketItem,
   markMarketGone,
   toggleMarketInterest,
@@ -71,20 +75,31 @@ export function MarketplaceBoard({
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [showGone, setShowGone] = useState(false);
+  const [scope, setScope] = useState<BoardScope>("all");
   const [isPending, startTransition] = useTransition();
+
+  const scopedItems = useMemo(
+    () => (scope === "mine" ? items.filter((item) => item.isMine) : items),
+    [items, scope],
+  );
 
   const activeItems = useMemo(
     () =>
-      items.filter((item) => {
+      scopedItems.filter((item) => {
         if (item.status === "gone") return false;
         if (filter === "all") return true;
         return item.type === filter;
       }),
-    [items, filter],
+    [scopedItems, filter],
   );
 
   const goneItems = useMemo(
-    () => items.filter((item) => item.status === "gone"),
+    () => scopedItems.filter((item) => item.status === "gone"),
+    [scopedItems],
+  );
+
+  const mineCount = useMemo(
+    () => items.filter((item) => item.isMine).length,
     [items],
   );
 
@@ -309,7 +324,16 @@ export function MarketplaceBoard({
         </p>
       ) : null}
 
-      <div className="animate-hero-rise-delay mt-8 flex gap-2">
+      <div className="animate-hero-rise-delay mt-8">
+        <BoardScopeFilter
+          value={scope}
+          onChange={setScope}
+          allCount={items.length}
+          mineCount={mineCount}
+        />
+      </div>
+
+      <div className="mt-4 flex gap-2">
         {(
           [
             { id: "all", label: "Tout" },
@@ -348,7 +372,9 @@ export function MarketplaceBoard({
           ))}
           {activeItems.length === 0 ? (
             <li className="py-10 text-center text-sm text-muted">
-              Aucune annonce pour ce filtre. Publie la première !
+              {scope === "mine"
+                ? "Tu n’as aucune annonce active pour ce filtre."
+                : "Aucune annonce pour ce filtre. Publie la première !"}
             </li>
           ) : null}
         </ul>

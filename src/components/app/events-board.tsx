@@ -1,12 +1,17 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 import { ContactAuthorLink } from "@/components/app/contact-author-link";
 import { ReportButton } from "@/components/app/report-button";
+import {
+  BoardScopeFilter,
+  type BoardScope,
+} from "@/components/ui/board-scope-filter";
 import {
   cancelEvent,
   createEvent,
   toggleEventJoin,
+  updateEventSpots,
   type EventItem,
 } from "@/lib/actions/events";
 
@@ -40,14 +45,24 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [showFull, setShowFull] = useState(false);
+  const [scope, setScope] = useState<BoardScope>("all");
   const [isPending, startTransition] = useTransition();
 
+  const scopedEvents = useMemo(
+    () =>
+      scope === "mine" ? events.filter((event) => event.isMine) : events,
+    [events, scope],
+  );
   const openEvents = useMemo(
-    () => events.filter((event) => event.spotsTaken < event.spotsTotal),
-    [events],
+    () => scopedEvents.filter((event) => event.spotsTaken < event.spotsTotal),
+    [scopedEvents],
   );
   const fullEvents = useMemo(
-    () => events.filter((event) => event.spotsTaken >= event.spotsTotal),
+    () => scopedEvents.filter((event) => event.spotsTaken >= event.spotsTotal),
+    [scopedEvents],
+  );
+  const mineCount = useMemo(
+    () => events.filter((event) => event.isMine).length,
     [events],
   );
 
@@ -89,6 +104,22 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
         return;
       }
       setEvents((prev) => prev.filter((event) => event.id !== id));
+    });
+  }
+
+  function onUpdateSpots(id: string, spotsTotal: number) {
+    setFormError(null);
+    startTransition(async () => {
+      const result = await updateEventSpots(id, spotsTotal);
+      if (!result.ok) {
+        setFormError(result.error);
+        return;
+      }
+      if (result.item) {
+        setEvents((prev) =>
+          prev.map((event) => (event.id === id ? result.item! : event)),
+        );
+      }
     });
   }
 
@@ -286,7 +317,16 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
         </p>
       ) : null}
 
-      <section className="animate-hero-rise-delay mt-10">
+      <div className="animate-hero-rise-delay mt-8">
+        <BoardScopeFilter
+          value={scope}
+          onChange={setScope}
+          allCount={events.length}
+          mineCount={mineCount}
+        />
+      </div>
+
+      <section className="mt-8">
         <h2 className="font-display text-sm font-semibold tracking-wide text-ink">
           Places disponibles · {openEvents.length}
         </h2>
@@ -298,11 +338,14 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
               busy={isPending}
               onToggle={() => onToggleJoin(event.id)}
               onCancel={() => onCancel(event.id)}
+              onUpdateSpots={(spots) => onUpdateSpots(event.id, spots)}
             />
           ))}
           {openEvents.length === 0 ? (
             <li className="py-10 text-center text-sm text-muted">
-              Aucune place ouverte pour le moment. Propose quelque chose !
+              {scope === "mine"
+                ? "Tu n’as aucun événement ouvert. Propose-en un !"
+                : "Aucune place ouverte pour le moment. Propose quelque chose !"}
             </li>
           ) : null}
         </ul>
@@ -326,6 +369,7 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
                   busy={isPending}
                   onToggle={() => onToggleJoin(event.id)}
                   onCancel={() => onCancel(event.id)}
+                  onUpdateSpots={(spots) => onUpdateSpots(event.id, spots)}
                 />
               ))}
             </ul>
@@ -341,14 +385,39 @@ function EventRow({
   busy,
   onToggle,
   onCancel,
+  onUpdateSpots,
 }: {
   event: EventItem;
   busy: boolean;
   onToggle: () => void;
   onCancel: () => void;
+  onUpdateSpots: (spotsTotal: number) => void;
 }) {
   const remaining = event.spotsTotal - event.spotsTaken;
   const isFull = remaining <= 0;
+  const [spotsDraft, setSpotsDraft] = useState(String(event.spotsTotal));
+  const [editingSpots, setEditingSpots] = useState(false);
+
+  useEffect(() => {
+    setSpotsDraft(String(event.spotsTotal));
+  }, [event.spotsTotal]);
+
+  const minSpots = Math.max(2, event.spotsTaken);
+
+  function saveSpots() {
+    const spots = Number(spotsDraft);
+    if (!Number.isFinite(spots) || spots < minSpots || spots > 30) {
+      setSpotsDraft(String(event.spotsTotal));
+      setEditingSpots(false);
+      return;
+    }
+    if (spots === event.spotsTotal) {
+      setEditingSpots(false);
+      return;
+    }
+    onUpdateSpots(spots);
+    setEditingSpots(false);
+  }
 
   return (
     <li className="py-6">
@@ -368,6 +437,59 @@ function EventRow({
             Par {event.author} · {event.spotsTaken}/{event.spotsTotal} inscrits
             {!isFull ? ` · ${remaining} place${remaining > 1 ? "s" : ""}` : ""}
           </p>
+          {event.isMine ? (
+            <div className="mt-3">
+              {editingSpots ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="text-xs font-medium text-ink" htmlFor={`spots-${event.id}`}>
+                    Places totales
+                  </label>
+                  <input
+                    id={`spots-${event.id}`}
+                    type="number"
+                    min={minSpots}
+                    max={30}
+                    value={spotsDraft}
+                    onChange={(e) => setSpotsDraft(e.target.value)}
+                    className="h-9 w-20 rounded-lg border border-line bg-surface px-2 text-sm text-ink"
+                  />
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={saveSpots}
+                    className="inline-flex h-9 items-center rounded-lg bg-ink px-3 text-xs font-semibold text-white disabled:opacity-60"
+                  >
+                    OK
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSpotsDraft(String(event.spotsTotal));
+                      setEditingSpots(false);
+                    }}
+                    className="text-xs font-medium text-muted hover:text-ink"
+                  >
+                    Annuler
+                  </button>
+                  <span className="text-[11px] text-muted">
+                    Min. {minSpots} (inscrits)
+                  </span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setSpotsDraft(String(event.spotsTotal));
+                    setEditingSpots(true);
+                  }}
+                  className="text-xs font-semibold text-accent hover:underline disabled:opacity-60"
+                >
+                  Modifier les places
+                </button>
+              )}
+            </div>
+          ) : null}
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:items-stretch">

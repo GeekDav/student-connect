@@ -4,6 +4,10 @@ import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { ContactAuthorLink } from "@/components/app/contact-author-link";
 import { ReportButton } from "@/components/app/report-button";
 import {
+  BoardScopeFilter,
+  type BoardScope,
+} from "@/components/ui/board-scope-filter";
+import {
   createSos,
   resolveSos,
   toggleSosHelp,
@@ -56,14 +60,23 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [showClosed, setShowClosed] = useState(false);
+  const [scope, setScope] = useState<BoardScope>("all");
   const [isPending, startTransition] = useTransition();
 
+  const scopedItems = useMemo(
+    () => (scope === "mine" ? items.filter((item) => item.isMine) : items),
+    [items, scope],
+  );
   const openItems = useMemo(
-    () => items.filter((item) => item.status !== "closed"),
-    [items],
+    () => scopedItems.filter((item) => item.status !== "closed"),
+    [scopedItems],
   );
   const closedItems = useMemo(
-    () => items.filter((item) => item.status === "closed"),
+    () => scopedItems.filter((item) => item.status === "closed"),
+    [scopedItems],
+  );
+  const mineCount = useMemo(
+    () => items.filter((item) => item.isMine).length,
     [items],
   );
 
@@ -228,7 +241,16 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
         </p>
       ) : null}
 
-      <section className="animate-hero-rise-delay mt-10">
+      <div className="animate-hero-rise-delay mt-8">
+        <BoardScopeFilter
+          value={scope}
+          onChange={setScope}
+          allCount={items.length}
+          mineCount={mineCount}
+        />
+      </div>
+
+      <section className="mt-8">
         <h2 className="font-display text-sm font-semibold tracking-wide text-ink">
           En cours · {openItems.length}
         </h2>
@@ -244,7 +266,9 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
           ))}
           {openItems.length === 0 ? (
             <li className="py-10 text-center text-sm text-muted">
-              Aucun SOS ouvert. Tout va bien — ou lance le tien.
+              {scope === "mine"
+                ? "Tu n’as aucun SOS en cours."
+                : "Aucun SOS ouvert. Tout va bien — ou lance le tien."}
             </li>
           ) : null}
         </ul>
