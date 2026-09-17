@@ -218,3 +218,60 @@ export async function toggleResidenceStatus(
 
   return { ok: true, residenceId: residence.id };
 }
+
+export type UpdateManagerEmailResult =
+  | { ok: true; managerEmail: string }
+  | { ok: false; error: string };
+
+/** Super-admin : change l’e-mail du gestionnaire d’une résidence. */
+export async function updateManagerEmail(
+  residenceId: string,
+  newEmail: string,
+): Promise<UpdateManagerEmailResult> {
+  const session = await requireSuperAdmin();
+  if (!session) {
+    return { ok: false, error: "Accès réservé au super-admin." };
+  }
+
+  const email = newEmail.trim().toLowerCase();
+  if (!email || !email.includes("@") || email.length < 5) {
+    return { ok: false, error: "Indique une adresse e-mail valide." };
+  }
+
+  const residence = await prisma.residence.findUnique({
+    where: { id: residenceId },
+    select: { id: true, managerId: true },
+  });
+  if (!residence?.managerId) {
+    return { ok: false, error: "Aucun gestionnaire lié à cette résidence." };
+  }
+
+  const manager = await prisma.user.findUnique({
+    where: { id: residence.managerId },
+    select: { id: true, email: true, role: true },
+  });
+  if (!manager || manager.role !== Role.MANAGER) {
+    return { ok: false, error: "Compte gestionnaire introuvable." };
+  }
+
+  if (email === manager.email) {
+    return { ok: false, error: "C’est déjà l’e-mail actuel." };
+  }
+
+  const taken = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+  if (taken) {
+    return { ok: false, error: "Cet e-mail est déjà utilisé." };
+  }
+
+  await prisma.user.update({
+    where: { id: manager.id },
+    data: { email },
+  });
+
+  revalidatePath("/super-admin");
+
+  return { ok: true, managerEmail: email };
+}

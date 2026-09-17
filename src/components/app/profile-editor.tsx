@@ -10,6 +10,7 @@ import {
   type FormEvent,
 } from "react";
 import { Avatar } from "@/components/ui/avatar";
+import { ChangeEmailForm } from "@/components/ui/change-email-form";
 import { ChangePasswordForm } from "@/components/ui/change-password-form";
 import {
   removeAvatar,
@@ -403,6 +404,24 @@ export function ProfileEditor({
           </button>
         </div>
       </form>
+
+      <section className="mt-12 border-t border-line pt-10">
+        <h3 className="font-display text-xl font-semibold text-ink">
+          E-mail de connexion
+        </h3>
+        <p className="mt-2 text-sm text-muted">
+          Change l’adresse utilisée pour te connecter. Confirme avec ton mot de
+          passe actuel.
+        </p>
+        <div className="mt-6">
+          <ChangeEmailForm
+            currentEmail={profile.email}
+            onEmailChanged={(email) =>
+              setProfile((prev) => ({ ...prev, email }))
+            }
+          />
+        </div>
+      </section>
 
       <section className="mt-12 border-t border-line pt-10">
         <h3 className="font-display text-xl font-semibold text-ink">

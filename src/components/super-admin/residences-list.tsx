@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import {
   toggleResidenceStatus,
+  updateManagerEmail,
   type PlatformResidenceItem,
 } from "@/lib/actions/super-admin";
 
@@ -14,6 +15,8 @@ export function ResidencesList({
 }) {
   const [items, setItems] = useState(initialItems);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [emailDraft, setEmailDraft] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function onToggle(id: string) {
@@ -34,6 +37,31 @@ export function ResidencesList({
             : item,
         ),
       );
+    });
+  }
+
+  function startEditEmail(item: PlatformResidenceItem) {
+    setError(null);
+    setEditingId(item.id);
+    setEmailDraft(item.managerEmail === "—" ? "" : item.managerEmail);
+  }
+
+  function saveEmail(residenceId: string) {
+    setError(null);
+    startTransition(async () => {
+      const result = await updateManagerEmail(residenceId, emailDraft);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === residenceId
+            ? { ...item, managerEmail: result.managerEmail }
+            : item,
+        ),
+      );
+      setEditingId(null);
     });
   }
 
@@ -86,8 +114,50 @@ export function ResidencesList({
                 <p className="mt-1 text-sm text-muted">{item.address}</p>
                 <p className="mt-3 text-sm text-ink">
                   Gestionnaire : {item.managerName}
-                  <span className="text-muted"> · {item.managerEmail}</span>
                 </p>
+                {editingId === item.id ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <input
+                      type="email"
+                      value={emailDraft}
+                      onChange={(e) => setEmailDraft(e.target.value)}
+                      className="h-10 min-w-[14rem] flex-1 rounded-lg border border-line bg-surface px-3 text-sm text-ink"
+                      placeholder="email@residence.fr"
+                    />
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => saveEmail(item.id)}
+                      className="inline-flex h-10 items-center rounded-lg bg-ink px-3 text-xs font-semibold text-white disabled:opacity-60"
+                    >
+                      Enregistrer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="text-xs font-medium text-muted hover:text-ink"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-sm text-muted">
+                    {item.managerEmail}
+                    {item.managerEmail !== "—" ? (
+                      <>
+                        {" · "}
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => startEditEmail(item)}
+                          className="font-semibold text-accent hover:underline disabled:opacity-60"
+                        >
+                          Modifier l’e-mail
+                        </button>
+                      </>
+                    ) : null}
+                  </p>
+                )}
                 <p className="mt-2 text-xs text-muted">
                   Créée le {item.createdAt} · {item.activeStudents} actifs ·{" "}
                   {item.pendingStudents} en attente

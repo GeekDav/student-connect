@@ -217,6 +217,84 @@ export async function changePassword(input: {
   return { ok: true };
 }
 
+export type ChangeEmailResult =
+  | { ok: true; email: string }
+  | { ok: false; error: string };
+
+/** Étudiant ou super-admin uniquement (pas le gestionnaire en self-service). */
+export async function changeEmail(input: {
+  newEmail: string;
+  currentPassword: string;
+}): Promise<ChangeEmailResult> {
+  const session = await getSession();
+  if (!session) {
+    return { ok: false, error: "Session expirée. Reconnecte-toi." };
+  }
+
+  if (session.role === Role.MANAGER) {
+    return {
+      ok: false,
+      error:
+        "Le changement d’e-mail gestionnaire est géré par le super-admin de la plateforme.",
+    };
+  }
+
+  const newEmail = input.newEmail.trim().toLowerCase();
+  if (!newEmail || !newEmail.includes("@") || newEmail.length < 5) {
+    return { ok: false, error: "Indique une adresse e-mail valide." };
+  }
+  if (!input.currentPassword) {
+    return { ok: false, error: "Indique ton mot de passe actuel." };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: {
+      id: true,
+      email: true,
+      passwordHash: true,
+      role: true,
+      firstName: true,
+      lastName: true,
+    },
+  });
+  if (!user) {
+    return { ok: false, error: "Compte introuvable." };
+  }
+
+  if (newEmail === user.email) {
+    return { ok: false, error: "C’est déjà ton e-mail actuel." };
+  }
+
+  const valid = await bcrypt.compare(input.currentPassword, user.passwordHash);
+  if (!valid) {
+    return { ok: false, error: "Mot de passe actuel incorrect." };
+  }
+
+  const taken = await prisma.user.findUnique({
+    where: { email: newEmail },
+    select: { id: true },
+  });
+  if (taken) {
+    return { ok: false, error: "Cet e-mail est déjà utilisé." };
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { email: newEmail },
+  });
+
+  await setSessionCookie({
+    userId: user.id,
+    email: newEmail,
+    role: user.role,
+    firstName: user.firstName,
+    lastName: user.lastName,
+  });
+
+  return { ok: true, email: newEmail };
+}
+
 export async function listActiveResidences() {
   return prisma.residence.findMany({
     where: { status: "ACTIVE" },
