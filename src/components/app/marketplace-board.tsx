@@ -70,6 +70,7 @@ export function MarketplaceBoard({
     {},
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [showGone, setShowGone] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const activeItems = useMemo(
@@ -355,14 +356,20 @@ export function MarketplaceBoard({
 
       {goneItems.length > 0 ? (
         <section className="mt-12">
-          <h2 className="font-display text-sm font-semibold tracking-wide text-muted">
-            Déjà partis · {goneItems.length}
-          </h2>
-          <ul className="mt-2 divide-y divide-line border-y border-line opacity-75">
-            {goneItems.map((item) => (
-              <MarketRow key={item.id} item={item} />
-            ))}
-          </ul>
+          <button
+            type="button"
+            onClick={() => setShowGone((v) => !v)}
+            className="font-display text-sm font-semibold tracking-wide text-muted transition-colors hover:text-ink"
+          >
+            {showGone ? "Masquer" : "Voir"} les partis · {goneItems.length}
+          </button>
+          {showGone ? (
+            <ul className="mt-2 divide-y divide-line border-y border-line opacity-75">
+              {goneItems.map((item) => (
+                <MarketRow key={item.id} item={item} />
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
     </div>

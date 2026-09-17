@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, useTransition, type FormEvent } from "rea
 import { ReportButton } from "@/components/app/report-button";
 import { Avatar } from "@/components/ui/avatar";
 import {
+  clearConversation,
+  deleteMessages,
   getConversation,
   sendMessage,
   type ChatMessage,
@@ -13,7 +15,6 @@ import {
 
 const fieldClass =
   "w-full rounded-lg border border-line bg-surface px-3.5 py-3 text-[15px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-accent focus:shadow-[0_0_0_3px_rgba(12,107,92,0.12)]";
-
 
 export function MessagesBoard({
   initialConversations,
@@ -36,6 +37,8 @@ export function MessagesBoard({
   );
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(bootstrapError ?? null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
 
   const activeSummary = useMemo(
@@ -68,11 +71,27 @@ export function MessagesBoard({
   function openConversation(id: string) {
     setError(null);
     setDraft("");
+    setSelectMode(false);
+    setSelectedIds(new Set());
     setDetail(null);
     setActiveId(id);
     setConversations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, unread: 0 } : c)),
     );
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    const messages = detail?.id === activeId ? detail.messages : [];
+    setSelectedIds(new Set(messages.map((m) => m.id)));
   }
 
   function onSend(e: FormEvent) {
@@ -120,6 +139,87 @@ export function MessagesBoard({
     });
   }
 
+  function onDeleteSelected() {
+    if (!activeId || selectedIds.size === 0) return;
+    const ids = [...selectedIds];
+    setError(null);
+    startTransition(async () => {
+      const result = await deleteMessages(activeId, ids);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setDetail((prev) => {
+        if (!prev || prev.id !== activeId) return prev;
+        const messages = prev.messages.filter((m) => !ids.includes(m.id));
+        const last = messages[messages.length - 1];
+        return {
+          ...prev,
+          messages,
+          preview: last?.text ?? "Nouvelle conversation",
+          updatedLabel: last ? last.timeLabel : "À l’instant",
+        };
+      });
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeId) return c;
+          const remaining =
+            detail?.messages.filter((m) => !ids.includes(m.id)) ?? [];
+          const last = remaining[remaining.length - 1];
+          return {
+            ...c,
+            preview: last?.text ?? "Nouvelle conversation",
+            updatedLabel: last ? "À l’instant" : c.updatedLabel,
+          };
+        }),
+      );
+      setSelectedIds(new Set());
+      setSelectMode(false);
+    });
+  }
+
+  function onClearAll() {
+    if (!activeId) return;
+    if (
+      !window.confirm(
+        "Effacer tous les messages de cette conversation ? Cette action est définitive pour les deux personnes.",
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const result = await clearConversation(activeId);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setDetail((prev) =>
+        prev && prev.id === activeId
+          ? {
+              ...prev,
+              messages: [],
+              preview: "Nouvelle conversation",
+              updatedLabel: "À l’instant",
+            }
+          : prev,
+      );
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === activeId
+            ? {
+                ...c,
+                preview: "Nouvelle conversation",
+                updatedLabel: "À l’instant",
+              }
+            : c,
+        ),
+      );
+      setSelectedIds(new Set());
+      setSelectMode(false);
+    });
+  }
+
   if (activeId) {
     const peerName = detail?.peerName ?? activeSummary?.peerName ?? "…";
     const peerField = detail?.peerField ?? activeSummary?.peerField ?? "";
@@ -138,20 +238,63 @@ export function MessagesBoard({
               setDetail(null);
               setDraft("");
               setError(null);
+              setSelectMode(false);
+              setSelectedIds(new Set());
             }}
             className="text-sm font-medium text-muted transition-colors hover:text-ink"
           >
             ← Conversations
           </button>
-          <div className="mt-4 flex items-center gap-3">
-            <Avatar name={peerName} src={peerAvatarUrl} size="md" />
-            <div>
-              <h1 className="font-display text-xl font-semibold text-ink">
-                {peerName}
-              </h1>
-              <p className="text-sm text-muted">{peerField}</p>
+          <div className="mt-4 flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <Avatar name={peerName} src={peerAvatarUrl} size="md" />
+              <div className="min-w-0">
+                <h1 className="font-display text-xl font-semibold text-ink">
+                  {peerName}
+                </h1>
+                <p className="text-sm text-muted">{peerField}</p>
+              </div>
             </div>
+            {!loading && messages.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectMode((v) => !v);
+                  setSelectedIds(new Set());
+                }}
+                className="shrink-0 text-sm font-medium text-muted transition-colors hover:text-ink"
+              >
+                {selectMode ? "Annuler" : "Sélectionner"}
+              </button>
+            ) : null}
           </div>
+          {selectMode ? (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={selectAll}
+                className="text-xs font-semibold text-accent"
+              >
+                Tout sélectionner
+              </button>
+              <button
+                type="button"
+                disabled={selectedIds.size === 0 || isPending}
+                onClick={onDeleteSelected}
+                className="inline-flex h-9 items-center rounded-lg bg-ink px-3 text-xs font-semibold text-white disabled:opacity-50"
+              >
+                Supprimer ({selectedIds.size})
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={onClearAll}
+                className="inline-flex h-9 items-center rounded-lg border border-line bg-surface px-3 text-xs font-semibold text-ink disabled:opacity-50"
+              >
+                Tout effacer
+              </button>
+            </div>
+          ) : null}
         </div>
 
         {error ? (
@@ -174,8 +317,19 @@ export function MessagesBoard({
           {messages.map((message) => (
             <li
               key={message.id}
-              className={`flex ${message.fromMe ? "justify-end" : "justify-start"}`}
+              className={`flex items-end gap-2 ${
+                message.fromMe ? "justify-end" : "justify-start"
+              }`}
             >
+              {selectMode ? (
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(message.id)}
+                  onChange={() => toggleSelect(message.id)}
+                  className="mb-3 size-4 shrink-0 accent-[var(--accent)]"
+                  aria-label="Sélectionner le message"
+                />
+              ) : null}
               <div
                 className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                   message.fromMe
@@ -191,7 +345,7 @@ export function MessagesBoard({
                 >
                   {message.timeLabel}
                 </p>
-                {!message.fromMe ? (
+                {!message.fromMe && !selectMode ? (
                   <div className="mt-2">
                     <ReportButton
                       targetType="message"
@@ -205,30 +359,32 @@ export function MessagesBoard({
           ))}
         </ul>
 
-        <form
-          onSubmit={onSend}
-          className="sticky bottom-0 flex gap-2 border-t border-line bg-background pt-4 pb-2"
-        >
-          <label htmlFor="draft" className="sr-only">
-            Message
-          </label>
-          <input
-            id="draft"
-            className={fieldClass}
-            placeholder="Écrire un message…"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            autoComplete="off"
-            disabled={isPending && !detail}
-          />
-          <button
-            type="submit"
-            disabled={!draft.trim() || isPending}
-            className="inline-flex h-12 shrink-0 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-white transition-[background-color,opacity,transform] hover:bg-accent-hover hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+        {!selectMode ? (
+          <form
+            onSubmit={onSend}
+            className="sticky bottom-0 flex gap-2 border-t border-line bg-background pt-4 pb-2"
           >
-            Envoyer
-          </button>
-        </form>
+            <label htmlFor="draft" className="sr-only">
+              Message
+            </label>
+            <input
+              id="draft"
+              className={fieldClass}
+              placeholder="Écrire un message…"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              autoComplete="off"
+              disabled={isPending && !detail}
+            />
+            <button
+              type="submit"
+              disabled={!draft.trim() || isPending}
+              className="inline-flex h-12 shrink-0 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-white transition-[background-color,opacity,transform] hover:bg-accent-hover hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+            >
+              Envoyer
+            </button>
+          </form>
+        ) : null}
       </div>
     );
   }

@@ -190,3 +190,30 @@ export async function toggleEventJoin(
 
   return { ok: true, item: mapEvent(refreshed, ctx.session.userId) };
 }
+
+/** L’auteur retire l’événement (complet, passé, ou annulé). */
+export async function cancelEvent(eventId: string): Promise<EventActionResult> {
+  const ctx = await getActiveStudentContext();
+  if (!ctx) {
+    return { ok: false, error: "Tu dois être un résident validé." };
+  }
+
+  const event = await prisma.microEvent.findFirst({
+    where: {
+      id: eventId,
+      residenceId: ctx.residenceId,
+      authorId: ctx.session.userId,
+    },
+  });
+
+  if (!event) {
+    return { ok: false, error: "Événement introuvable ou non autorisé." };
+  }
+
+  await prisma.microEvent.delete({ where: { id: event.id } });
+
+  revalidatePath("/evenements");
+  revalidatePath("/accueil");
+
+  return { ok: true };
+}

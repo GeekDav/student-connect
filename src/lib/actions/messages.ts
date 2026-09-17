@@ -398,3 +398,77 @@ export async function sendMessage(
     },
   };
 }
+
+async function assertConversationAccess(conversationId: string) {
+  const ctx = await getActiveStudentContext();
+  if (!ctx) return null;
+
+  const conversation = await prisma.conversation.findFirst({
+    where: {
+      id: conversationId,
+      residenceId: ctx.residenceId,
+      OR: [{ userAId: ctx.session.userId }, { userBId: ctx.session.userId }],
+    },
+  });
+
+  if (!conversation) return null;
+  return { ctx, conversation };
+}
+
+/** Supprime des messages sélectionnés (participant de la conversation). */
+export async function deleteMessages(
+  conversationId: string,
+  messageIds: string[],
+): Promise<MessageActionResult> {
+  const access = await assertConversationAccess(conversationId);
+  if (!access) {
+    return { ok: false, error: "Conversation introuvable." };
+  }
+
+  const ids = [...new Set(messageIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0) {
+    return { ok: false, error: "Sélectionne au moins un message." };
+  }
+
+  await prisma.message.deleteMany({
+    where: {
+      conversationId,
+      id: { in: ids },
+    },
+  });
+
+  const last = await prisma.message.findFirst({
+    where: { conversationId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  await prisma.conversation.update({
+    where: { id: conversationId },
+    data: { updatedAt: last?.createdAt ?? new Date() },
+  });
+
+  revalidatePath("/messages");
+  return { ok: true, conversationId };
+}
+
+/** Efface toute la conversation (tous les messages). */
+export async function clearConversation(
+  conversationId: string,
+): Promise<MessageActionResult> {
+  const access = await assertConversationAccess(conversationId);
+  if (!access) {
+    return { ok: false, error: "Conversation introuvable." };
+  }
+
+  await prisma.message.deleteMany({
+    where: { conversationId },
+  });
+
+  await prisma.conversation.update({
+    where: { id: conversationId },
+    data: { updatedAt: new Date() },
+  });
+
+  revalidatePath("/messages");
+  return { ok: true, conversationId };
+}

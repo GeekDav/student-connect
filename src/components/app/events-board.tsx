@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { ContactAuthorLink } from "@/components/app/contact-author-link";
 import { ReportButton } from "@/components/app/report-button";
 import {
+  cancelEvent,
   createEvent,
   toggleEventJoin,
   type EventItem,
@@ -38,6 +39,7 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
     {},
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [showFull, setShowFull] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const openEvents = useMemo(
@@ -68,6 +70,25 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
           prev.map((event) => (event.id === id ? result.item! : event)),
         );
       }
+    });
+  }
+
+  function onCancel(id: string) {
+    if (
+      !window.confirm(
+        "Retirer cet événement ? Il disparaîtra de la liste pour tout le monde.",
+      )
+    ) {
+      return;
+    }
+    setFormError(null);
+    startTransition(async () => {
+      const result = await cancelEvent(id);
+      if (!result.ok) {
+        setFormError(result.error);
+        return;
+      }
+      setEvents((prev) => prev.filter((event) => event.id !== id));
     });
   }
 
@@ -276,6 +297,7 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
               event={event}
               busy={isPending}
               onToggle={() => onToggleJoin(event.id)}
+              onCancel={() => onCancel(event.id)}
             />
           ))}
           {openEvents.length === 0 ? (
@@ -288,19 +310,26 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
 
       {fullEvents.length > 0 ? (
         <section className="mt-12">
-          <h2 className="font-display text-sm font-semibold tracking-wide text-muted">
-            Complets · {fullEvents.length}
-          </h2>
-          <ul className="mt-2 divide-y divide-line border-y border-line opacity-80">
-            {fullEvents.map((event) => (
-              <EventRow
-                key={event.id}
-                event={event}
-                busy={isPending}
-                onToggle={() => onToggleJoin(event.id)}
-              />
-            ))}
-          </ul>
+          <button
+            type="button"
+            onClick={() => setShowFull((v) => !v)}
+            className="font-display text-sm font-semibold tracking-wide text-muted transition-colors hover:text-ink"
+          >
+            {showFull ? "Masquer" : "Voir"} les complets · {fullEvents.length}
+          </button>
+          {showFull ? (
+            <ul className="mt-2 divide-y divide-line border-y border-line opacity-80">
+              {fullEvents.map((event) => (
+                <EventRow
+                  key={event.id}
+                  event={event}
+                  busy={isPending}
+                  onToggle={() => onToggleJoin(event.id)}
+                  onCancel={() => onCancel(event.id)}
+                />
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
     </div>
@@ -311,10 +340,12 @@ function EventRow({
   event,
   busy,
   onToggle,
+  onCancel,
 }: {
   event: EventItem;
   busy: boolean;
   onToggle: () => void;
+  onCancel: () => void;
 }) {
   const remaining = event.spotsTotal - event.spotsTaken;
   const isFull = remaining <= 0;
@@ -358,7 +389,18 @@ function EventRow({
                 ? "Complet"
                 : "Je participe"}
           </button>
-          <ContactAuthorLink authorId={event.authorId} isMine={event.isMine} />
+          {event.isMine ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onCancel}
+              className="inline-flex h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-60"
+            >
+              Retirer
+            </button>
+          ) : (
+            <ContactAuthorLink authorId={event.authorId} isMine={false} />
+          )}
         </div>
       </div>
       <div className="mt-3">

@@ -55,6 +55,7 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
     {},
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [showClosed, setShowClosed] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const openItems = useMemo(
@@ -251,14 +252,20 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
 
       {closedItems.length > 0 ? (
         <section className="mt-12">
-          <h2 className="font-display text-sm font-semibold tracking-wide text-muted">
-            Résolus · {closedItems.length}
-          </h2>
-          <ul className="mt-2 divide-y divide-line border-y border-line opacity-75">
-            {closedItems.map((item) => (
-              <SosRow key={item.id} item={item} />
-            ))}
-          </ul>
+          <button
+            type="button"
+            onClick={() => setShowClosed((v) => !v)}
+            className="font-display text-sm font-semibold tracking-wide text-muted transition-colors hover:text-ink"
+          >
+            {showClosed ? "Masquer" : "Voir"} les résolus · {closedItems.length}
+          </button>
+          {showClosed ? (
+            <ul className="mt-2 divide-y divide-line border-y border-line opacity-75">
+              {closedItems.map((item) => (
+                <SosRow key={item.id} item={item} />
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
     </div>
