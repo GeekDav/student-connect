@@ -242,6 +242,9 @@ model Conversation {
   updatedAt DateTime @updatedAt
   userALastReadAt DateTime @default(now())
   userBLastReadAt DateTime @default(now())
+  /** Masquée dans la liste pour userA (style WhatsApp — l’autre garde la sienne). */
+  userAHiddenAt DateTime?
+  userBHiddenAt DateTime?
 
   residenceId String
   userAId     String

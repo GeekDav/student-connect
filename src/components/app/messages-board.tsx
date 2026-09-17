@@ -7,6 +7,7 @@ import {
   clearConversation,
   deleteMessages,
   getConversation,
+  hideConversation,
   sendMessage,
   type ChatMessage,
   type ConversationDetail,
@@ -92,6 +93,29 @@ export function MessagesBoard({
   function selectAll() {
     const messages = detail?.id === activeId ? detail.messages : [];
     setSelectedIds(new Set(messages.map((m) => m.id)));
+  }
+
+  function onHideConversation(id: string) {
+    if (
+      !window.confirm(
+        "Retirer cette conversation de ta liste ? L’autre personne la garde. Elle réapparaîtra s’il y a un nouveau message.",
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const result = await hideConversation(id);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      if (activeId === id) {
+        setActiveId(null);
+        setDetail(null);
+      }
+    });
   }
 
   function onSend(e: FormEvent) {
@@ -409,11 +433,11 @@ export function MessagesBoard({
 
       <ul className="animate-hero-rise-delay mt-8 divide-y divide-line border-y border-line">
         {conversations.map((conversation) => (
-          <li key={conversation.id}>
+          <li key={conversation.id} className="flex items-stretch gap-1">
             <button
               type="button"
               onClick={() => openConversation(conversation.id)}
-              className="flex w-full gap-4 py-5 text-left transition-colors hover:bg-wash/60"
+              className="flex min-w-0 flex-1 gap-4 py-5 text-left transition-colors hover:bg-wash/60"
             >
               <Avatar
                 name={conversation.peerName}
@@ -441,6 +465,16 @@ export function MessagesBoard({
                   {conversation.unread}
                 </span>
               ) : null}
+            </button>
+            <button
+              type="button"
+              disabled={isPending}
+              title="Retirer de ma liste"
+              aria-label={`Retirer la conversation avec ${conversation.peerName}`}
+              onClick={() => onHideConversation(conversation.id)}
+              className="shrink-0 self-center rounded-lg px-3 py-2 text-xs font-semibold text-muted transition-colors hover:bg-wash hover:text-ink disabled:opacity-50"
+            >
+              Supprimer
             </button>
           </li>
         ))}

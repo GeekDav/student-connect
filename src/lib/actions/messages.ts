@@ -119,6 +119,29 @@ function myLastRead(
   return row.userAId === userId ? row.userALastReadAt : row.userBLastReadAt;
 }
 
+function myHiddenAt(
+  row: { userAId: string; userAHiddenAt: Date | null; userBHiddenAt: Date | null },
+  userId: string,
+) {
+  return row.userAId === userId ? row.userAHiddenAt : row.userBHiddenAt;
+}
+
+function isHiddenForMe(
+  row: {
+    userAId: string;
+    userAHiddenAt: Date | null;
+    userBHiddenAt: Date | null;
+    messages: { createdAt: Date }[];
+  },
+  userId: string,
+) {
+  const hiddenAt = myHiddenAt(row, userId);
+  if (!hiddenAt) return false;
+  const last = row.messages[0];
+  if (!last) return true;
+  return last.createdAt <= hiddenAt;
+}
+
 const conversationInclude = {
   userA: {
     select: {
@@ -213,7 +236,10 @@ export async function listConversations(): Promise<ConversationSummary[]> {
     }),
   );
 
-  return withUnread;
+  return withUnread.filter((_, index) => {
+    const row = rows[index];
+    return !isHiddenForMe(row, ctx.session.userId);
+  });
 }
 
 export async function getConversation(
@@ -260,8 +286,8 @@ export async function getConversation(
   await prisma.conversation.update({
     where: { id: row.id },
     data: isUserA
-      ? { userALastReadAt: new Date() }
-      : { userBLastReadAt: new Date() },
+      ? { userALastReadAt: new Date(), userAHiddenAt: null }
+      : { userBLastReadAt: new Date(), userBHiddenAt: null },
   });
 
   const peer = peerOf(row, ctx.session.userId);
@@ -325,6 +351,11 @@ export async function ensureConversationWith(
   });
 
   if (existing) {
+    const isUserA = existing.userAId === ctx.session.userId;
+    await prisma.conversation.update({
+      where: { id: existing.id },
+      data: isUserA ? { userAHiddenAt: null } : { userBHiddenAt: null },
+    });
     return { ok: true, conversationId: existing.id };
   }
 
@@ -380,8 +411,8 @@ export async function sendMessage(
     data: {
       updatedAt: new Date(),
       ...(isUserA
-        ? { userALastReadAt: new Date() }
-        : { userBLastReadAt: new Date() }),
+        ? { userALastReadAt: new Date(), userAHiddenAt: null }
+        : { userBLastReadAt: new Date(), userBHiddenAt: null }),
     },
   });
 
@@ -445,6 +476,27 @@ export async function deleteMessages(
   await prisma.conversation.update({
     where: { id: conversationId },
     data: { updatedAt: last?.createdAt ?? new Date() },
+  });
+
+  revalidatePath("/messages");
+  return { ok: true, conversationId };
+}
+
+/** Retire la conversation de *ma* liste (l’autre la garde). Réapparaît si nouveau message. */
+export async function hideConversation(
+  conversationId: string,
+): Promise<MessageActionResult> {
+  const access = await assertConversationAccess(conversationId);
+  if (!access) {
+    return { ok: false, error: "Conversation introuvable." };
+  }
+
+  const isUserA = access.conversation.userAId === access.ctx.session.userId;
+  await prisma.conversation.update({
+    where: { id: conversationId },
+    data: isUserA
+      ? { userAHiddenAt: new Date() }
+      : { userBHiddenAt: new Date() },
   });
 
   revalidatePath("/messages");
