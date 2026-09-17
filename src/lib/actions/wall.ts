@@ -31,6 +31,12 @@ export type WallActionResult =
 const MAX_NOTE_LEN = 280;
 const MAX_REPLY_LEN = 160;
 const MAX_REPLIES_PER_NOTE = 40;
+/** Les notes du mur expirent après 7 jours (et leurs réponses avec). */
+const NOTE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function noteExpiryCutoff() {
+  return new Date(Date.now() - NOTE_TTL_MS);
+}
 
 async function getActiveStudentContext() {
   const session = await getSession();
@@ -122,8 +128,21 @@ export async function listWallNotes(): Promise<WallNoteItem[]> {
   const ctx = await getActiveStudentContext();
   if (!ctx) return [];
 
+  const cutoff = noteExpiryCutoff();
+
+  // Nettoyage paresseux : retire les notes trop vieilles (réponses en cascade).
+  await prisma.wallNote.deleteMany({
+    where: {
+      residenceId: ctx.residenceId,
+      createdAt: { lt: cutoff },
+    },
+  });
+
   const rows = await prisma.wallNote.findMany({
-    where: { residenceId: ctx.residenceId },
+    where: {
+      residenceId: ctx.residenceId,
+      createdAt: { gte: cutoff },
+    },
     include: {
       author: { select: { firstName: true, lastName: true } },
       replies: {

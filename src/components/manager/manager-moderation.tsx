@@ -16,6 +16,10 @@ function typeLabel(type: ReportListItem["targetType"]) {
       return "Recyclerie";
     case "message":
       return "Message";
+    case "wall":
+      return "Petit mur";
+    case "wall_reply":
+      return "Réponse au mur";
   }
 }
 

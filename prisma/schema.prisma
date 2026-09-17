@@ -48,6 +48,8 @@ enum ReportTargetType {
   SOS
   RECYCLERIE
   MESSAGE
+  WALL
+  WALL_REPLY
 }
 
 enum ReportStatus {

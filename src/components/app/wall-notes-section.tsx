@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition, type FormEvent } from "react";
+import { ReportButton } from "@/components/app/report-button";
 import {
   createWallNote,
   createWallReply,
@@ -105,8 +106,8 @@ export function WallNotesSection({
         Petit mur
       </h2>
       <p className="mt-1 text-sm text-muted">
-        Pose une question ou une idée · les autres répondent dessous · 1 post /
-        jour
+        Pose une question ou une idée · réponses dessous · 1 post / jour ·
+        disparaît après 7 jours
       </p>
 
       <form onSubmit={onCreate} className="mt-4 space-y-3">
@@ -154,6 +155,11 @@ export function WallNotesSection({
                       Message privé
                     </Link>
                   ) : null}
+                  <ReportButton
+                    targetType="wall"
+                    targetId={note.id}
+                    isMine={note.isMine}
+                  />
                   {note.isMine ? (
                     <button
                       type="button"
@@ -188,12 +194,19 @@ export function WallNotesSection({
                             Retirer
                           </button>
                         ) : (
-                          <Link
-                            href={`/messages?with=${reply.authorId}`}
-                            className="text-xs font-semibold text-accent hover:opacity-70"
-                          >
-                            Message
-                          </Link>
+                          <>
+                            <Link
+                              href={`/messages?with=${reply.authorId}`}
+                              className="text-xs font-semibold text-accent hover:opacity-70"
+                            >
+                              Message
+                            </Link>
+                            <ReportButton
+                              targetType="wall_reply"
+                              targetId={reply.id}
+                              isMine={false}
+                            />
+                          </>
                         )}
                       </div>
                     </li>

@@ -12,7 +12,7 @@ import { prisma } from "@/lib/db";
 
 export type ReportListItem = {
   id: string;
-  targetType: "event" | "sos" | "recyclerie" | "message";
+  targetType: "event" | "sos" | "recyclerie" | "message" | "wall" | "wall_reply";
   targetId: string;
   targetLabel: string;
   /** Description / corps du contenu signalé (snapshot). */
@@ -78,6 +78,10 @@ function mapType(type: ReportTargetType): ReportListItem["targetType"] {
       return "recyclerie";
     case ReportTargetType.MESSAGE:
       return "message";
+    case ReportTargetType.WALL:
+      return "wall";
+    case ReportTargetType.WALL_REPLY:
+      return "wall_reply";
   }
 }
 
@@ -155,6 +159,23 @@ async function resolveTargetSnapshot(
       }
       return { label: "Message privé", body: message.body };
     }
+    case ReportTargetType.WALL: {
+      const note = await prisma.wallNote.findFirst({
+        where: { id: targetId, residenceId },
+        select: { body: true },
+      });
+      return note ? { label: "Petit mur", body: note.body } : null;
+    }
+    case ReportTargetType.WALL_REPLY: {
+      const reply = await prisma.wallNoteReply.findFirst({
+        where: {
+          id: targetId,
+          note: { residenceId },
+        },
+        select: { body: true },
+      });
+      return reply ? { label: "Réponse au mur", body: reply.body } : null;
+    }
   }
 }
 
@@ -174,6 +195,10 @@ function toPrismaType(
       return ReportTargetType.RECYCLERIE;
     case "message":
       return ReportTargetType.MESSAGE;
+    case "wall":
+      return ReportTargetType.WALL;
+    case "wall_reply":
+      return ReportTargetType.WALL_REPLY;
   }
 }
 
@@ -262,6 +287,25 @@ export async function createReport(input: {
     targetLabel = item.title;
     targetBody = item.description;
     authorId = item.authorId;
+  } else if (input.targetType === "wall") {
+    const note = await prisma.wallNote.findFirst({
+      where: { id: input.targetId, residenceId: ctx.residenceId },
+    });
+    if (!note) return { ok: false, error: "Note introuvable." };
+    targetLabel = "Petit mur";
+    targetBody = note.body;
+    authorId = note.authorId;
+  } else if (input.targetType === "wall_reply") {
+    const reply = await prisma.wallNoteReply.findFirst({
+      where: {
+        id: input.targetId,
+        note: { residenceId: ctx.residenceId },
+      },
+    });
+    if (!reply) return { ok: false, error: "Réponse introuvable." };
+    targetLabel = "Réponse au mur";
+    targetBody = reply.body;
+    authorId = reply.authorId;
   } else {
     const message = await prisma.message.findFirst({
       where: { id: input.targetId },
@@ -428,5 +472,18 @@ async function removeTargetContent(
       }
       break;
     }
+    case ReportTargetType.WALL:
+      await prisma.wallNote.deleteMany({
+        where: { id: targetId, residenceId },
+      });
+      break;
+    case ReportTargetType.WALL_REPLY:
+      await prisma.wallNoteReply.deleteMany({
+        where: {
+          id: targetId,
+          note: { residenceId },
+        },
+      });
+      break;
   }
 }
