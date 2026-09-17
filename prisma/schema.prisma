@@ -90,6 +90,7 @@ model User {
   reportsFiled     ModerationReport[]    @relation("ReportReporter")
   announcements    OfficialAnnouncement[]
   wallNotes        WallNote[]            @relation("WallNoteAuthor")
+  wallReplies      WallNoteReply[]       @relation("WallReplyAuthor")
 }
 
 model Residence {
@@ -285,8 +286,24 @@ model WallNote {
   authorId    String
   residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
   author      User      @relation("WallNoteAuthor", fields: [authorId], references: [id])
+  replies     WallNoteReply[]
 
   @@index([residenceId, createdAt])
+  @@index([authorId, createdAt])
+}
+
+/** Réponse publique sous une note du mur. */
+model WallNoteReply {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+
+  noteId   String
+  authorId String
+  note     WallNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  author   User     @relation("WallReplyAuthor", fields: [authorId], references: [id])
+
+  @@index([noteId, createdAt])
   @@index([authorId, createdAt])
 }
 
