@@ -275,3 +275,49 @@ export async function updateManagerEmail(
 
   return { ok: true, managerEmail: email };
 }
+
+export type UpdateResidenceNameResult =
+  | { ok: true; name: string }
+  | { ok: false; error: string };
+
+/** Super-admin : corrige le nom d’une résidence. */
+export async function updateResidenceName(
+  residenceId: string,
+  newName: string,
+): Promise<UpdateResidenceNameResult> {
+  const session = await requireSuperAdmin();
+  if (!session) {
+    return { ok: false, error: "Accès réservé au super-admin." };
+  }
+
+  const name = newName.trim();
+  if (name.length < 2) {
+    return { ok: false, error: "Indique un nom de résidence valide." };
+  }
+  if (name.length > 120) {
+    return { ok: false, error: "Nom trop long (max 120 caractères)." };
+  }
+
+  const residence = await prisma.residence.findUnique({
+    where: { id: residenceId },
+    select: { id: true, name: true },
+  });
+  if (!residence) {
+    return { ok: false, error: "Résidence introuvable." };
+  }
+
+  if (name === residence.name) {
+    return { ok: false, error: "C’est déjà le nom actuel." };
+  }
+
+  await prisma.residence.update({
+    where: { id: residence.id },
+    data: { name },
+  });
+
+  revalidatePath("/super-admin");
+  revalidatePath("/inscription");
+  revalidatePath("/gestionnaire");
+
+  return { ok: true, name };
+}

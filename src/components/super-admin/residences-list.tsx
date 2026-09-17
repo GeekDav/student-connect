@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import {
   toggleResidenceStatus,
   updateManagerEmail,
+  updateResidenceName,
   type PlatformResidenceItem,
 } from "@/lib/actions/super-admin";
 
@@ -15,8 +16,10 @@ export function ResidencesList({
 }) {
   const [items, setItems] = useState(initialItems);
   const [error, setError] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
+  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [nameDraft, setNameDraft] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function onToggle(id: string) {
@@ -42,8 +45,16 @@ export function ResidencesList({
 
   function startEditEmail(item: PlatformResidenceItem) {
     setError(null);
-    setEditingId(item.id);
+    setEditingNameId(null);
+    setEditingEmailId(item.id);
     setEmailDraft(item.managerEmail === "—" ? "" : item.managerEmail);
+  }
+
+  function startEditName(item: PlatformResidenceItem) {
+    setError(null);
+    setEditingEmailId(null);
+    setEditingNameId(item.id);
+    setNameDraft(item.name);
   }
 
   function saveEmail(residenceId: string) {
@@ -61,7 +72,24 @@ export function ResidencesList({
             : item,
         ),
       );
-      setEditingId(null);
+      setEditingEmailId(null);
+    });
+  }
+
+  function saveName(residenceId: string) {
+    setError(null);
+    startTransition(async () => {
+      const result = await updateResidenceName(residenceId, nameDraft);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === residenceId ? { ...item, name: result.name } : item,
+        ),
+      );
+      setEditingNameId(null);
     });
   }
 
@@ -97,9 +125,46 @@ export function ResidencesList({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <h3 className="font-display text-lg font-semibold text-ink">
-                    {item.name}
-                  </h3>
+                  {editingNameId === item.id ? (
+                    <div className="flex w-full flex-wrap items-center gap-2">
+                      <input
+                        type="text"
+                        value={nameDraft}
+                        onChange={(e) => setNameDraft(e.target.value)}
+                        className="h-10 min-w-[14rem] flex-1 rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-ink"
+                        placeholder="Nom de la résidence"
+                      />
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => saveName(item.id)}
+                        className="inline-flex h-10 items-center rounded-lg bg-ink px-3 text-xs font-semibold text-white disabled:opacity-60"
+                      >
+                        Enregistrer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingNameId(null)}
+                        className="text-xs font-medium text-muted hover:text-ink"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="font-display text-lg font-semibold text-ink">
+                        {item.name}
+                      </h3>
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => startEditName(item)}
+                        className="text-xs font-semibold text-accent hover:underline disabled:opacity-60"
+                      >
+                        Modifier le nom
+                      </button>
+                    </>
+                  )}
                   <span
                     className={`text-xs font-semibold ${
                       item.status === "active" ? "text-accent" : "text-muted"
@@ -115,7 +180,7 @@ export function ResidencesList({
                 <p className="mt-3 text-sm text-ink">
                   Gestionnaire : {item.managerName}
                 </p>
-                {editingId === item.id ? (
+                {editingEmailId === item.id ? (
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <input
                       type="email"
@@ -134,7 +199,7 @@ export function ResidencesList({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setEditingId(null)}
+                      onClick={() => setEditingEmailId(null)}
                       className="text-xs font-medium text-muted hover:text-ink"
                     >
                       Annuler
