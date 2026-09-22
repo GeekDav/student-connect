@@ -80,8 +80,7 @@ export function ManagerBilling({
         </h2>
         <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
           Paiement self-serve pour « {info.residenceName} ». Mode test Stripe :
-          cartes{" "}
-          <code className="text-xs">4242…</code>, webhooks locaux via Stripe CLI.
+          carte <code className="text-xs">4242…</code>.
         </p>
       </div>
 
