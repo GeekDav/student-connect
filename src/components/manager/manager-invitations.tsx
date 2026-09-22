@@ -88,7 +88,10 @@ export function ManagerInvitations({
         <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
           Partage un lien ou un code : l’étudiant s’inscrit et entre directement
           dans ta résidence. L’envoi d’e-mail automatique arrivera en prod —
-          pour l’instant, copie-colle le lien (WhatsApp, mail, affichage…).
+          pour l’instant, copie le lien et envoie-le (WhatsApp, mail…), ou
+          partage seulement le code. L’étudiant doit ouvrir le lien (pas le
+          coller tel quel dans un autre champ), idéalement sans être connecté
+          gestionnaire.
         </p>
       </div>
 

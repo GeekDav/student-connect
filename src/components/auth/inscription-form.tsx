@@ -360,7 +360,7 @@ export function InscriptionForm({
               <Field
                 label="Code d’invitation (recommandé)"
                 htmlFor="inviteCode"
-                hint="Colle le code, puis clique « Valider le code » (ou Continuer)."
+                hint="Tu peux coller le code OU le lien complet. Ou ouvre le lien dans un onglet (idéalement déconnecté / navigation privée)."
               >
                 <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                   <input
@@ -369,7 +369,7 @@ export function InscriptionForm({
                     placeholder="Ex. A1B2C3D4"
                     value={form.inviteCode}
                     onChange={(e) => {
-                      update("inviteCode", e.target.value.toUpperCase());
+                      update("inviteCode", e.target.value);
                       setResolvedInvite(null);
                     }}
                   />
