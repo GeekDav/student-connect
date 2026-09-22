@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { normalizeInviteInput } from "@/lib/invite-utils";
+import { getAppUrl, sendEmail } from "@/lib/mail/mailer";
+import { studentInviteEmail } from "@/lib/mail/templates";
 
 export type InvitationItem = {
   id: string;
@@ -21,7 +23,7 @@ export type InvitationItem = {
 };
 
 export type InvitationActionResult =
-  | { ok: true; item?: InvitationItem }
+  | { ok: true; item?: InvitationItem; emailed?: boolean }
   | { ok: false; error: string };
 
 export type ResolvedInvite = {
@@ -134,6 +136,8 @@ export async function createResidenceInvitation(input: {
   label?: string;
   maxUses?: number | null;
   expiresInDays?: number | null;
+  /** Si renseigné, envoie (ou journalise) l’invitation à cet e-mail. */
+  recipientEmail?: string;
 }): Promise<InvitationActionResult> {
   const ctx = await getManagerResidence();
   if (!ctx) {
@@ -148,6 +152,10 @@ export async function createResidenceInvitation(input: {
   }
 
   const label = input.label?.trim() || null;
+  const recipientEmail = input.recipientEmail?.trim().toLowerCase() || "";
+  if (recipientEmail && !recipientEmail.includes("@")) {
+    return { ok: false, error: "E-mail destinataire invalide." };
+  }
   const maxUses =
     input.maxUses == null || Number.isNaN(input.maxUses)
       ? null
@@ -180,10 +188,33 @@ export async function createResidenceInvitation(input: {
     },
   });
 
+  let emailed = false;
+  if (recipientEmail) {
+    const inviteUrl = `${getAppUrl()}/inscription?invite=${row.code}`;
+    const tpl = studentInviteEmail({
+      residenceName: ctx.residence.name,
+      inviteUrl,
+      code: row.code,
+    });
+    const mail = await sendEmail({
+      to: recipientEmail,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      template: tpl.template,
+      meta: {
+        residenceId: ctx.residence.id,
+        invitationId: row.id,
+      },
+    });
+    emailed = mail.ok;
+  }
+
   revalidatePath("/gestionnaire/invitations");
   revalidatePath("/gestionnaire");
+  revalidatePath("/super-admin/emails");
 
-  return { ok: true, item: mapInvite(row) };
+  return { ok: true, item: mapInvite(row), emailed };
 }
 
 export async function revokeResidenceInvitation(

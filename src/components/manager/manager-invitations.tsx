@@ -18,9 +18,11 @@ export function ManagerInvitations({
 }) {
   const [items, setItems] = useState(initialItems);
   const [label, setLabel] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
   const [maxUses, setMaxUses] = useState("");
   const [expiresInDays, setExpiresInDays] = useState("30");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { visible, hasMore, remaining, showMore } = useLoadMore(items, 8);
@@ -38,9 +40,11 @@ export function ManagerInvitations({
   function onCreate(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     startTransition(async () => {
       const result = await createResidenceInvitation({
         label: label.trim() || undefined,
+        recipientEmail: recipientEmail.trim() || undefined,
         maxUses: maxUses.trim() ? Number(maxUses) : null,
         expiresInDays: expiresInDays.trim()
           ? Number(expiresInDays)
@@ -53,7 +57,17 @@ export function ManagerInvitations({
       if (result.item) {
         setItems((prev) => [result.item!, ...prev]);
       }
+      if (recipientEmail.trim()) {
+        setSuccess(
+          result.emailed
+            ? "Invitation créée et e-mail journalisé / envoyé."
+            : "Invitation créée, mais l’e-mail n’a pas pu être envoyé.",
+        );
+      } else {
+        setSuccess("Invitation créée.");
+      }
       setLabel("");
+      setRecipientEmail("");
       setMaxUses("");
       setExpiresInDays("30");
     });
@@ -124,6 +138,27 @@ export function ManagerInvitations({
             onChange={(e) => setLabel(e.target.value)}
           />
         </div>
+        <div>
+          <label
+            htmlFor="invite-email"
+            className="text-sm font-medium text-ink"
+          >
+            Envoyer par e-mail (optionnel)
+          </label>
+          <input
+            id="invite-email"
+            type="email"
+            className={fieldClass}
+            placeholder="etudiant@exemple.fr"
+            value={recipientEmail}
+            onChange={(e) => setRecipientEmail(e.target.value)}
+            autoComplete="email"
+          />
+          <p className="mt-1.5 text-xs text-muted">
+            En mode test, l’e-mail est journalisé (page SA E-mails). Tu peux
+            aussi juste copier le lien après création.
+          </p>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="invite-max" className="text-sm font-medium text-ink">
@@ -163,6 +198,9 @@ export function ManagerInvitations({
           <p className="text-sm text-red-700" role="alert">
             {error}
           </p>
+        ) : null}
+        {success ? (
+          <p className="text-sm font-medium text-accent">{success}</p>
         ) : null}
         <button
           type="submit"

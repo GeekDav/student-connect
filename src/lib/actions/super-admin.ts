@@ -6,6 +6,12 @@ import { revalidatePath } from "next/cache";
 import { pauseRetainUntil } from "@/lib/student-context";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendEmail } from "@/lib/mail/mailer";
+import {
+  residenceActivatedEmail,
+  residencePausedEmail,
+  residenceReactivatedEmail,
+} from "@/lib/mail/templates";
 
 export type PlatformResidenceItem = {
   id: string;
@@ -184,8 +190,24 @@ export async function createResidenceWithManager(input: {
     return { residence, manager };
   });
 
+  const activated = residenceActivatedEmail({
+    managerName: result.manager.firstName,
+    residenceName: result.residence.name,
+    managerEmail: result.manager.email,
+    temporaryPassword: managerPassword,
+  });
+  await sendEmail({
+    to: result.manager.email,
+    subject: activated.subject,
+    html: activated.html,
+    text: activated.text,
+    template: activated.template,
+    meta: { residenceId: result.residence.id },
+  });
+
   revalidatePath("/super-admin");
   revalidatePath("/super-admin/nouvelle-residence");
+  revalidatePath("/super-admin/emails");
   revalidatePath("/inscription");
 
   return {
@@ -205,6 +227,9 @@ export async function toggleResidenceStatus(
 
   const residence = await prisma.residence.findUnique({
     where: { id: residenceId },
+    include: {
+      manager: { select: { firstName: true, email: true } },
+    },
   });
   if (!residence) {
     return { ok: false, error: "Résidence introuvable." };
@@ -229,10 +254,49 @@ export async function toggleResidenceStatus(
             status: nextStatus,
             pausedAt: null,
             retainUntil: null,
+            lastPauseReminderAt: null,
           },
   });
 
+  if (residence.manager?.email) {
+    if (nextStatus === ResidenceStatus.PAUSED) {
+      const retainUntil = pauseRetainUntil(now);
+      const tpl = residencePausedEmail({
+        managerName: residence.manager.firstName,
+        residenceName: residence.name,
+        retainUntilLabel: retainUntil.toLocaleDateString("fr-FR", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+      });
+      await sendEmail({
+        to: residence.manager.email,
+        subject: tpl.subject,
+        html: tpl.html,
+        text: tpl.text,
+        template: tpl.template,
+        meta: { residenceId: residence.id },
+      });
+    } else {
+      const tpl = residenceReactivatedEmail({
+        managerName: residence.manager.firstName,
+        residenceName: residence.name,
+      });
+      await sendEmail({
+        to: residence.manager.email,
+        subject: tpl.subject,
+        html: tpl.html,
+        text: tpl.text,
+        template: tpl.template,
+        meta: { residenceId: residence.id },
+      });
+    }
+  }
+
   revalidatePath("/super-admin");
+  revalidatePath("/super-admin/en-pause");
+  revalidatePath("/super-admin/emails");
   revalidatePath("/inscription");
   revalidatePath("/accueil");
   revalidatePath("/gestionnaire");

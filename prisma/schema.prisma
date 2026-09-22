@@ -114,6 +114,8 @@ model Residence {
   pausedAt    DateTime?
   /** Conservation des données jusqu’à cette date (ex. +12 mois). */
   retainUntil DateTime?
+  /** Dernier rappel hebdo envoyé (évite les doublons). */
+  lastPauseReminderAt DateTime?
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 
@@ -129,6 +131,21 @@ model Residence {
   conversations Conversation[]
   wallNotes     WallNote[]
   invitations   ResidenceInvitation[]
+}
+
+/** Journal des e-mails (mode log test ou envois Resend). */
+model EmailLog {
+  id          String   @id @default(cuid())
+  to          String
+  subject     String
+  template    String
+  bodyPreview String
+  status      String
+  meta        Json?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([template, createdAt])
 }
 
 model ResidenceMembership {

@@ -29,8 +29,11 @@ export default async function SuperAdminPausedPage() {
             Résidences en pause · {paused.length}
           </h2>
           <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
-            Liste pour relancer les gestionnaires. Les rappels e-mail
-            automatiques arriveront avec l’étape emails.
+            Liste pour relancer les gestionnaires. Rappels hebdo : page{" "}
+            <Link href="/super-admin/emails" className="text-accent hover:opacity-70">
+              E-mails
+            </Link>{" "}
+            ou cron du lundi 9h UTC.
           </p>
         </div>
       </div>

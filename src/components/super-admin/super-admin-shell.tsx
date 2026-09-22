@@ -9,6 +9,7 @@ import { LogoutButton } from "@/components/ui/logout-button";
 const NAV = [
   { href: "/super-admin", label: "Résidences", exact: true },
   { href: "/super-admin/en-pause", label: "En pause", exact: false },
+  { href: "/super-admin/emails", label: "E-mails", exact: false },
   { href: "/super-admin/nouvelle-residence", label: "Créer", exact: false },
   { href: "/super-admin/compte", label: "Compte", exact: false },
 ] as const;
