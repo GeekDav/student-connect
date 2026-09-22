@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { registerStudent } from "@/lib/actions/auth";
+import type { ResolvedInvite } from "@/lib/actions/invitations";
 
 export type ResidenceOption = {
   id: string;
@@ -21,10 +22,10 @@ type FormState = {
   password: string;
   passwordConfirm: string;
   residenceId: string;
+  inviteCode: string;
   school: string;
   fieldOfStudy: string;
   interests: string;
-  roomNumber: string;
   nationality: string;
   showNationality: boolean;
 };
@@ -36,10 +37,10 @@ const INITIAL: FormState = {
   password: "",
   passwordConfirm: "",
   residenceId: "",
+  inviteCode: "",
   school: "",
   fieldOfStudy: "",
   interests: "",
-  roomNumber: "",
   nationality: "",
   showNationality: false,
 };
@@ -57,18 +58,28 @@ const labelClass = "block text-sm font-medium text-ink";
 
 export function InscriptionForm({
   residences,
+  initialInvite = null,
+  inviteError = null,
 }: {
   residences: ResidenceOption[];
+  initialInvite?: ResolvedInvite | null;
+  inviteError?: string | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
-  const [form, setForm] = useState<FormState>(INITIAL);
+  const [form, setForm] = useState<FormState>({
+    ...INITIAL,
+    residenceId: initialInvite?.residenceId ?? "",
+    inviteCode: initialInvite?.code ?? "",
+  });
   const [query, setQuery] = useState("");
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>(
     {},
   );
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(inviteError);
   const [pending, setPending] = useState(false);
+
+  const hasInvite = Boolean(form.inviteCode.trim() && form.residenceId);
 
   const filteredResidences = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -107,17 +118,14 @@ export function InscriptionForm({
     }
 
     if (current === 2 && !form.residenceId) {
-      nextErrors.residenceId = "Choisis ta résidence partenaire.";
+      nextErrors.residenceId =
+        "Choisis ta résidence, ou entre un code d’invitation.";
     }
 
     if (current === 3) {
       if (!form.school.trim()) nextErrors.school = "Indique ton école ou université.";
       if (!form.fieldOfStudy.trim()) {
         nextErrors.fieldOfStudy = "Indique ton domaine d’études.";
-      }
-      if (!form.roomNumber.trim()) {
-        nextErrors.roomNumber =
-          "Le n° de chambre aide ton gestionnaire à te valider.";
       }
     }
 
@@ -139,9 +147,9 @@ export function InscriptionForm({
         school: form.school,
         fieldOfStudy: form.fieldOfStudy,
         interests: form.interests,
-        roomNumber: form.roomNumber,
         showNationality: form.showNationality,
         nationality: form.nationality,
+        inviteCode: form.inviteCode.trim() || undefined,
       });
       setPending(false);
       if (!result.ok) {
@@ -261,53 +269,120 @@ export function InscriptionForm({
 
       {step === 2 ? (
         <div className="space-y-5">
-          <Field
-            label="Rechercher ta résidence"
-            htmlFor="residence-search"
-            hint="Uniquement les résidences partenaires actives."
-          >
-            <input
-              id="residence-search"
-              className={fieldClass}
-              placeholder="Nom, ville, gestionnaire…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </Field>
+          {initialInvite && hasInvite ? (
+            <div className="rounded-xl border border-accent/25 bg-accent/5 px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-accent">
+                Invitation
+              </p>
+              <p className="mt-2 font-display text-lg font-semibold text-ink">
+                {initialInvite.residenceName}
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                {initialInvite.city} · code {initialInvite.code}
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                Avec cette invitation, ton accès s’ouvre tout de suite après
+                inscription — pas besoin d’attendre une validation.
+              </p>
+            </div>
+          ) : (
+            <>
+              <Field
+                label="Code d’invitation (recommandé)"
+                htmlFor="inviteCode"
+                hint="Si ton gestionnaire t’a envoyé un lien ou un code, colle-le ici. Accès immédiat."
+              >
+                <input
+                  id="inviteCode"
+                  className={fieldClass}
+                  placeholder="Ex. A1B2C3D4"
+                  value={form.inviteCode}
+                  onChange={(e) => {
+                    update("inviteCode", e.target.value.toUpperCase());
+                  }}
+                  onBlur={async (e) => {
+                    const code = e.target.value.trim();
+                    if (!code) return;
+                    const { resolveInviteCode } = await import(
+                      "@/lib/actions/invitations"
+                    );
+                    const resolved = await resolveInviteCode(code);
+                    if (!resolved) {
+                      setFormError(
+                        "Invitation invalide ou expirée. Tu peux aussi choisir ta résidence ci-dessous.",
+                      );
+                      return;
+                    }
+                    setFormError(null);
+                    setForm((prev) => ({
+                      ...prev,
+                      inviteCode: resolved.code,
+                      residenceId: resolved.residenceId,
+                    }));
+                  }}
+                />
+              </Field>
 
-          <fieldset>
-            <legend className="sr-only">Liste des résidences</legend>
-            <ul className="max-h-72 space-y-2 overflow-y-auto pr-1">
-              {filteredResidences.map((residence) => {
-                const selected = form.residenceId === residence.id;
-                return (
-                  <li key={residence.id}>
-                    <button
-                      type="button"
-                      onClick={() => update("residenceId", residence.id)}
-                      className={`w-full rounded-xl border px-4 py-3.5 text-left transition-[border-color,background-color,transform] ${
-                        selected
-                          ? "border-accent bg-accent/5"
-                          : "border-line bg-surface hover:border-accent/40 hover:bg-wash"
-                      }`}
-                    >
-                      <span className="block font-medium text-ink">
-                        {residence.name}
-                      </span>
-                      <span className="mt-1 block text-sm text-muted">
-                        {residence.city} · {residence.operator}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-              {filteredResidences.length === 0 ? (
-                <li className="rounded-xl border border-dashed border-line px-4 py-8 text-center text-sm text-muted">
-                  Aucune résidence trouvée.
-                </li>
-              ) : null}
-            </ul>
-          </fieldset>
+              <div className="relative py-1 text-center text-xs font-medium uppercase tracking-wide text-muted">
+                <span className="bg-surface px-2 relative z-10">ou</span>
+                <span
+                  className="absolute inset-x-0 top-1/2 h-px bg-line"
+                  aria-hidden
+                />
+              </div>
+
+              <Field
+                label="Rechercher ta résidence"
+                htmlFor="residence-search"
+                hint="Sans invitation : ta demande sera validée par le gestionnaire."
+              >
+                <input
+                  id="residence-search"
+                  className={fieldClass}
+                  placeholder="Nom, ville, gestionnaire…"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </Field>
+
+              <fieldset>
+                <legend className="sr-only">Liste des résidences</legend>
+                <ul className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                  {filteredResidences.map((residence) => {
+                    const selected = form.residenceId === residence.id;
+                    return (
+                      <li key={residence.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            update("residenceId", residence.id);
+                            update("inviteCode", "");
+                          }}
+                          className={`w-full rounded-xl border px-4 py-3.5 text-left transition-[border-color,background-color,transform] ${
+                            selected
+                              ? "border-accent bg-accent/5"
+                              : "border-line bg-surface hover:border-accent/40 hover:bg-wash"
+                          }`}
+                        >
+                          <span className="block font-medium text-ink">
+                            {residence.name}
+                          </span>
+                          <span className="mt-1 block text-sm text-muted">
+                            {residence.city} · {residence.operator}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                  {filteredResidences.length === 0 ? (
+                    <li className="rounded-xl border border-dashed border-line px-4 py-8 text-center text-sm text-muted">
+                      Aucune résidence trouvée.
+                    </li>
+                  ) : null}
+                </ul>
+              </fieldset>
+            </>
+          )}
           {errors.residenceId ? (
             <p className="text-sm text-red-700" role="alert">
               {errors.residenceId}
@@ -351,20 +426,6 @@ export function InscriptionForm({
               placeholder="Ex. FIFA, cuisine, running"
               value={form.interests}
               onChange={(e) => update("interests", e.target.value)}
-            />
-          </Field>
-          <Field
-            label="Numéro de chambre"
-            error={errors.roomNumber}
-            htmlFor="roomNumber"
-            hint="Visible uniquement par l’admin de ta résidence, pour te valider."
-          >
-            <input
-              id="roomNumber"
-              className={fieldClass}
-              placeholder="Ex. 302"
-              value={form.roomNumber}
-              onChange={(e) => update("roomNumber", e.target.value)}
             />
           </Field>
 
@@ -439,7 +500,9 @@ export function InscriptionForm({
           {pending
             ? "Envoi…"
             : step === 3
-              ? "Envoyer ma demande"
+              ? hasInvite
+                ? "Créer mon compte"
+                : "Envoyer ma demande"
               : "Continuer"}
         </button>
       </div>

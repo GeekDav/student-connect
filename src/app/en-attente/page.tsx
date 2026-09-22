@@ -70,7 +70,8 @@ export default async function EnAttentePage() {
 
         <p className="mt-5 text-base leading-relaxed text-muted">
           Tu pourras accéder au feed dès que ton inscription sera acceptée.
-          Reconnecte-toi après validation.
+          Reconnecte-toi après validation. Astuce : si ton gestionnaire t’envoie
+          une invitation, tu auras l’accès immédiat sans cette attente.
         </p>
 
         <ul className="mt-6 space-y-3 border-t border-line pt-6 text-sm text-muted">

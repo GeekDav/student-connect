@@ -100,8 +100,14 @@ export async function ManagerDashboard() {
         </h3>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
-            href="/gestionnaire/inscriptions"
+            href="/gestionnaire/invitations"
             className="inline-flex h-11 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
+          >
+            Inviter des étudiants
+          </Link>
+          <Link
+            href="/gestionnaire/inscriptions"
+            className="inline-flex h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash"
           >
             Valider des inscriptions
           </Link>

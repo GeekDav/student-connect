@@ -5,6 +5,7 @@ import { MembershipStatus, Role } from "@prisma/client";
 import { z } from "zod";
 import { clearSessionCookie, getSession, setSessionCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { resolveInviteCode } from "@/lib/actions/invitations";
 
 const registerSchema = z.object({
   firstName: z.string().trim().min(1),
@@ -15,9 +16,10 @@ const registerSchema = z.object({
   school: z.string().trim().min(1),
   fieldOfStudy: z.string().trim().min(1),
   interests: z.string().trim().optional(),
-  roomNumber: z.string().trim().min(1),
   showNationality: z.boolean(),
   nationality: z.string().trim().optional(),
+  /** Code d’invitation → accès immédiat (ACTIVE). Sans code → PENDING. */
+  inviteCode: z.string().trim().optional(),
 });
 
 const loginSchema = z.object({
@@ -45,8 +47,25 @@ export async function registerStudent(
     };
   }
 
+  let membershipStatus: MembershipStatus = MembershipStatus.PENDING;
+  let residenceId = data.residenceId;
+  let inviteCode: string | null = null;
+
+  if (data.inviteCode?.trim()) {
+    const invite = await resolveInviteCode(data.inviteCode);
+    if (!invite) {
+      return {
+        ok: false,
+        error: "Invitation invalide ou expirée. Demande un nouveau lien.",
+      };
+    }
+    residenceId = invite.residenceId;
+    inviteCode = invite.code;
+    membershipStatus = MembershipStatus.ACTIVE;
+  }
+
   const residence = await prisma.residence.findFirst({
-    where: { id: data.residenceId, status: "ACTIVE" },
+    where: { id: residenceId, status: "ACTIVE" },
   });
   if (!residence) {
     return { ok: false, error: "Résidence partenaire introuvable." };
@@ -61,37 +80,79 @@ export async function registerStudent(
 
   const passwordHash = await bcrypt.hash(data.password, 10);
 
-  const user = await prisma.user.create({
-    data: {
-      email: data.email.toLowerCase(),
-      passwordHash,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      role: Role.STUDENT,
-      school: data.school,
-      fieldOfStudy: data.fieldOfStudy,
-      interests: data.interests || null,
-      roomNumber: data.roomNumber,
-      showNationality: data.showNationality,
-      nationality: data.showNationality ? data.nationality : null,
-      memberships: {
-        create: {
-          residenceId: residence.id,
-          status: MembershipStatus.PENDING,
+  try {
+    const user = await prisma.$transaction(async (tx) => {
+      if (inviteCode) {
+        const inviteRow = await tx.residenceInvitation.findUnique({
+          where: { code: inviteCode },
+        });
+        if (
+          !inviteRow ||
+          inviteRow.residenceId !== residence.id ||
+          inviteRow.revokedAt ||
+          (inviteRow.expiresAt &&
+            inviteRow.expiresAt.getTime() <= Date.now()) ||
+          (inviteRow.maxUses != null &&
+            inviteRow.usedCount >= inviteRow.maxUses)
+        ) {
+          throw new Error("INVITE_INVALID");
+        }
+        await tx.residenceInvitation.update({
+          where: { id: inviteRow.id },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
+
+      return tx.user.create({
+        data: {
+          email: data.email.toLowerCase(),
+          passwordHash,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          role: Role.STUDENT,
+          school: data.school,
+          fieldOfStudy: data.fieldOfStudy,
+          interests: data.interests || null,
+          showNationality: data.showNationality,
+          nationality: data.showNationality ? data.nationality : null,
+          memberships: {
+            create: {
+              residenceId: residence.id,
+              status: membershipStatus,
+              decidedAt:
+                membershipStatus === MembershipStatus.ACTIVE
+                  ? new Date()
+                  : null,
+            },
+          },
         },
-      },
-    },
-  });
+      });
+    });
 
-  await setSessionCookie({
-    userId: user.id,
-    email: user.email,
-    role: user.role,
-    firstName: user.firstName,
-    lastName: user.lastName,
-  });
+    await setSessionCookie({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    });
 
-  return { ok: true, redirectTo: "/en-attente" };
+    return {
+      ok: true,
+      redirectTo:
+        membershipStatus === MembershipStatus.ACTIVE
+          ? "/accueil"
+          : "/en-attente",
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVITE_INVALID") {
+      return {
+        ok: false,
+        error: "Invitation invalide ou expirée. Demande un nouveau lien.",
+      };
+    }
+    throw error;
+  }
 }
 
 export async function loginUser(

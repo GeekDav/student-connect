@@ -79,9 +79,6 @@ export function ProfileEditor({
     if (!profile.fieldOfStudy.trim()) {
       next.fieldOfStudy = "Domaine d’études requis.";
     }
-    if (!profile.roomNumber.trim()) {
-      next.roomNumber = "Le n° de chambre aide ton gestionnaire.";
-    }
     if (profile.showNationality && !profile.nationality.trim()) {
       next.nationality = "Indique ta nationalité, ou décoche l’option.";
     }
@@ -366,7 +363,8 @@ export function ProfileEditor({
 
         <div>
           <label htmlFor="roomNumber" className={labelClass}>
-            Numéro de chambre
+            Numéro de chambre{" "}
+            <span className="font-normal text-muted">(optionnel)</span>
           </label>
           <input
             id="roomNumber"
@@ -375,7 +373,8 @@ export function ProfileEditor({
             onChange={(e) => update("roomNumber", e.target.value)}
           />
           <p className="mt-1.5 text-xs text-muted">
-            Visible uniquement par l’admin de ta résidence.
+            Visible uniquement par l’admin de ta résidence — uniquement si tu
+            veux l’aider. Pas obligatoire.
           </p>
           {errors.roomNumber ? (
             <p className="mt-1.5 text-sm text-red-700">{errors.roomNumber}</p>

@@ -47,9 +47,6 @@ export async function updateProfile(
   if (!lastName) return { ok: false, error: "Nom requis." };
   if (!school) return { ok: false, error: "École / université requise." };
   if (!fieldOfStudy) return { ok: false, error: "Domaine d’études requis." };
-  if (!roomNumber) {
-    return { ok: false, error: "Le n° de chambre aide ton gestionnaire." };
-  }
   if (showNationality && !nationality) {
     return {
       ok: false,
@@ -68,7 +65,7 @@ export async function updateProfile(
       school,
       fieldOfStudy,
       interests: interests || null,
-      roomNumber,
+      roomNumber: roomNumber || null,
       bio: bio || null,
       showNationality,
       nationality: showNationality ? nationality : null,
