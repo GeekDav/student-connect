@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import {
   decideMembership,
   type MembershipListItem,
 } from "@/lib/actions/manager-memberships";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export function ManagerInscriptions({
   initialItems,
@@ -63,54 +65,66 @@ export function ManagerInscriptions({
         <h3 className="font-display text-sm font-semibold tracking-wide text-ink">
           En attente · {pending.length}
         </h3>
-        <ul className="mt-2 divide-y divide-line border-y border-line">
-          {pending.map((item) => {
-            const busy = isPending && pendingId === item.id;
-            return (
-              <li key={item.id} className="py-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h4 className="font-display text-lg font-semibold text-ink">
-                      {item.firstName} {item.lastName}
-                    </h4>
-                    <p className="mt-1 text-sm text-ink">
-                      Chambre {item.roomNumber}
-                      <span className="text-muted">
-                        {" "}
-                        · {item.fieldOfStudy} · {item.school}
-                      </span>
-                    </p>
-                    <p className="mt-2 text-sm text-muted">{item.email}</p>
-                    <p className="mt-1 text-xs text-muted">{item.requestedAt}</p>
+        {pending.length === 0 ? (
+          <div className="mt-2">
+            <EmptyState
+              title="Aucune demande en attente"
+              description="Quand un étudiant s’inscrit sans invitation, il apparaît ici. Tu peux aussi partager un lien d’invitation."
+              action={
+                <Link
+                  href="/gestionnaire/invitations"
+                  className="inline-flex h-10 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
+                >
+                  Créer une invitation
+                </Link>
+              }
+            />
+          </div>
+        ) : (
+          <ul className="mt-2 divide-y divide-line border-y border-line">
+            {pending.map((item) => {
+              const busy = isPending && pendingId === item.id;
+              return (
+                <li key={item.id} className="py-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h4 className="font-display text-lg font-semibold text-ink">
+                        {item.firstName} {item.lastName}
+                      </h4>
+                      <p className="mt-1 text-sm text-ink">
+                        Chambre {item.roomNumber}
+                        <span className="text-muted">
+                          {" "}
+                          · {item.fieldOfStudy} · {item.school}
+                        </span>
+                      </p>
+                      <p className="mt-2 text-sm text-muted">{item.email}</p>
+                      <p className="mt-1 text-xs text-muted">{item.requestedAt}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => decide(item.id, "accepted")}
+                        className="inline-flex h-11 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-[background-color,transform,opacity] hover:bg-accent-hover hover:-translate-y-0.5 disabled:opacity-60"
+                      >
+                        {busy ? "…" : "Accepter"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => decide(item.id, "refused")}
+                        className="inline-flex h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-60"
+                      >
+                        Refuser
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => decide(item.id, "accepted")}
-                      className="inline-flex h-11 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-[background-color,transform,opacity] hover:bg-accent-hover hover:-translate-y-0.5 disabled:opacity-60"
-                    >
-                      {busy ? "…" : "Accepter"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => decide(item.id, "refused")}
-                      className="inline-flex h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-60"
-                    >
-                      Refuser
-                    </button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-          {pending.length === 0 ? (
-            <li className="py-10 text-center text-sm text-muted">
-              Aucune demande en attente.
-            </li>
-          ) : null}
-        </ul>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       {decided.length > 0 ? (

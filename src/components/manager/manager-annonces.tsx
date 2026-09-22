@@ -8,6 +8,7 @@ import {
   type FormEvent,
 } from "react";
 import { ViewAnnouncementImage } from "@/components/ui/view-announcement-image";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   createAnnouncement,
   unpublishAnnouncement,
@@ -230,43 +231,56 @@ export function ManagerAnnonces({
         <h3 className="font-display text-sm font-semibold tracking-wide text-ink">
           Publiées · {published.length}
         </h3>
-        <ul className="mt-2 divide-y divide-line border-y border-line">
-          {published.map((item) => (
-            <li key={item.id} className="py-6">
-              <p className="text-xs font-semibold text-accent">Officiel</p>
-              <h4 className="mt-2 font-display text-lg font-semibold text-ink">
-                {item.title}
-              </h4>
-              <p className="mt-2 text-base leading-relaxed text-muted">
-                {item.body}
-              </p>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-xs text-muted">{item.publishedAt}</p>
-                  {item.imageUrl ? (
-                    <ViewAnnouncementImage
-                      src={item.imageUrl}
-                      title={item.title}
-                    />
-                  ) : null}
-                </div>
+        {published.length === 0 ? (
+          <div className="mt-2">
+            <EmptyState
+              title="Aucune annonce publiée"
+              description="Publie une info officielle (travaux, règles, événement) — elle apparaît sur l’accueil des étudiants."
+              action={
                 <button
                   type="button"
-                  disabled={isPending}
-                  onClick={() => onUnpublish(item.id)}
-                  className="text-sm font-semibold text-muted transition-colors hover:text-ink disabled:opacity-60"
+                  onClick={() => setMode("create")}
+                  className="inline-flex h-10 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
                 >
-                  Retirer
+                  Nouvelle annonce
                 </button>
-              </div>
-            </li>
-          ))}
-          {published.length === 0 ? (
-            <li className="py-10 text-center text-sm text-muted">
-              Aucune annonce publiée.
-            </li>
-          ) : null}
-        </ul>
+              }
+            />
+          </div>
+        ) : (
+          <ul className="mt-2 divide-y divide-line border-y border-line">
+            {published.map((item) => (
+              <li key={item.id} className="py-6">
+                <p className="text-xs font-semibold text-accent">Officiel</p>
+                <h4 className="mt-2 font-display text-lg font-semibold text-ink">
+                  {item.title}
+                </h4>
+                <p className="mt-2 text-base leading-relaxed text-muted">
+                  {item.body}
+                </p>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <p className="text-xs text-muted">{item.publishedAt}</p>
+                    {item.imageUrl ? (
+                      <ViewAnnouncementImage
+                        src={item.imageUrl}
+                        title={item.title}
+                      />
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => onUnpublish(item.id)}
+                    className="text-sm font-semibold text-muted transition-colors hover:text-ink disabled:opacity-60"
+                  >
+                    Retirer
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {drafts.length > 0 ? (

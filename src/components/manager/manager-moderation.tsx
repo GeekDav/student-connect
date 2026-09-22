@@ -5,6 +5,7 @@ import {
   resolveReport,
   type ReportListItem,
 } from "@/lib/actions/moderation";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 
 function typeLabel(type: ReportListItem["targetType"]) {
@@ -97,65 +98,71 @@ export function ManagerModeration({
         <h3 className="font-display text-sm font-semibold tracking-wide text-ink">
           Ouverts · {open.length}
         </h3>
-        <ul className="mt-2 divide-y divide-line border-y border-line">
-          {visibleOpen.map((item) => (
-            <li key={item.id} className="py-6">
-              <p className="text-xs font-semibold text-[#9a4b1a]">
-                {typeLabel(item.targetType)}
-              </p>
-              <h4 className="mt-2 font-display text-lg font-semibold text-ink">
-                {item.targetLabel}
-              </h4>
-              {item.targetBody ? (
-                <div className="mt-3 rounded-xl border border-line bg-wash/60 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                    Contenu signalé
+        {open.length === 0 ? (
+          <div className="mt-2">
+            <EmptyState
+              title="Aucun signalement ouvert"
+              description="Quand un résident signale un contenu, tu le traiteras ici : masquer ou classer sans suite."
+            />
+          </div>
+        ) : (
+          <>
+            <ul className="mt-2 divide-y divide-line border-y border-line">
+              {visibleOpen.map((item) => (
+                <li key={item.id} className="py-6">
+                  <p className="text-xs font-semibold text-[#9a4b1a]">
+                    {typeLabel(item.targetType)}
                   </p>
-                  <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                    {item.targetBody}
+                  <h4 className="mt-2 font-display text-lg font-semibold text-ink">
+                    {item.targetLabel}
+                  </h4>
+                  {item.targetBody ? (
+                    <div className="mt-3 rounded-xl border border-line bg-wash/60 px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                        Contenu signalé
+                      </p>
+                      <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-ink">
+                        {item.targetBody}
+                      </p>
+                    </div>
+                  ) : null}
+                  <div className="mt-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                      Motif du signalement
+                    </p>
+                    <p className="mt-1 text-base leading-relaxed text-muted">
+                      {item.reason}
+                    </p>
+                  </div>
+                  <p className="mt-3 text-xs text-muted">
+                    Signalé par {item.reporter} · {item.reportedAt}
                   </p>
-                </div>
-              ) : null}
-              <div className="mt-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-                  Motif du signalement
-                </p>
-                <p className="mt-1 text-base leading-relaxed text-muted">
-                  {item.reason}
-                </p>
-              </div>
-              <p className="mt-3 text-xs text-muted">
-                Signalé par {item.reporter} · {item.reportedAt}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => onResolve(item.id, "removed")}
-                  className="inline-flex h-11 items-center rounded-lg bg-ink px-4 text-sm font-semibold text-white transition-[opacity,transform] hover:opacity-90 hover:-translate-y-0.5 disabled:opacity-60"
-                >
-                  Masquer le contenu
-                </button>
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => onResolve(item.id, "dismissed")}
-                  className="inline-flex h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-60"
-                >
-                  Classer sans suite
-                </button>
-              </div>
-            </li>
-          ))}
-          {open.length === 0 ? (
-            <li className="py-10 text-center text-sm text-muted">
-              Aucun signalement ouvert.
-            </li>
-          ) : null}
-        </ul>
-        {hasMoreOpen ? (
-          <LoadMoreButton remaining={remainingOpen} onClick={showMoreOpen} />
-        ) : null}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => onResolve(item.id, "removed")}
+                      className="inline-flex h-11 items-center rounded-lg bg-ink px-4 text-sm font-semibold text-white transition-[opacity,transform] hover:opacity-90 hover:-translate-y-0.5 disabled:opacity-60"
+                    >
+                      Masquer le contenu
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => onResolve(item.id, "dismissed")}
+                      className="inline-flex h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-60"
+                    >
+                      Classer sans suite
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {hasMoreOpen ? (
+              <LoadMoreButton remaining={remainingOpen} onClick={showMoreOpen} />
+            ) : null}
+          </>
+        )}
       </section>
 
       {closed.length > 0 ? (

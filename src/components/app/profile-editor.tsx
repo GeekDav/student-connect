@@ -51,6 +51,7 @@ export function ProfileEditor({
   >({});
   const [formError, setFormError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarSuccess, setAvatarSuccess] = useState<string | null>(null);
   const [availabilityError, setAvailabilityError] = useState<string | null>(
     null,
   );
@@ -119,6 +120,7 @@ export function ProfileEditor({
     const formData = new FormData();
     formData.set("avatar", file);
     setAvatarError(null);
+    setAvatarSuccess(null);
 
     startAvatarTransition(async () => {
       const result = await uploadAvatar(formData);
@@ -127,12 +129,14 @@ export function ProfileEditor({
         return;
       }
       if (result.avatarUrl) setAvatarUrl(result.avatarUrl);
+      setAvatarSuccess("Photo mise à jour.");
       router.refresh();
     });
   }
 
   function onRemovePhoto() {
     setAvatarError(null);
+    setAvatarSuccess(null);
     startAvatarTransition(async () => {
       const result = await removeAvatar();
       if (!result.ok) {
@@ -140,6 +144,7 @@ export function ProfileEditor({
         return;
       }
       setAvatarUrl(null);
+      setAvatarSuccess("Photo retirée.");
       router.refresh();
     });
   }
@@ -249,6 +254,9 @@ export function ProfileEditor({
             <p className="mt-2 text-sm text-red-700" role="alert">
               {avatarError}
             </p>
+          ) : null}
+          {avatarSuccess ? (
+            <p className="mt-2 text-sm font-medium text-accent">{avatarSuccess}</p>
           ) : null}
         </div>
       </div>

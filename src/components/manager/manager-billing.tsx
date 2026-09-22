@@ -79,20 +79,19 @@ export function ManagerBilling({
           Abonnement
         </h2>
         <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
-          Paiement self-serve pour « {info.residenceName} ». Mode test Stripe :
-          carte <code className="text-xs">4242…</code>.
+          Abonnement de « {info.residenceName} ». Paiement sécurisé via Stripe.
         </p>
       </div>
 
       {checkoutFlash === "success" ? (
         <p className="mt-6 rounded-2xl border border-accent/30 bg-wash px-4 py-3 text-sm text-accent">
-          Paiement reçu — l’activation se finalise via le webhook Stripe (quelques
-          secondes). Recharge la page si besoin.
+          Paiement reçu. L’espace se réactive en quelques secondes — recharge si
+          besoin.
         </p>
       ) : null}
       {checkoutFlash === "cancel" ? (
         <p className="mt-6 rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-muted">
-          Checkout annulé. Tu peux réessayer quand tu veux.
+          Paiement annulé. Tu peux réessayer quand tu veux.
         </p>
       ) : null}
 
@@ -147,7 +146,7 @@ export function ManagerBilling({
                 onClick={goCheckout}
                 className="inline-flex h-11 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-[background-color,transform,opacity] hover:bg-accent-hover hover:-translate-y-0.5 disabled:opacity-60"
               >
-                {isPending ? "Redirection…" : "S’abonner (Checkout test)"}
+                {isPending ? "Redirection…" : "S’abonner"}
               </button>
             ) : null}
             {info.hasCustomer ? (
@@ -157,7 +156,7 @@ export function ManagerBilling({
                 onClick={goPortal}
                 className="inline-flex h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-60"
               >
-                {isPending ? "Redirection…" : "Gérer l’abonnement (portail)"}
+                {isPending ? "Redirection…" : "Gérer l’abonnement"}
               </button>
             ) : null}
           </div>
@@ -169,8 +168,7 @@ export function ManagerBilling({
           ) : null}
 
           <p className="mt-8 max-w-xl text-xs leading-relaxed text-muted">
-            Après paiement réussi, le webhook Stripe met la résidence en{" "}
-            <strong>PAID / ACTIVE</strong>. Annulation ou impayé → pause
+            Paiement à jour → espace actif. Annulation ou impayé → pause
             (étudiants en lecture seule). Les pilotes gratuits restent gérés par
             le super-admin.
           </p>

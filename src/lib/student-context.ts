@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export const RESIDENCE_PAUSE_STUDENT_MESSAGE =
-  "L’espace de ta résidence est en pause (abonnement). Tu peux encore consulter, mais pas publier ni envoyer de messages pour le moment.";
+  "L’espace de ta résidence est en pause. Tu peux encore consulter, mais pas publier ni envoyer de messages.";
 
 export const RESIDENCE_PAUSE_MANAGER_MESSAGE =
   "Cette résidence est en pause. Les étudiants sont en lecture seule. Réactive l’abonnement (ou contacte le support) pour rouvrir l’espace.";

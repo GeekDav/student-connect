@@ -26,7 +26,12 @@ export default async function GestionnaireLayout({
 
   return (
     <ManagerShell residenceName={residence?.name ?? "Résidence non assignée"}>
-      {isPaused ? <ResidencePauseBanner variant="manager" /> : null}
+      {isPaused ? (
+        <ResidencePauseBanner
+          variant="manager"
+          planType={residence?.planType}
+        />
+      ) : null}
       {children}
     </ManagerShell>
   );
