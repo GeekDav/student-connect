@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { registerStudent } from "@/lib/actions/auth";
-import type { ResolvedInvite } from "@/lib/actions/invitations";
+import {
+  resolveInviteCode,
+  type ResolvedInvite,
+} from "@/lib/actions/invitations";
 
 export type ResidenceOption = {
   id: string;
@@ -72,6 +75,9 @@ export function InscriptionForm({
     residenceId: initialInvite?.residenceId ?? "",
     inviteCode: initialInvite?.code ?? "",
   });
+  const [resolvedInvite, setResolvedInvite] = useState<ResolvedInvite | null>(
+    initialInvite,
+  );
   const [query, setQuery] = useState("");
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>(
     {},
@@ -79,7 +85,7 @@ export function InscriptionForm({
   const [formError, setFormError] = useState<string | null>(inviteError);
   const [pending, setPending] = useState(false);
 
-  const hasInvite = Boolean(form.inviteCode.trim() && form.residenceId);
+  const hasInvite = Boolean(resolvedInvite);
 
   const filteredResidences = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -98,7 +104,42 @@ export function InscriptionForm({
     setFormError(null);
   }
 
-  function validateStep(current: Step): boolean {
+  function applyInvite(invite: ResolvedInvite) {
+    setResolvedInvite(invite);
+    setForm((prev) => ({
+      ...prev,
+      inviteCode: invite.code,
+      residenceId: invite.residenceId,
+    }));
+    setFormError(null);
+    setErrors((prev) => ({ ...prev, residenceId: undefined }));
+  }
+
+  function clearInvite() {
+    setResolvedInvite(null);
+    setForm((prev) => ({
+      ...prev,
+      inviteCode: "",
+      residenceId: "",
+    }));
+  }
+
+  async function tryResolveInvite(code: string): Promise<ResolvedInvite | null> {
+    const cleaned = code.trim();
+    if (!cleaned) return null;
+    const resolved = await resolveInviteCode(cleaned);
+    if (!resolved) {
+      setFormError(
+        "Invitation invalide ou expirée. Tu peux aussi choisir ta résidence ci-dessous.",
+      );
+      setResolvedInvite(null);
+      return null;
+    }
+    applyInvite(resolved);
+    return resolved;
+  }
+
+  function validateStep(current: Step, residenceId = form.residenceId): boolean {
     const nextErrors: Partial<Record<keyof FormState, string>> = {};
 
     if (current === 1) {
@@ -117,9 +158,9 @@ export function InscriptionForm({
       }
     }
 
-    if (current === 2 && !form.residenceId) {
+    if (current === 2 && !residenceId) {
       nextErrors.residenceId =
-        "Choisis ta résidence, ou entre un code d’invitation.";
+        "Choisis ta résidence, ou valide un code d’invitation.";
     }
 
     if (current === 3) {
@@ -134,8 +175,32 @@ export function InscriptionForm({
   }
 
   async function goNext() {
-    if (!validateStep(step)) return;
+    if (step === 1) {
+      if (!validateStep(1)) return;
+      setStep(2);
+      return;
+    }
+
+    if (step === 2) {
+      setPending(true);
+      setFormError(null);
+      let residenceId = form.residenceId;
+      let invite = resolvedInvite;
+
+      // Si un code est saisi mais pas encore validé (ex. clic Continuer sans blur)
+      if (form.inviteCode.trim() && !invite) {
+        invite = await tryResolveInvite(form.inviteCode);
+        if (invite) residenceId = invite.residenceId;
+      }
+
+      setPending(false);
+      if (!validateStep(2, residenceId)) return;
+      setStep(3);
+      return;
+    }
+
     if (step === 3) {
+      if (!validateStep(3)) return;
       setPending(true);
       setFormError(null);
       const result = await registerStudent({
@@ -149,7 +214,7 @@ export function InscriptionForm({
         interests: form.interests,
         showNationality: form.showNationality,
         nationality: form.nationality,
-        inviteCode: form.inviteCode.trim() || undefined,
+        inviteCode: resolvedInvite?.code || form.inviteCode.trim() || undefined,
       });
       setPending(false);
       if (!result.ok) {
@@ -158,9 +223,7 @@ export function InscriptionForm({
       }
       router.push(result.redirectTo);
       router.refresh();
-      return;
     }
-    setStep((step + 1) as Step);
   }
 
   function goBack() {
@@ -269,62 +332,64 @@ export function InscriptionForm({
 
       {step === 2 ? (
         <div className="space-y-5">
-          {initialInvite && hasInvite ? (
+          {resolvedInvite ? (
             <div className="rounded-xl border border-accent/25 bg-accent/5 px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-accent">
-                Invitation
+                Invitation validée
               </p>
               <p className="mt-2 font-display text-lg font-semibold text-ink">
-                {initialInvite.residenceName}
+                {resolvedInvite.residenceName}
               </p>
               <p className="mt-1 text-sm text-muted">
-                {initialInvite.city} · code {initialInvite.code}
+                {resolvedInvite.city} · code {resolvedInvite.code}
               </p>
               <p className="mt-3 text-sm leading-relaxed text-muted">
-                Avec cette invitation, ton accès s’ouvre tout de suite après
-                inscription — pas besoin d’attendre une validation.
+                Ton accès s’ouvre tout de suite après inscription — pas besoin
+                d’attendre une validation.
               </p>
+              <button
+                type="button"
+                onClick={clearInvite}
+                className="mt-4 text-sm font-medium text-accent hover:opacity-70"
+              >
+                Utiliser un autre code / choisir une résidence
+              </button>
             </div>
           ) : (
             <>
               <Field
                 label="Code d’invitation (recommandé)"
                 htmlFor="inviteCode"
-                hint="Si ton gestionnaire t’a envoyé un lien ou un code, colle-le ici. Accès immédiat."
+                hint="Colle le code, puis clique « Valider le code » (ou Continuer)."
               >
-                <input
-                  id="inviteCode"
-                  className={fieldClass}
-                  placeholder="Ex. A1B2C3D4"
-                  value={form.inviteCode}
-                  onChange={(e) => {
-                    update("inviteCode", e.target.value.toUpperCase());
-                  }}
-                  onBlur={async (e) => {
-                    const code = e.target.value.trim();
-                    if (!code) return;
-                    const { resolveInviteCode } = await import(
-                      "@/lib/actions/invitations"
-                    );
-                    const resolved = await resolveInviteCode(code);
-                    if (!resolved) {
-                      setFormError(
-                        "Invitation invalide ou expirée. Tu peux aussi choisir ta résidence ci-dessous.",
-                      );
-                      return;
-                    }
-                    setFormError(null);
-                    setForm((prev) => ({
-                      ...prev,
-                      inviteCode: resolved.code,
-                      residenceId: resolved.residenceId,
-                    }));
-                  }}
-                />
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    id="inviteCode"
+                    className={`${fieldClass} mt-0`}
+                    placeholder="Ex. A1B2C3D4"
+                    value={form.inviteCode}
+                    onChange={(e) => {
+                      update("inviteCode", e.target.value.toUpperCase());
+                      setResolvedInvite(null);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={pending || !form.inviteCode.trim()}
+                    onClick={async () => {
+                      setPending(true);
+                      await tryResolveInvite(form.inviteCode);
+                      setPending(false);
+                    }}
+                    className="inline-flex h-[50px] shrink-0 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-50"
+                  >
+                    Valider le code
+                  </button>
+                </div>
               </Field>
 
               <div className="relative py-1 text-center text-xs font-medium uppercase tracking-wide text-muted">
-                <span className="bg-surface px-2 relative z-10">ou</span>
+                <span className="relative z-10 bg-background px-2">ou</span>
                 <span
                   className="absolute inset-x-0 top-1/2 h-px bg-line"
                   aria-hidden
@@ -355,8 +420,17 @@ export function InscriptionForm({
                         <button
                           type="button"
                           onClick={() => {
-                            update("residenceId", residence.id);
-                            update("inviteCode", "");
+                            setResolvedInvite(null);
+                            setForm((prev) => ({
+                              ...prev,
+                              residenceId: residence.id,
+                              inviteCode: "",
+                            }));
+                            setErrors((prev) => ({
+                              ...prev,
+                              residenceId: undefined,
+                            }));
+                            setFormError(null);
                           }}
                           className={`w-full rounded-xl border px-4 py-3.5 text-left transition-[border-color,background-color,transform] ${
                             selected
