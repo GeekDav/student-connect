@@ -20,12 +20,17 @@ export function ManagerInvitations({
   const [maxUses, setMaxUses] = useState("");
   const [expiresInDays, setExpiresInDays] = useState("30");
   const [error, setError] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function absoluteInviteUrl(path: string) {
     if (typeof window === "undefined") return path;
     return `${window.location.origin}${path}`;
+  }
+
+  function flashCopied(key: string) {
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
   }
 
   function onCreate(e: FormEvent) {
@@ -68,14 +73,23 @@ export function ManagerInvitations({
     });
   }
 
-  async function onCopy(item: InvitationItem) {
+  async function onCopyLink(item: InvitationItem) {
+    // Lien absolu = partage WhatsApp / mail. Le chemin seul ne s’ouvre pas ailleurs.
     const url = absoluteInviteUrl(item.invitePath);
     try {
       await navigator.clipboard.writeText(url);
-      setCopiedId(item.id);
-      setTimeout(() => setCopiedId(null), 2000);
+      flashCopied(`${item.id}:link`);
     } catch {
       setError("Impossible de copier. Sélectionne le lien manuellement.");
+    }
+  }
+
+  async function onCopyCode(item: InvitationItem) {
+    try {
+      await navigator.clipboard.writeText(item.code);
+      flashCopied(`${item.id}:code`);
+    } catch {
+      setError("Impossible de copier. Sélectionne le code manuellement.");
     }
   }
 
@@ -86,12 +100,9 @@ export function ManagerInvitations({
           Invitations
         </h2>
         <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
-          Partage un lien ou un code : l’étudiant s’inscrit et entre directement
-          dans ta résidence. L’envoi d’e-mail automatique arrivera en prod —
-          pour l’instant, copie le lien et envoie-le (WhatsApp, mail…), ou
-          partage seulement le code. L’étudiant doit ouvrir le lien (pas le
-          coller tel quel dans un autre champ), idéalement sans être connecté
-          gestionnaire.
+          Crée un lien à envoyer (WhatsApp, mail…) ou un code à coller à
+          l’inscription. « Copier le lien » prend l’URL complète — c’est normal
+          et mieux pour partager. « Copier le code » pour le code seul.
         </p>
       </div>
 
@@ -192,10 +203,22 @@ export function ManagerInvitations({
                     <button
                       type="button"
                       disabled={isPending}
-                      onClick={() => onCopy(item)}
+                      onClick={() => onCopyLink(item)}
                       className="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-ink transition-colors hover:bg-wash"
                     >
-                      {copiedId === item.id ? "Copié" : "Copier le lien"}
+                      {copiedKey === `${item.id}:link`
+                        ? "Lien copié"
+                        : "Copier le lien"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => onCopyCode(item)}
+                      className="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-ink transition-colors hover:bg-wash"
+                    >
+                      {copiedKey === `${item.id}:code`
+                        ? "Code copié"
+                        : "Copier le code"}
                     </button>
                     <button
                       type="button"
