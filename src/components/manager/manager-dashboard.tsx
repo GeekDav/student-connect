@@ -3,7 +3,11 @@ import { MembershipStatus, ResidenceStatus, Role } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-export async function ManagerDashboard() {
+export async function ManagerDashboard({
+  welcome = false,
+}: {
+  welcome?: boolean;
+}) {
   const session = await getSession();
   const residence =
     session?.role === Role.SUPER_ADMIN
@@ -79,6 +83,13 @@ export async function ManagerDashboard() {
             : "Aucune résidence liée à ce compte pour le moment."}
         </p>
       </div>
+
+      {welcome ? (
+        <p className="animate-hero-rise-delay mt-6 rounded-2xl border border-accent/30 bg-wash px-5 py-4 text-sm leading-relaxed text-ink">
+          Bienvenue ! Ton essai est lancé. Invite des étudiants et explore
+          l’espace — tu gères l’abonnement quand tu veux.
+        </p>
+      ) : null}
 
       {residence?.status === ResidenceStatus.PAUSED ? (
         <div className="animate-hero-rise-delay mt-6 rounded-2xl border border-line bg-surface px-5 py-5">

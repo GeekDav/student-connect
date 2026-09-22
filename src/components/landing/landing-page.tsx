@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Reveal } from "./reveal";
+import type { PublicPricing } from "@/lib/stripe";
 
 const features = [
   {
@@ -21,7 +22,22 @@ const features = [
   },
 ];
 
-export function LandingPage() {
+const managerSteps = [
+  {
+    title: "Crée l’espace de ta résidence",
+    text: "Nom, adresse, ton compte gestionnaire — en quelques minutes.",
+  },
+  {
+    title: "Essaie 14 jours",
+    text: "Invite des résidents, publie, modère. Carte enregistrée, tu peux annuler avant la fin de l’essai.",
+  },
+  {
+    title: "Anime au quotidien",
+    text: "Annonces, invitations, validation des inscriptions : tout centralisé.",
+  },
+];
+
+export function LandingPage({ pricing }: { pricing: PublicPricing }) {
   return (
     <div className="bg-background text-foreground">
       <header className="animate-nav absolute inset-x-0 top-0 z-20">
@@ -32,20 +48,24 @@ export function LandingPage() {
           >
             Student-Connect
           </Link>
-          <Link
-            href="/connexion"
-            className="text-sm font-medium text-white/85 transition-colors hover:text-white"
-          >
-            Connexion
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/creer-residence"
+              className="hidden text-sm font-medium text-white/85 transition-colors hover:text-white sm:inline"
+            >
+              Pour les résidences
+            </Link>
+            <Link
+              href="/connexion"
+              className="text-sm font-medium text-white/85 transition-colors hover:text-white"
+            >
+              Connexion
+            </Link>
+          </div>
         </div>
       </header>
 
       <section className="relative bg-[#0b161d]">
-        {/*
-          Mobile : cadre paysage pour voir tout le groupe (évite le crop vertical extrême).
-          Desktop : hero plein écran immersif.
-        */}
         <div className="relative aspect-[16/10] w-full overflow-hidden md:absolute md:inset-0 md:aspect-auto md:min-h-[100svh]">
           <Image
             src="/hero-residence.png"
@@ -84,10 +104,10 @@ export function LandingPage() {
               Rejoindre ma résidence
             </Link>
             <Link
-              href="/connexion?next=/gestionnaire"
+              href="/creer-residence"
               className="inline-flex h-12 items-center justify-center rounded-lg border border-white/35 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur-sm transition-[background-color,border-color] duration-200 hover:border-white/55 hover:bg-white/18"
             >
-              Espace gestionnaire
+              Équiper ma résidence
             </Link>
           </div>
         </div>
@@ -149,39 +169,100 @@ export function LandingPage() {
           }}
           aria-hidden
         />
-        <Reveal className="relative mx-auto max-w-3xl px-5 py-20 sm:px-8 sm:py-24">
+        <div className="relative mx-auto max-w-3xl px-5 py-20 sm:px-8 sm:py-24">
+          <Reveal>
+            <h2 className="font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+              Pour les gestionnaires de résidence
+            </h2>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
+              Un espace pour publier les infos officielles, valider les
+              inscriptions et faire vivre le bâtiment — sans app dispersée ni
+              groupe WhatsApp interminable.
+            </p>
+          </Reveal>
+          <ul className="mt-12 divide-y divide-line border-y border-line">
+            {managerSteps.map((step, index) => (
+              <Reveal key={step.title}>
+                <li className="grid gap-2 py-8 sm:grid-cols-[7rem_1fr] sm:gap-8">
+                  <span className="font-display text-sm font-semibold text-accent">
+                    0{index + 1}
+                  </span>
+                  <div>
+                    <h3 className="font-display text-xl font-semibold text-ink">
+                      {step.title}
+                    </h3>
+                    <p className="mt-2 text-base leading-relaxed text-muted">
+                      {step.text}
+                    </p>
+                  </div>
+                </li>
+              </Reveal>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section id="tarif" className="bg-surface">
+        <Reveal className="mx-auto max-w-3xl px-5 py-20 sm:px-8 sm:py-24">
           <h2 className="font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            Pour les gestionnaires de résidence
+            Un tarif simple
           </h2>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-            Publiez vos annonces officielles, validez les inscriptions et
-            animez la vie du bâtiment. Un argument concret pour vos résidents :
-            ici, on n’est pas seul.
+          <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted">
+            Une résidence, un abonnement. Le prix affiché vient de Stripe : tu
+            le changes dans le Dashboard, la page suit.
           </p>
-          <Link
-            href="/connexion?next=/gestionnaire"
-            className="mt-8 inline-flex h-12 items-center justify-center rounded-lg bg-ink px-6 text-sm font-semibold text-white transition-[opacity,transform] duration-200 hover:opacity-90 hover:-translate-y-0.5"
-          >
-            Découvrir l’espace gestionnaire
-          </Link>
+
+          <div className="mt-10 rounded-3xl border border-line bg-background px-6 py-8 sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+              Essai {pricing.trialDays} jours
+            </p>
+            <p className="mt-4 font-display text-5xl font-semibold tracking-tight text-ink">
+              {pricing.configured ? pricing.amountLabel : "—"}
+            </p>
+            <p className="mt-2 text-base text-muted">{pricing.intervalLabel}</p>
+            <ul className="mt-6 space-y-2 text-sm leading-relaxed text-muted">
+              <li>Espace étudiants + espace gestionnaire</li>
+              <li>Invitations, annonces, modération</li>
+              <li>Annule avant la fin de l’essai : 0 €</li>
+            </ul>
+            <Link
+              href="/creer-residence"
+              className="mt-8 inline-flex h-12 items-center justify-center rounded-lg bg-accent px-6 text-sm font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-accent-hover hover:-translate-y-0.5"
+            >
+              Démarrer l’essai gratuit
+            </Link>
+            {!pricing.configured ? (
+              <p className="mt-4 text-xs text-muted">
+                Tarif bientôt affiché — Stripe en cours de configuration.
+              </p>
+            ) : null}
+          </div>
         </Reveal>
       </section>
 
-      <section className="bg-surface">
+      <section className="border-t border-line bg-background">
         <Reveal className="mx-auto max-w-3xl px-5 py-20 text-center sm:px-8 sm:py-24">
           <h2 className="font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
             Prêt à rejoindre ta résidence ?
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted">
-            Crée ton compte, choisis ta résidence partenaire, et attends la
-            validation de ton établissement.
+            Étudiant : crée ton compte avec une invitation ou une demande à
+            valider. Gestionnaire : ouvre l’espace de ton bâtiment.
           </p>
-          <Link
-            href="/inscription"
-            className="mt-8 inline-flex h-12 items-center justify-center rounded-lg bg-accent px-6 text-sm font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-accent-hover hover:-translate-y-0.5"
-          >
-            Créer mon compte
-          </Link>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href="/inscription"
+              className="inline-flex h-12 items-center justify-center rounded-lg bg-accent px-6 text-sm font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-accent-hover hover:-translate-y-0.5"
+            >
+              Créer mon compte étudiant
+            </Link>
+            <Link
+              href="/creer-residence"
+              className="inline-flex h-12 items-center justify-center rounded-lg border border-line bg-surface px-6 text-sm font-semibold text-ink transition-colors hover:bg-wash"
+            >
+              Équiper ma résidence
+            </Link>
+          </div>
         </Reveal>
       </section>
 
@@ -194,6 +275,12 @@ export function LandingPage() {
             Student-Connect
           </Link>
           <div className="flex flex-wrap gap-5 text-sm text-muted">
+            <Link href="/#tarif" className="hover:text-ink">
+              Tarif
+            </Link>
+            <Link href="/creer-residence" className="hover:text-ink">
+              Pour les résidences
+            </Link>
             <Link href="/mentions-legales" className="hover:text-ink">
               Mentions légales
             </Link>

@@ -1,6 +1,9 @@
 import Stripe from "stripe";
 import { getAppUrl } from "@/lib/mail/mailer";
 
+/** Essai gratuit self-serve (jours). */
+export const STRIPE_TRIAL_DAYS = 14;
+
 export function isStripeConfigured() {
   return Boolean(
     process.env.STRIPE_SECRET_KEY?.trim() &&
@@ -31,6 +34,8 @@ export function getBillingUrls() {
     success: `${base}/gestionnaire/abonnement?checkout=success`,
     cancel: `${base}/gestionnaire/abonnement?checkout=cancel`,
     return: `${base}/gestionnaire/abonnement`,
+    selfServeSuccess: `${base}/gestionnaire?welcome=1`,
+    selfServeCancel: `${base}/creer-residence?checkout=cancel`,
   };
 }
 
@@ -46,7 +51,55 @@ export function getStripeRuntimeInfo() {
     mode,
     priceId: getStripePriceId(),
     webhookReady: Boolean(getStripeWebhookSecret()),
+    trialDays: STRIPE_TRIAL_DAYS,
   };
+}
+
+export type PublicPricing = {
+  amountLabel: string;
+  intervalLabel: string;
+  trialDays: number;
+  configured: boolean;
+};
+
+/** Prix public lu depuis Stripe (change le prix dans le Dashboard → la landing suit). */
+export async function getPublicPricing(): Promise<PublicPricing> {
+  const fallback: PublicPricing = {
+    amountLabel: "—",
+    intervalLabel: "par mois et par résidence",
+    trialDays: STRIPE_TRIAL_DAYS,
+    configured: false,
+  };
+
+  const stripe = getStripe();
+  const priceId = getStripePriceId();
+  if (!stripe || !priceId) return fallback;
+
+  try {
+    const price = await stripe.prices.retrieve(priceId);
+    const cents = price.unit_amount ?? 0;
+    const currency = (price.currency || "eur").toUpperCase();
+    const amountLabel = new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: cents % 100 === 0 ? 0 : 2,
+    }).format(cents / 100);
+
+    const interval = price.recurring?.interval;
+    const intervalLabel =
+      interval === "year"
+        ? "par an et par résidence"
+        : "par mois et par résidence";
+
+    return {
+      amountLabel,
+      intervalLabel,
+      trialDays: STRIPE_TRIAL_DAYS,
+      configured: true,
+    };
+  } catch {
+    return fallback;
+  }
 }
 
 /** Statuts Stripe qui gardent la résidence active. */
