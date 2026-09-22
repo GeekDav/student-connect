@@ -4,7 +4,7 @@ import { ResidenceStatus, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getAppUrl, sendEmail } from "@/lib/mail/mailer";
+import { sendEmail } from "@/lib/mail/mailer";
 import { weeklyPausedReminderEmail } from "@/lib/mail/templates";
 
 export type EmailLogItem = {
@@ -111,18 +111,4 @@ export async function triggerWeeklyPausedReminders(): Promise<WeeklyReminderResu
   const result = await runWeeklyPausedReminders();
   revalidatePath("/super-admin/emails");
   return result;
-}
-
-export function getMailRuntimeInfo() {
-  const mode =
-    process.env.EMAIL_MODE === "resend" && process.env.RESEND_API_KEY
-      ? "resend"
-      : "log";
-  return {
-    mode,
-    appUrl: getAppUrl(),
-    from:
-      process.env.EMAIL_FROM?.trim() ||
-      "Student-Connect <onboarding@resend.dev>",
-  };
 }

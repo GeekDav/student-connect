@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { SuperAdminEmails } from "@/components/super-admin/super-admin-emails";
-import {
-  getMailRuntimeInfo,
-  listRecentEmailLogs,
-} from "@/lib/actions/emails";
+import { listRecentEmailLogs } from "@/lib/actions/emails";
+import { getMailRuntimeInfo } from "@/lib/mail/mailer";
 
 export const dynamic = "force-dynamic";
 

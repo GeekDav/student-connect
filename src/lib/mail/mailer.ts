@@ -25,6 +25,21 @@ export function getAppUrl() {
   return appUrl();
 }
 
+/** Infos runtime mail — hors fichier "use server" (doit rester sync). */
+export function getMailRuntimeInfo() {
+  const mode =
+    process.env.EMAIL_MODE === "resend" && process.env.RESEND_API_KEY
+      ? "resend"
+      : "log";
+  return {
+    mode,
+    appUrl: appUrl(),
+    from:
+      process.env.EMAIL_FROM?.trim() ||
+      "Student-Connect <onboarding@resend.dev>",
+  };
+}
+
 function emailMode(): "log" | "resend" {
   if (process.env.EMAIL_MODE === "resend" && process.env.RESEND_API_KEY) {
     return "resend";
