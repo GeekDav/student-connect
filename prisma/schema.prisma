@@ -19,7 +19,7 @@ enum ResidenceStatus {
   PAUSED
 }
 
-/** Pilote gratuit (SA) ou abonnement payant (self-serve, Stripe plus tard). */
+/** Pilote gratuit (SA) ou abonnement payant (self-serve Stripe). */
 enum ResidencePlanType {
   PILOT
   PAID
@@ -116,6 +116,10 @@ model Residence {
   retainUntil DateTime?
   /** Dernier rappel hebdo envoyé (évite les doublons). */
   lastPauseReminderAt DateTime?
+  /** Stripe (mode test puis live). */
+  stripeCustomerId           String? @unique
+  stripeSubscriptionId       String? @unique
+  stripeSubscriptionStatus   String?
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 

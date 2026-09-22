@@ -6,7 +6,7 @@ export function ResidencePauseBanner({
   const student =
     "L’espace de ta résidence est en pause (abonnement). Tu peux encore consulter, mais pas publier ni envoyer de messages pour le moment.";
   const manager =
-    "Cette résidence est en pause. Les étudiants sont en lecture seule. Réactive l’abonnement (Stripe bientôt) ou demande au support de rouvrir l’espace.";
+    "Cette résidence est en pause. Les étudiants sont en lecture seule. Réactive l’abonnement (page Abonnement) ou demande au support de rouvrir l’espace.";
 
   return (
     <div

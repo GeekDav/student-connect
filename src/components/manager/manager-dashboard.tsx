@@ -88,8 +88,16 @@ export async function ManagerDashboard() {
           <p className="mt-2 text-sm leading-relaxed text-muted">
             {residence.planType === "PILOT"
               ? "Pilote gratuit : demande au super-admin de rouvrir l’espace depuis son tableau."
-              : "Abonnement : le renouvellement Stripe arrivera bientôt. En attendant, contacte le support."}
+              : "Abonnement : renouvelle ou réactive le paiement depuis la page Abonnement."}
           </p>
+          {residence.planType !== "PILOT" ? (
+            <Link
+              href="/gestionnaire/abonnement"
+              className="mt-4 inline-flex h-11 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
+            >
+              Ouvrir Abonnement
+            </Link>
+          ) : null}
           {residence.retainUntil ? (
             <p className="mt-2 text-xs text-muted">
               Données conservées jusqu’au{" "}
@@ -102,7 +110,16 @@ export async function ManagerDashboard() {
             </p>
           ) : null}
         </div>
-      ) : null}
+      ) : (
+        <div className="animate-hero-rise-delay mt-6">
+          <Link
+            href="/gestionnaire/abonnement"
+            className="inline-flex h-10 items-center rounded-lg border border-line bg-surface px-3.5 text-sm font-semibold text-ink transition-colors hover:bg-wash"
+          >
+            Gérer l’abonnement
+          </Link>
+        </div>
+      )}
 
       <ul className="animate-hero-rise-delay mt-8 grid gap-3 sm:grid-cols-2">
         {cards.map((card) => (

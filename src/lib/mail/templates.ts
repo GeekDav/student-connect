@@ -87,7 +87,7 @@ export function residencePausedEmail(input: {
          ? `<p>Données conservées jusqu’au <strong>${input.retainUntilLabel}</strong>.</p>`
          : ""
      }
-     <p>Contacte le support pour réactiver (le renouvellement Stripe arrivera bientôt).</p>`,
+     <p>Contacte le support pour réactiver, ou renouvelle l’abonnement depuis ton espace gestionnaire.</p>`,
   );
 
   return { subject, text, html, template: "residence_paused" };

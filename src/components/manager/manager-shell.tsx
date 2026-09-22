@@ -8,6 +8,7 @@ import { LogoutButton } from "@/components/ui/logout-button";
 
 const NAV = [
   { href: "/gestionnaire", label: "Dashboard", exact: true },
+  { href: "/gestionnaire/abonnement", label: "Abonnement", exact: false },
   { href: "/gestionnaire/invitations", label: "Invitations", exact: false },
   { href: "/gestionnaire/inscriptions", label: "Inscriptions", exact: false },
   { href: "/gestionnaire/residents", label: "Résidents", exact: false },
