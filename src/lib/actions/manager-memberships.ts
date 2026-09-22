@@ -113,6 +113,18 @@ export async function decideMembership(
     return { ok: false, error: "Aucune résidence liée à ce compte." };
   }
 
+  const residence = await prisma.residence.findUnique({
+    where: { id: residenceId },
+    select: { status: true },
+  });
+  if (!residence || residence.status !== "ACTIVE") {
+    return {
+      ok: false,
+      error:
+        "Résidence en pause : tu ne peux pas valider d’inscriptions pour le moment.",
+    };
+  }
+
   const membership = await prisma.residenceMembership.findFirst({
     where: {
       id: membershipId,

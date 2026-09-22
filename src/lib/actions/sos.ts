@@ -1,8 +1,11 @@
 "use server";
 
-import { MembershipStatus, Role, SosStatus } from "@prisma/client";
+import {
+  getActiveStudentContext,
+  writeBlockedResult,
+} from "@/lib/student-context";
+import { SosStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export type SosItem = {
@@ -22,17 +25,6 @@ export type SosActionResult =
   | { ok: true; item?: SosItem }
   | { ok: false; error: string };
 
-async function getActiveStudentContext() {
-  const session = await getSession();
-  if (!session || session.role !== Role.STUDENT) return null;
-
-  const membership = await prisma.residenceMembership.findFirst({
-    where: { userId: session.userId, status: MembershipStatus.ACTIVE },
-  });
-  if (!membership) return null;
-
-  return { session, residenceId: membership.residenceId };
-}
 
 function formatRelative(date: Date) {
   const diffMs = Date.now() - date.getTime();
@@ -111,6 +103,7 @@ export async function createSos(input: {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const title = input.title.trim();
   const description = input.description.trim();
@@ -141,6 +134,7 @@ export async function toggleSosHelp(sosId: string): Promise<SosActionResult> {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const sos = await prisma.sosRequest.findFirst({
     where: { id: sosId, residenceId: ctx.residenceId },
@@ -193,6 +187,7 @@ export async function resolveSos(sosId: string): Promise<SosActionResult> {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const sos = await prisma.sosRequest.findFirst({
     where: {

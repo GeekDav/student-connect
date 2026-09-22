@@ -139,6 +139,13 @@ export async function createResidenceInvitation(input: {
   if (!ctx) {
     return { ok: false, error: "Action non autorisée." };
   }
+  if (ctx.residence.status !== "ACTIVE") {
+    return {
+      ok: false,
+      error:
+        "Résidence en pause : tu ne peux pas créer d’invitations tant que l’espace n’est pas réactivé.",
+    };
+  }
 
   const label = input.label?.trim() || null;
   const maxUses =

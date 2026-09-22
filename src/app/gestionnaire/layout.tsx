@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { Role } from "@prisma/client";
+import { ResidenceStatus, Role } from "@prisma/client";
 import { ManagerShell } from "@/components/manager/manager-shell";
+import { ResidencePauseBanner } from "@/components/ui/residence-pause-banner";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -13,7 +14,6 @@ export default async function GestionnaireLayout({
   const residence =
     session?.role === Role.SUPER_ADMIN
       ? await prisma.residence.findFirst({
-          where: { status: "ACTIVE" },
           orderBy: { createdAt: "asc" },
         })
       : session
@@ -22,8 +22,11 @@ export default async function GestionnaireLayout({
           })
         : null;
 
+  const isPaused = residence?.status === ResidenceStatus.PAUSED;
+
   return (
     <ManagerShell residenceName={residence?.name ?? "Résidence non assignée"}>
+      {isPaused ? <ResidencePauseBanner variant="manager" /> : null}
       {children}
     </ManagerShell>
   );

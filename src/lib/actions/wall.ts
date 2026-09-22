@@ -1,8 +1,10 @@
 "use server";
 
-import { MembershipStatus, Role } from "@prisma/client";
+import {
+  getActiveStudentContext,
+  writeBlockedResult,
+} from "@/lib/student-context";
 import { revalidatePath } from "next/cache";
-import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export type WallReplyItem = {
@@ -38,17 +40,6 @@ function noteExpiryCutoff() {
   return new Date(Date.now() - NOTE_TTL_MS);
 }
 
-async function getActiveStudentContext() {
-  const session = await getSession();
-  if (!session || session.role !== Role.STUDENT) return null;
-
-  const membership = await prisma.residenceMembership.findFirst({
-    where: { userId: session.userId, status: MembershipStatus.ACTIVE },
-  });
-  if (!membership) return null;
-
-  return { session, residenceId: membership.residenceId };
-}
 
 function startOfToday() {
   const d = new Date();
@@ -163,6 +154,7 @@ export async function createWallNote(body: string): Promise<WallActionResult> {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const text = body.trim();
   if (!text) return { ok: false, error: "Écris un petit mot." };
@@ -210,6 +202,7 @@ export async function deleteWallNote(noteId: string): Promise<WallActionResult> 
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const note = await prisma.wallNote.findFirst({
     where: {
@@ -235,6 +228,7 @@ export async function createWallReply(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const text = body.trim();
   if (!text) return { ok: false, error: "Écris une réponse." };
@@ -276,6 +270,7 @@ export async function deleteWallReply(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const reply = await prisma.wallNoteReply.findFirst({
     where: {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MembershipStatus, Role } from "@prisma/client";
+import { MembershipStatus, ResidenceStatus, Role } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -8,7 +8,6 @@ export async function ManagerDashboard() {
   const residence =
     session?.role === Role.SUPER_ADMIN
       ? await prisma.residence.findFirst({
-          where: { status: "ACTIVE" },
           orderBy: { createdAt: "asc" },
         })
       : session
@@ -72,10 +71,38 @@ export async function ManagerDashboard() {
         </h2>
         <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
           {residence
-            ? `Vue d’ensemble — ${residence.name}`
+            ? `Vue d’ensemble — ${residence.name}${
+                residence.status === ResidenceStatus.PAUSED
+                  ? " · en pause"
+                  : ""
+              }`
             : "Aucune résidence liée à ce compte pour le moment."}
         </p>
       </div>
+
+      {residence?.status === ResidenceStatus.PAUSED ? (
+        <div className="animate-hero-rise-delay mt-6 rounded-2xl border border-line bg-surface px-5 py-5">
+          <p className="font-display text-lg font-semibold text-ink">
+            Réactivation
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            {residence.planType === "PILOT"
+              ? "Pilote gratuit : demande au super-admin de rouvrir l’espace depuis son tableau."
+              : "Abonnement : le renouvellement Stripe arrivera bientôt. En attendant, contacte le support."}
+          </p>
+          {residence.retainUntil ? (
+            <p className="mt-2 text-xs text-muted">
+              Données conservées jusqu’au{" "}
+              {residence.retainUntil.toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+              .
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <ul className="animate-hero-rise-delay mt-8 grid gap-3 sm:grid-cols-2">
         {cards.map((card) => (

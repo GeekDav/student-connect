@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   toggleResidenceStatus,
@@ -14,6 +15,7 @@ export function ResidencesList({
 }: {
   initialItems: PlatformResidenceItem[];
 }) {
+  const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [error, setError] = useState<string | null>(null);
   const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
@@ -40,6 +42,7 @@ export function ResidencesList({
             : item,
         ),
       );
+      router.refresh();
     });
   }
 
@@ -167,16 +170,25 @@ export function ResidencesList({
                   )}
                   <span
                     className={`text-xs font-semibold ${
-                      item.status === "active" ? "text-accent" : "text-muted"
+                      item.status === "active" ? "text-accent" : "text-[#9a4b1a]"
                     }`}
                   >
                     {item.status === "active" ? "Active" : "En pause"}
+                  </span>
+                  <span className="text-xs font-medium text-muted">
+                    {item.planType === "pilot" ? "Pilote" : "Payant"}
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-muted">
                   {item.city} · {item.operator}
                 </p>
                 <p className="mt-1 text-sm text-muted">{item.address}</p>
+                {item.status === "paused" && item.retainUntil ? (
+                  <p className="mt-2 text-xs text-muted">
+                    Pause depuis {item.pausedAt ?? "—"} · données jusqu’au{" "}
+                    {item.retainUntil}
+                  </p>
+                ) : null}
                 <p className="mt-3 text-sm text-ink">
                   Gestionnaire : {item.managerName}
                 </p>

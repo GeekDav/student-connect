@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { MembershipStatus, ResidenceStatus, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { pauseRetainUntil } from "@/lib/student-context";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -16,6 +17,9 @@ export type PlatformResidenceItem = {
   managerEmail: string;
   createdAt: string;
   status: "active" | "paused";
+  planType: "pilot" | "paid";
+  pausedAt: string | null;
+  retainUntil: string | null;
   pendingStudents: number;
   activeStudents: number;
 };
@@ -94,6 +98,9 @@ export async function listPlatformResidences(): Promise<
         managerEmail: row.manager?.email ?? "—",
         createdAt: formatCreatedAt(row.createdAt),
         status: row.status === ResidenceStatus.ACTIVE ? "active" : "paused",
+        planType: row.planType === "PAID" ? "paid" : "pilot",
+        pausedAt: row.pausedAt ? formatCreatedAt(row.pausedAt) : null,
+        retainUntil: row.retainUntil ? formatCreatedAt(row.retainUntil) : null,
         pendingStudents,
         activeStudents,
       } satisfies PlatformResidenceItem;
@@ -208,13 +215,27 @@ export async function toggleResidenceStatus(
       ? ResidenceStatus.PAUSED
       : ResidenceStatus.ACTIVE;
 
+  const now = new Date();
   await prisma.residence.update({
     where: { id: residence.id },
-    data: { status: nextStatus },
+    data:
+      nextStatus === ResidenceStatus.PAUSED
+        ? {
+            status: nextStatus,
+            pausedAt: now,
+            retainUntil: pauseRetainUntil(now),
+          }
+        : {
+            status: nextStatus,
+            pausedAt: null,
+            retainUntil: null,
+          },
   });
 
   revalidatePath("/super-admin");
   revalidatePath("/inscription");
+  revalidatePath("/accueil");
+  revalidatePath("/gestionnaire");
 
   return { ok: true, residenceId: residence.id };
 }

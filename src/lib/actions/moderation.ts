@@ -1,7 +1,6 @@
 "use server";
 
 import {
-  MembershipStatus,
   ReportStatus,
   ReportTargetType,
   Role,
@@ -9,6 +8,10 @@ import {
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  getActiveStudentContext,
+  writeBlockedResult,
+} from "@/lib/student-context";
 
 export type ReportListItem = {
   id: string;
@@ -27,17 +30,6 @@ export type ModerationActionResult =
   | { ok: true; item?: ReportListItem }
   | { ok: false; error: string };
 
-async function getActiveStudentContext() {
-  const session = await getSession();
-  if (!session || session.role !== Role.STUDENT) return null;
-
-  const membership = await prisma.residenceMembership.findFirst({
-    where: { userId: session.userId, status: MembershipStatus.ACTIVE },
-  });
-  if (!membership) return null;
-
-  return { session, residenceId: membership.residenceId };
-}
 
 async function getManagerResidenceId(userId: string, role: Role) {
   if (role === Role.SUPER_ADMIN) {
@@ -251,6 +243,7 @@ export async function createReport(input: {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const reason = input.reason.trim();
   if (!reason) return { ok: false, error: "Indique un motif de signalement." };

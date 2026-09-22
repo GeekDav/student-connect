@@ -1,13 +1,14 @@
 "use server";
 
 import {
+  getActiveStudentContext,
+  writeBlockedResult,
+} from "@/lib/student-context";
+import {
   MarketplaceStatus,
   MarketplaceType,
-  MembershipStatus,
-  Role,
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export type MarketItem = {
@@ -30,17 +31,6 @@ export type MarketActionResult =
   | { ok: true; item?: MarketItem }
   | { ok: false; error: string };
 
-async function getActiveStudentContext() {
-  const session = await getSession();
-  if (!session || session.role !== Role.STUDENT) return null;
-
-  const membership = await prisma.residenceMembership.findFirst({
-    where: { userId: session.userId, status: MembershipStatus.ACTIVE },
-  });
-  if (!membership) return null;
-
-  return { session, residenceId: membership.residenceId };
-}
 
 function formatRelative(date: Date) {
   const diffMs = Date.now() - date.getTime();
@@ -132,6 +122,7 @@ export async function createMarketItem(input: {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const title = input.title.trim();
   const description = input.description.trim();
@@ -176,6 +167,7 @@ export async function toggleMarketInterest(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const item = await prisma.marketplaceItem.findFirst({
     where: { id: itemId, residenceId: ctx.residenceId },
@@ -233,6 +225,7 @@ export async function markMarketGone(itemId: string): Promise<MarketActionResult
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const item = await prisma.marketplaceItem.findFirst({
     where: {

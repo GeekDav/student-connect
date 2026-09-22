@@ -19,6 +19,12 @@ enum ResidenceStatus {
   PAUSED
 }
 
+/** Pilote gratuit (SA) ou abonnement payant (self-serve, Stripe plus tard). */
+enum ResidencePlanType {
+  PILOT
+  PAID
+}
+
 enum MembershipStatus {
   PENDING
   ACTIVE
@@ -97,14 +103,19 @@ model User {
 }
 
 model Residence {
-  id        String          @id @default(cuid())
+  id        String            @id @default(cuid())
   name      String
   city      String
   address   String
   operator  String
-  status    ResidenceStatus @default(ACTIVE)
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  status    ResidenceStatus   @default(ACTIVE)
+  planType  ResidencePlanType @default(PILOT)
+  /** Rempli quand status = PAUSED. */
+  pausedAt    DateTime?
+  /** Conservation des données jusqu’à cette date (ex. +12 mois). */
+  retainUntil DateTime?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
 
   managerId String? @unique
   manager   User?   @relation(fields: [managerId], references: [id])

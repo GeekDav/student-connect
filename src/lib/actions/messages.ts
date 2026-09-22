@@ -1,8 +1,11 @@
 "use server";
 
-import { MembershipStatus, Role } from "@prisma/client";
+import {
+  getActiveStudentContext,
+  writeBlockedResult,
+} from "@/lib/student-context";
+import { MembershipStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export type ChatMessage = {
@@ -31,17 +34,6 @@ export type MessageActionResult =
   | { ok: true; conversationId?: string; message?: ChatMessage; detail?: ConversationDetail }
   | { ok: false; error: string };
 
-async function getActiveStudentContext() {
-  const session = await getSession();
-  if (!session || session.role !== Role.STUDENT) return null;
-
-  const membership = await prisma.residenceMembership.findFirst({
-    where: { userId: session.userId, status: MembershipStatus.ACTIVE },
-  });
-  if (!membership) return null;
-
-  return { session, residenceId: membership.residenceId };
-}
 
 function orderedPair(a: string, b: string): [string, string] {
   return a < b ? [a, b] : [b, a];
@@ -318,6 +310,7 @@ export async function ensureConversationWith(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   if (peerUserId === ctx.session.userId) {
     return { ok: false, error: "Tu ne peux pas t’écrire à toi-même." };
@@ -378,6 +371,7 @@ export async function sendMessage(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const text = body.trim();
   if (!text) return { ok: false, error: "Écris un message." };
@@ -455,6 +449,7 @@ export async function deleteMessages(
   if (!access) {
     return { ok: false, error: "Conversation introuvable." };
   }
+  if (!access.ctx.writable) return writeBlockedResult();
 
   const ids = [...new Set(messageIds.map((id) => id.trim()).filter(Boolean))];
   if (ids.length === 0) {
@@ -511,6 +506,7 @@ export async function clearConversation(
   if (!access) {
     return { ok: false, error: "Conversation introuvable." };
   }
+  if (!access.ctx.writable) return writeBlockedResult();
 
   await prisma.message.deleteMany({
     where: { conversationId },

@@ -1,9 +1,11 @@
 "use server";
 
-import { MembershipStatus, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  getActiveStudentContext,
+  writeBlockedResult,
+} from "@/lib/student-context";
 
 export type EventItem = {
   id: string;
@@ -22,18 +24,6 @@ export type EventItem = {
 export type EventActionResult =
   | { ok: true; item?: EventItem }
   | { ok: false; error: string };
-
-async function getActiveStudentContext() {
-  const session = await getSession();
-  if (!session || session.role !== Role.STUDENT) return null;
-
-  const membership = await prisma.residenceMembership.findFirst({
-    where: { userId: session.userId, status: MembershipStatus.ACTIVE },
-  });
-  if (!membership) return null;
-
-  return { session, residenceId: membership.residenceId };
-}
 
 function mapEvent(
   row: {
@@ -92,6 +82,7 @@ export async function createEvent(input: {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const title = input.title.trim();
   const description = input.description.trim();
@@ -139,6 +130,7 @@ export async function toggleEventJoin(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const event = await prisma.microEvent.findFirst({
     where: { id: eventId, residenceId: ctx.residenceId },
@@ -197,6 +189,7 @@ export async function cancelEvent(eventId: string): Promise<EventActionResult> {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   const event = await prisma.microEvent.findFirst({
     where: {
@@ -227,6 +220,7 @@ export async function updateEventSpots(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
+  if (!ctx.writable) return writeBlockedResult();
 
   if (!Number.isFinite(spotsTotal) || spotsTotal < 2 || spotsTotal > 30) {
     return { ok: false, error: "Entre 2 et 30 places." };
