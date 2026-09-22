@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 import { ReportButton } from "@/components/app/report-button";
 import { Avatar } from "@/components/ui/avatar";
+import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import {
   clearConversation,
   deleteMessages,
@@ -399,6 +400,11 @@ export function MessagesBoard({
               onChange={(e) => setDraft(e.target.value)}
               autoComplete="off"
               disabled={isPending && !detail}
+            />
+            <EmojiPickerButton
+              disabled={isPending && !detail}
+              align="right"
+              onPick={(emoji) => setDraft((prev) => prev + emoji)}
             />
             <button
               type="submit"

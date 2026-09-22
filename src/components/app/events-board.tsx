@@ -7,6 +7,7 @@ import {
   BoardScopeFilter,
   type BoardScope,
 } from "@/components/ui/board-scope-filter";
+import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 import {
   cancelEvent,
@@ -223,6 +224,14 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
               value={form.description}
               onChange={(e) => update("description", e.target.value)}
             />
+            <div className="mt-2">
+              <EmojiPickerButton
+                disabled={isPending}
+                onPick={(emoji) =>
+                  update("description", form.description + emoji)
+                }
+              />
+            </div>
             {errors.description ? (
               <p className="mt-1.5 text-sm text-red-700">{errors.description}</p>
             ) : null}

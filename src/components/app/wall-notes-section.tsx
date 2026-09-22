@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition, type FormEvent } from "react";
 import { ReportButton } from "@/components/app/report-button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 import {
   createWallNote,
@@ -122,7 +123,15 @@ export function WallNotesSection({
           onChange={(e) => setDraft(e.target.value)}
         />
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-muted">{draft.length}/280</p>
+          <div className="flex items-center gap-2">
+            <EmojiPickerButton
+              disabled={isPending}
+              onPick={(emoji) =>
+                setDraft((prev) => (prev + emoji).slice(0, 280))
+              }
+            />
+            <p className="text-xs text-muted">{draft.length}/280</p>
+          </div>
           <button
             type="submit"
             disabled={isPending || !draft.trim()}
@@ -233,13 +242,28 @@ export function WallNotesSection({
                     }))
                   }
                 />
-                <button
-                  type="submit"
-                  disabled={isPending || !replyDraft.trim()}
-                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-50"
-                >
-                  Répondre
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <EmojiPickerButton
+                    disabled={isPending}
+                    align="right"
+                    onPick={(emoji) =>
+                      setReplyDrafts((prev) => ({
+                        ...prev,
+                        [note.id]: ((prev[note.id] ?? "") + emoji).slice(
+                          0,
+                          160,
+                        ),
+                      }))
+                    }
+                  />
+                  <button
+                    type="submit"
+                    disabled={isPending || !replyDraft.trim()}
+                    className="inline-flex h-10 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-50"
+                  >
+                    Répondre
+                  </button>
+                </div>
               </form>
             </li>
           );

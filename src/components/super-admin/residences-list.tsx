@@ -12,8 +12,10 @@ import {
 
 export function ResidencesList({
   initialItems,
+  showHeader = true,
 }: {
   initialItems: PlatformResidenceItem[];
+  showHeader?: boolean;
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
@@ -98,32 +100,37 @@ export function ResidencesList({
 
   return (
     <div>
-      <div className="animate-hero-rise flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight text-ink">
-            Résidences partenaires
-          </h2>
-          <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
-            Crée une résidence et le compte gestionnaire associé. Phase Alpha :
-            uniquement les partenaires que tu actives ici.
-          </p>
+      {showHeader ? (
+        <div className="animate-hero-rise flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-display text-3xl font-semibold tracking-tight text-ink">
+              Résidences partenaires
+            </h2>
+            <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
+              Crée une résidence et le compte gestionnaire associé. Phase Alpha :
+              uniquement les partenaires que tu actives ici.
+            </p>
+          </div>
+          <Link
+            href="/super-admin/nouvelle-residence"
+            className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
+          >
+            Créer une résidence
+          </Link>
         </div>
-        <Link
-          href="/super-admin/nouvelle-residence"
-          className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
-        >
-          Créer une résidence
-        </Link>
-      </div>
+      ) : null}
 
       {error ? (
-        <p className="mt-6 text-sm text-red-700" role="alert">
+        <p className={`${showHeader ? "mt-6" : ""} text-sm text-red-700`} role="alert">
           {error}
         </p>
       ) : null}
 
-      <ul className="animate-hero-rise-delay mt-8 divide-y divide-line border-y border-line">
-        {items.map((item) => (
+      <ul
+        className={`divide-y divide-line border-y border-line ${
+          showHeader ? "animate-hero-rise-delay mt-8" : "mt-2"
+        }`}
+      >        {items.map((item) => (
           <li key={item.id} className="py-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
