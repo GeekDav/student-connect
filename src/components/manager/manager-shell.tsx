@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { BackToTop } from "@/components/ui/back-to-top";
 import { LogoutButton } from "@/components/ui/logout-button";
 
 const NAV = [
@@ -84,6 +85,7 @@ export function ManagerShell({
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
         {children}
       </main>
+      <BackToTop offset={360} />
     </div>
   );
 }

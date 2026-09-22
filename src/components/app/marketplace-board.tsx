@@ -7,6 +7,7 @@ import {
   BoardScopeFilter,
   type BoardScope,
 } from "@/components/ui/board-scope-filter";
+import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 import {
   createMarketItem,
   markMarketGone,
@@ -102,6 +103,12 @@ export function MarketplaceBoard({
     () => items.filter((item) => item.isMine).length,
     [items],
   );
+  const {
+    visible: visibleActive,
+    hasMore: hasMoreActive,
+    remaining: remainingActive,
+    showMore: showMoreActive,
+  } = useLoadMore(activeItems, 8);
 
   function update<K extends keyof CreateForm>(key: K, value: CreateForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -361,7 +368,7 @@ export function MarketplaceBoard({
           Annonces · {activeItems.length}
         </h2>
         <ul className="mt-2 divide-y divide-line border-y border-line">
-          {activeItems.map((item) => (
+          {visibleActive.map((item) => (
             <MarketRow
               key={item.id}
               item={item}
@@ -378,6 +385,9 @@ export function MarketplaceBoard({
             </li>
           ) : null}
         </ul>
+        {hasMoreActive ? (
+          <LoadMoreButton remaining={remainingActive} onClick={showMoreActive} />
+        ) : null}
       </section>
 
       {goneItems.length > 0 ? (

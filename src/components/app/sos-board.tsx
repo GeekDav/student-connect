@@ -7,6 +7,7 @@ import {
   BoardScopeFilter,
   type BoardScope,
 } from "@/components/ui/board-scope-filter";
+import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 import {
   createSos,
   resolveSos,
@@ -79,6 +80,12 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
     () => items.filter((item) => item.isMine).length,
     [items],
   );
+  const {
+    visible: visibleOpen,
+    hasMore: hasMoreOpen,
+    remaining: remainingOpen,
+    showMore: showMoreOpen,
+  } = useLoadMore(openItems, 8);
 
   function update<K extends keyof CreateForm>(key: K, value: CreateForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -255,7 +262,7 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
           En cours · {openItems.length}
         </h2>
         <ul className="mt-2 divide-y divide-line border-y border-line">
-          {openItems.map((item) => (
+          {visibleOpen.map((item) => (
             <SosRow
               key={item.id}
               item={item}
@@ -272,6 +279,9 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
             </li>
           ) : null}
         </ul>
+        {hasMoreOpen ? (
+          <LoadMoreButton remaining={remainingOpen} onClick={showMoreOpen} />
+        ) : null}
       </section>
 
       {closedItems.length > 0 ? (

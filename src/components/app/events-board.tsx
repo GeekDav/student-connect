@@ -7,6 +7,7 @@ import {
   BoardScopeFilter,
   type BoardScope,
 } from "@/components/ui/board-scope-filter";
+import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 import {
   cancelEvent,
   createEvent,
@@ -65,6 +66,12 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
     () => events.filter((event) => event.isMine).length,
     [events],
   );
+  const {
+    visible: visibleOpen,
+    hasMore: hasMoreOpen,
+    remaining: remainingOpen,
+    showMore: showMoreOpen,
+  } = useLoadMore(openEvents, 8);
 
   function update<K extends keyof CreateForm>(key: K, value: CreateForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -331,7 +338,7 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
           Places disponibles · {openEvents.length}
         </h2>
         <ul className="mt-2 divide-y divide-line border-y border-line">
-          {openEvents.map((event) => (
+          {visibleOpen.map((event) => (
             <EventRow
               key={event.id}
               event={event}
@@ -349,6 +356,9 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
             </li>
           ) : null}
         </ul>
+        {hasMoreOpen ? (
+          <LoadMoreButton remaining={remainingOpen} onClick={showMoreOpen} />
+        ) : null}
       </section>
 
       {fullEvents.length > 0 ? (

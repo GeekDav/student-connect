@@ -5,6 +5,7 @@ import {
   resolveReport,
   type ReportListItem,
 } from "@/lib/actions/moderation";
+import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 
 function typeLabel(type: ReportListItem["targetType"]) {
   switch (type) {
@@ -40,6 +41,12 @@ export function ManagerModeration({
     () => items.filter((item) => item.status !== "open"),
     [items],
   );
+  const {
+    visible: visibleOpen,
+    hasMore: hasMoreOpen,
+    remaining: remainingOpen,
+    showMore: showMoreOpen,
+  } = useLoadMore(open, 8);
 
   function onResolve(id: string, action: "removed" | "dismissed") {
     setError(null);
@@ -91,7 +98,7 @@ export function ManagerModeration({
           Ouverts · {open.length}
         </h3>
         <ul className="mt-2 divide-y divide-line border-y border-line">
-          {open.map((item) => (
+          {visibleOpen.map((item) => (
             <li key={item.id} className="py-6">
               <p className="text-xs font-semibold text-[#9a4b1a]">
                 {typeLabel(item.targetType)}
@@ -146,6 +153,9 @@ export function ManagerModeration({
             </li>
           ) : null}
         </ul>
+        {hasMoreOpen ? (
+          <LoadMoreButton remaining={remainingOpen} onClick={showMoreOpen} />
+        ) : null}
       </section>
 
       {closed.length > 0 ? (

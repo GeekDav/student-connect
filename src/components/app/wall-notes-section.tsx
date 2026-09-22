@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState, useTransition, type FormEvent } from "react";
 import { ReportButton } from "@/components/app/report-button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 import {
   createWallNote,
   createWallReply,
@@ -27,6 +29,7 @@ export function WallNotesSection({
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { visible, hasMore, remaining, showMore } = useLoadMore(notes, 6);
 
   function onCreate(e: FormEvent) {
     e.preventDefault();
@@ -137,7 +140,7 @@ export function WallNotesSection({
       ) : null}
 
       <ul className="mt-6 divide-y divide-line border-y border-line">
-        {notes.map((note) => {
+        {visible.map((note) => {
           const replyDraft = replyDrafts[note.id] ?? "";
           return (
             <li key={note.id} className="py-5">
@@ -242,11 +245,18 @@ export function WallNotesSection({
           );
         })}
         {notes.length === 0 ? (
-          <li className="py-8 text-center text-sm text-muted">
-            Aucun petit mot pour l’instant. Lance le premier.
+          <li className="border-0 py-6">
+            <EmptyState
+              title="Le mur est encore calme"
+              description="Pose une question, propose une sortie, ou cherche un voisin qui partage ton domaine."
+            />
           </li>
         ) : null}
       </ul>
+
+      {hasMore ? (
+        <LoadMoreButton remaining={remaining} onClick={showMore} />
+      ) : null}
     </section>
   );
 }

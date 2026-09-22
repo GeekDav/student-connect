@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { ContactAuthorLink } from "@/components/app/contact-author-link";
 import { Avatar } from "@/components/ui/avatar";
+import { EmptyState } from "@/components/ui/empty-state";
+import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 import type { DirectoryResident } from "@/lib/actions/residents";
 
 const selectClass =
@@ -75,6 +77,8 @@ export function ResidentsDirectory({
       return haystack.includes(q);
     });
   }, [initialResidents, search, field, interest, nationality, availableOnly]);
+
+  const { visible, hasMore, remaining, showMore } = useLoadMore(filtered, 8);
 
   const activeFilters =
     [field, interest, nationality].filter(Boolean).length +
@@ -207,7 +211,7 @@ export function ResidentsDirectory({
       </div>
 
       <ul className="animate-hero-rise-delay-2 mt-6 divide-y divide-line border-y border-line">
-        {filtered.map((resident) => (
+        {visible.map((resident) => (
           <li
             key={resident.id}
             className="flex gap-4 py-5 transition-colors hover:bg-wash/40"
@@ -262,27 +266,33 @@ export function ResidentsDirectory({
         ))}
 
         {filtered.length === 0 ? (
-          <li className="py-12 text-center">
-            <p className="font-display text-lg font-semibold text-ink">
-              Aucun résident trouvé
-            </p>
-            <p className="mt-2 text-sm text-muted">
-              {initialResidents.length === 0
-                ? "Pas encore d’autres résidents validés dans ta résidence."
-                : "Élargis ta recherche ou réinitialise les filtres."}
-            </p>
-            {initialResidents.length > 0 ? (
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="mt-5 inline-flex h-11 items-center justify-center rounded-lg border border-line bg-surface px-5 text-sm font-semibold text-ink transition-colors hover:bg-wash"
-              >
-                Réinitialiser
-              </button>
-            ) : null}
+          <li className="border-0 py-6">
+            <EmptyState
+              title="Aucun résident trouvé"
+              description={
+                initialResidents.length === 0
+                  ? "Pas encore d’autres résidents validés dans ta résidence."
+                  : "Élargis ta recherche ou réinitialise les filtres."
+              }
+              action={
+                initialResidents.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="inline-flex h-11 items-center justify-center rounded-lg border border-line bg-surface px-5 text-sm font-semibold text-ink transition-colors hover:bg-wash"
+                  >
+                    Réinitialiser
+                  </button>
+                ) : null
+              }
+            />
           </li>
         ) : null}
       </ul>
+
+      {hasMore ? (
+        <LoadMoreButton remaining={remaining} onClick={showMore} />
+      ) : null}
 
       <p className="mt-6 text-xs leading-relaxed text-muted">
         Les numéros de chambre ne sont jamais affichés ici. La nationalité

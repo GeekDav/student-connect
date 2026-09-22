@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { WallNotesSection } from "@/components/app/wall-notes-section";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ViewAnnouncementImage } from "@/components/ui/view-announcement-image";
 import type { AnnouncementItem } from "@/lib/actions/announcements";
 import type { EventItem } from "@/lib/actions/events";
@@ -130,9 +131,12 @@ export function AccueilFeed({
             ))}
           </ul>
         ) : (
-          <p className="mt-4 text-sm text-muted">
-            Aucune annonce officielle pour le moment.
-          </p>
+          <div className="mt-4">
+            <EmptyState
+              title="Tableau d’affichage vide"
+              description="Les annonces officielles de ta résidence apparaîtront ici."
+            />
+          </div>
         )}
       </section>
 

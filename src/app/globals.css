@@ -114,6 +114,14 @@ body {
   animation: avatar-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.animate-soft-fade {
+  animation: soft-fade 0.55s ease both;
+}
+
+.animate-list-item {
+  animation: hero-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 html.sc-modal-open,
 html.sc-modal-open body {
   overflow: hidden;
@@ -145,6 +153,8 @@ html.sc-modal-open body {
   .animate-hero-zoom,
   .animate-nav,
   .animate-avatar-pop,
+  .animate-soft-fade,
+  .animate-list-item,
   .sc-lightbox-backdrop,
   .sc-lightbox-panel {
     animation: none;

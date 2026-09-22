@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/ui/avatar";
+import { BackToTop } from "@/components/ui/back-to-top";
 import { LogoutButton } from "@/components/ui/logout-button";
 
 const NAV = [
@@ -137,6 +138,8 @@ export function AppShell({
           </li>
         </ul>
       </nav>
+
+      <BackToTop />
     </div>
   );
 }

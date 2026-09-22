@@ -5,6 +5,7 @@ import {
   removeResident,
   type ResidenceMemberItem,
 } from "@/lib/actions/manager-memberships";
+import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 
 const fieldClass =
   "mt-2 w-full rounded-lg border border-line bg-surface px-3.5 py-3 text-[15px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-accent focus:shadow-[0_0_0_3px_rgba(12,107,92,0.12)]";
@@ -43,6 +44,12 @@ export function ManagerResidents({
     () => members.filter((m) => m.status === "left"),
     [members],
   );
+  const {
+    visible: visibleActive,
+    hasMore: hasMoreActive,
+    remaining: remainingActive,
+    showMore: showMoreActive,
+  } = useLoadMore(active, 10);
 
   const confirming = members.find((m) => m.id === confirmId) ?? null;
 
@@ -108,7 +115,7 @@ export function ManagerResidents({
           Actifs · {active.length}
         </h3>
         <ul className="mt-2 divide-y divide-line border-y border-line">
-          {active.map((member) => (
+          {visibleActive.map((member) => (
             <li key={member.id} className="py-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -148,6 +155,9 @@ export function ManagerResidents({
             </li>
           ) : null}
         </ul>
+        {hasMoreActive ? (
+          <LoadMoreButton remaining={remainingActive} onClick={showMoreActive} />
+        ) : null}
       </section>
 
       {left.length > 0 ? (

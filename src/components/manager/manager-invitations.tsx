@@ -6,6 +6,7 @@ import {
   revokeResidenceInvitation,
   type InvitationItem,
 } from "@/lib/actions/invitations";
+import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 
 const fieldClass =
   "mt-2 w-full rounded-lg border border-line bg-surface px-3.5 py-3 text-[15px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-accent focus:shadow-[0_0_0_3px_rgba(12,107,92,0.12)]";
@@ -22,6 +23,7 @@ export function ManagerInvitations({
   const [error, setError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { visible, hasMore, remaining, showMore } = useLoadMore(items, 8);
 
   function absoluteInviteUrl(path: string) {
     if (typeof window === "undefined") return path;
@@ -172,7 +174,7 @@ export function ManagerInvitations({
       </form>
 
       <ul className="animate-hero-rise-delay-2 mt-10 divide-y divide-line border-y border-line">
-        {items.map((item) => (
+        {visible.map((item) => (
           <li key={item.id} className="py-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -240,6 +242,9 @@ export function ManagerInvitations({
           </li>
         ) : null}
       </ul>
+      {hasMore ? (
+        <LoadMoreButton remaining={remaining} onClick={showMore} />
+      ) : null}
     </div>
   );
 }
