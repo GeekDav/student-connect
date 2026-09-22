@@ -25,13 +25,27 @@ export function CreateResidenceForm({
     managerName: "",
     managerEmail: "",
     managerPassword: "",
+    managerPasswordConfirm: "",
   });
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (form.managerPassword !== form.managerPasswordConfirm) {
+      setError("Les mots de passe ne correspondent pas.");
+      return;
+    }
     startTransition(async () => {
-      const result = await startSelfServeResidence(form);
+      const result = await startSelfServeResidence({
+        residenceName: form.residenceName,
+        city: form.city,
+        address: form.address,
+        operator: form.operator,
+        managerName: form.managerName,
+        managerEmail: form.managerEmail,
+        managerPassword: form.managerPassword,
+        managerPasswordConfirm: form.managerPasswordConfirm,
+      });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -196,6 +210,29 @@ export function CreateResidenceForm({
               }
             />
             <p className="mt-1.5 text-xs text-muted">8 caractères minimum.</p>
+          </div>
+          <div>
+            <label
+              htmlFor="managerPasswordConfirm"
+              className="text-sm font-medium text-ink"
+            >
+              Confirmer le mot de passe
+            </label>
+            <input
+              id="managerPasswordConfirm"
+              type="password"
+              className={fieldClass}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={form.managerPasswordConfirm}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  managerPasswordConfirm: e.target.value,
+                }))
+              }
+            />
           </div>
         </fieldset>
 

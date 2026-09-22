@@ -39,6 +39,7 @@ export async function startSelfServeResidence(input: {
   managerName: string;
   managerEmail: string;
   managerPassword: string;
+  managerPasswordConfirm?: string;
 }): Promise<SelfServeResult> {
   if (!isStripeConfigured()) {
     return {
@@ -71,6 +72,12 @@ export async function startSelfServeResidence(input: {
   }
   if (managerPassword.length < 8) {
     return { ok: false, error: "Mot de passe : 8 caractères minimum." };
+  }
+  if (
+    input.managerPasswordConfirm != null &&
+    managerPassword !== input.managerPasswordConfirm
+  ) {
+    return { ok: false, error: "Les mots de passe ne correspondent pas." };
   }
 
   const existingUser = await prisma.user.findUnique({
