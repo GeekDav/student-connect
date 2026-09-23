@@ -14,6 +14,10 @@ import {
   unpublishAnnouncement,
   type AnnouncementItem,
 } from "@/lib/actions/announcements";
+import {
+  prepareImageForUpload,
+  uploadTransportError,
+} from "@/lib/client-image";
 
 const fieldClass =
   "mt-2 w-full rounded-lg border border-line bg-surface px-3.5 py-3 text-[15px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-accent focus:shadow-[0_0_0_3px_rgba(12,107,92,0.12)]";
@@ -42,9 +46,25 @@ export function ManagerAnnonces({
     if (fileRef.current) fileRef.current.value = "";
   }
 
-  function onPickImage(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    setImageFile(file);
+  async function onPickImage(e: ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.files?.[0] ?? null;
+    e.target.value = "";
+    if (!raw) {
+      setImageFile(null);
+      return;
+    }
+
+    setFormError(null);
+    const prepared = await prepareImageForUpload(raw, {
+      maxEdge: 1600,
+      maxBytes: 1.6 * 1024 * 1024,
+    });
+    if (!prepared.ok) {
+      setImageFile(null);
+      setFormError(prepared.error);
+      return;
+    }
+    setImageFile(prepared.file);
   }
 
   function onCreate(e: FormEvent) {
@@ -62,18 +82,22 @@ export function ManagerAnnonces({
 
     setFormError(null);
     startTransition(async () => {
-      const result = await createAnnouncement(formData);
-      if (!result.ok) {
-        setFormError(result.error);
-        return;
+      try {
+        const result = await createAnnouncement(formData);
+        if (!result.ok) {
+          setFormError(result.error);
+          return;
+        }
+        if (result.item) {
+          setItems((prev) => [result.item!, ...prev]);
+        }
+        setTitle("");
+        setBody("");
+        clearImage();
+        setMode("list");
+      } catch (err) {
+        setFormError(uploadTransportError(err));
       }
-      if (result.item) {
-        setItems((prev) => [result.item!, ...prev]);
-      }
-      setTitle("");
-      setBody("");
-      clearImage();
-      setMode("list");
     });
   }
 
@@ -150,7 +174,7 @@ export function ManagerAnnonces({
             <input
               ref={fileRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,image/jpg,.jpg,.jpeg,.png,.webp"
               className="hidden"
               onChange={onPickImage}
             />
@@ -178,7 +202,7 @@ export function ManagerAnnonces({
               ) : null}
             </div>
             <p className="mt-1.5 text-xs text-muted">
-              JPG, PNG ou WebP · max 2 Mo
+              JPG, PNG ou WebP. Photos téléphone compressées auto · pas de HEIC.
             </p>
           </div>
 

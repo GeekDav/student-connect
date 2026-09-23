@@ -18,6 +18,10 @@ import {
   updateProfile,
   uploadAvatar,
 } from "@/lib/actions/profile";
+import {
+  prepareImageForUpload,
+  uploadTransportError,
+} from "@/lib/client-image";
 import type { StudentProfile } from "@/data/mock-profile";
 
 const fieldClass =
@@ -117,20 +121,37 @@ export function ProfileEditor({
     e.target.value = "";
     if (!file) return;
 
-    const formData = new FormData();
-    formData.set("avatar", file);
     setAvatarError(null);
     setAvatarSuccess(null);
 
     startAvatarTransition(async () => {
-      const result = await uploadAvatar(formData);
-      if (!result.ok) {
-        setAvatarError(result.error);
-        return;
+      try {
+        const prepared = await prepareImageForUpload(file, {
+          maxEdge: 960,
+          maxBytes: 1.4 * 1024 * 1024,
+        });
+        if (!prepared.ok) {
+          setAvatarError(prepared.error);
+          return;
+        }
+
+        const formData = new FormData();
+        formData.set("avatar", prepared.file);
+        const result = await uploadAvatar(formData);
+        if (!result.ok) {
+          setAvatarError(result.error);
+          return;
+        }
+        if (result.avatarUrl) setAvatarUrl(result.avatarUrl);
+        setAvatarSuccess(
+          prepared.wasProcessed
+            ? "Photo mise à jour (optimisée pour le mobile)."
+            : "Photo mise à jour.",
+        );
+        router.refresh();
+      } catch (err) {
+        setAvatarError(uploadTransportError(err));
       }
-      if (result.avatarUrl) setAvatarUrl(result.avatarUrl);
-      setAvatarSuccess("Photo mise à jour.");
-      router.refresh();
     });
   }
 
@@ -242,13 +263,13 @@ export function ProfileEditor({
           <input
             ref={fileRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/jpg,.jpg,.jpeg,.png,.webp"
             className="hidden"
             onChange={onPickPhoto}
           />
           <p className="mt-4 text-xs text-muted">
-            JPG, PNG ou WebP · max 2 Mo. Visible dans l’annuaire et les
-            messages.
+            JPG, PNG ou WebP. Les grosses photos (téléphone) sont compressées
+            automatiquement. HEIC iPhone non supporté.
           </p>
           {avatarError ? (
             <p className="mt-2 text-sm text-red-700" role="alert">

@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "**.private.blob.vercel-storage.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "**.blob.vercel-storage.com",
         pathname: "/**",
       },
@@ -24,7 +29,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: "3mb",
+      // Sous la limite dure Vercel (~4,5 Mo). Les images sont compressées côté client.
+      bodySizeLimit: "4mb",
     },
   },
 };
