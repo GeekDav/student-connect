@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AnchorLink } from "./anchor-link";
 import { Reveal } from "./reveal";
+import { ScrollToHash } from "./scroll-to-hash";
 
 const features = [
   {
@@ -39,6 +41,7 @@ const managerSteps = [
 export function LandingPage() {
   return (
     <div className="bg-background text-foreground">
+      <ScrollToHash />
       <header className="animate-nav absolute inset-x-0 top-0 z-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
           <Link
@@ -48,12 +51,12 @@ export function LandingPage() {
             Student-Connect
           </Link>
           <div className="flex items-center gap-4">
-            <Link
-              href="/#partenaires"
+            <AnchorLink
+              hash="partenaires"
               className="hidden text-sm font-medium text-white/85 transition-colors hover:text-white sm:inline"
             >
               Pour les résidences
-            </Link>
+            </AnchorLink>
             <Link
               href="/connexion"
               className="text-sm font-medium text-white/85 transition-colors hover:text-white"
@@ -102,12 +105,12 @@ export function LandingPage() {
             >
               Rejoindre ma résidence
             </Link>
-            <Link
-              href="/#partenaires"
+            <AnchorLink
+              hash="partenaires"
               className="inline-flex h-12 items-center justify-center rounded-lg border border-white/35 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur-sm transition-[background-color,border-color] duration-200 hover:border-white/55 hover:bg-white/18"
             >
               Je gère une résidence
-            </Link>
+            </AnchorLink>
           </div>
         </div>
       </section>
@@ -161,7 +164,7 @@ export function LandingPage() {
 
       <section
         id="partenaires"
-        className="relative overflow-hidden border-y border-line bg-wash"
+        className="relative scroll-mt-6 overflow-hidden border-y border-line bg-wash"
       >
         <div
           className="pointer-events-none absolute inset-0 opacity-70"
@@ -228,7 +231,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section id="offre" className="bg-surface">
+      <section id="offre" className="scroll-mt-6 bg-surface">
         <Reveal className="mx-auto max-w-3xl px-5 py-20 sm:px-8 sm:py-24">
           <h2 className="font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
             Offre pilote
@@ -311,12 +314,12 @@ export function LandingPage() {
             <Link href="/nous-contacter" className="hover:text-ink">
               Nous contacter
             </Link>
-            <Link href="/#partenaires" className="hover:text-ink">
+            <AnchorLink hash="partenaires" className="hover:text-ink">
               Phase pilote
-            </Link>
-            <Link href="/#offre" className="hover:text-ink">
+            </AnchorLink>
+            <AnchorLink hash="offre" className="hover:text-ink">
               Offre
-            </Link>
+            </AnchorLink>
             <Link href="/mentions-legales" className="hover:text-ink">
               Mentions légales
             </Link>

@@ -54,7 +54,7 @@ export default async function CreateResidencePage({
               Connexion gestionnaire
             </Link>
             <Link
-              href="/#partenaires"
+              href="/nous-contacter"
               className="inline-flex h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash"
             >
               Voir la phase pilote

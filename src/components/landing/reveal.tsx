@@ -16,6 +16,14 @@ export function Reveal({
     const node = ref.current;
     if (!node) return;
 
+    // Hash / scroll déjà positionné : rendre visible tout de suite
+    // (évite opacity-0 bloquant après navigation #ancre).
+    const rect = node.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.92 && rect.bottom > 0) {
+      setVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -23,7 +31,7 @@ export function Reveal({
           observer.disconnect();
         }
       },
-      { threshold: 0.18 },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
     );
 
     observer.observe(node);
@@ -35,8 +43,8 @@ export function Reveal({
       ref={ref}
       className={`transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none ${
         visible
-          ? "translate-y-0 opacity-100"
-          : "translate-y-5 opacity-0"
+          ? "pointer-events-auto translate-y-0 opacity-100"
+          : "pointer-events-none translate-y-5 opacity-0"
       } ${className}`}
     >
       {children}
