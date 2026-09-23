@@ -5,6 +5,7 @@ import {
   removeResident,
   type ResidenceMemberItem,
 } from "@/lib/actions/manager-memberships";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 
 const fieldClass =
@@ -17,6 +18,59 @@ const REASONS = [
   "Autre",
 ] as const;
 
+type StatusFilter = "active" | "left" | "all";
+
+function csvEscape(value: string) {
+  const v = value.replace(/"/g, '""');
+  return `"${v}"`;
+}
+
+function downloadResidentsCsv(
+  rows: ResidenceMemberItem[],
+  filter: StatusFilter,
+) {
+  const header = [
+    "prenom",
+    "nom",
+    "email",
+    "chambre",
+    "ecole",
+    "domaine",
+    "statut",
+    "valide_le",
+    "parti_le",
+    "motif_depart",
+  ];
+  const lines = [
+    header.join(","),
+    ...rows.map((m) =>
+      [
+        m.firstName,
+        m.lastName,
+        m.email,
+        m.roomNumber,
+        m.school,
+        m.fieldOfStudy,
+        m.status === "active" ? "actif" : "parti",
+        m.joinedAt,
+        m.leftAt ?? "",
+        m.leaveReason ?? "",
+      ]
+        .map(csvEscape)
+        .join(","),
+    ),
+  ];
+  const blob = new Blob([`\uFEFF${lines.join("\n")}`], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `residents-${filter}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export function ManagerResidents({
   initialMembers,
 }: {
@@ -24,34 +78,34 @@ export function ManagerResidents({
 }) {
   const [members, setMembers] = useState(initialMembers);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [reason, setReason] = useState<string>(REASONS[0]);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const active = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return members.filter((m) => {
-      if (m.status !== "active") return false;
+      if (statusFilter === "active" && m.status !== "active") return false;
+      if (statusFilter === "left" && m.status !== "left") return false;
       if (!q) return true;
-      return `${m.firstName} ${m.lastName} ${m.email} ${m.roomNumber} ${m.fieldOfStudy}`
+      return `${m.firstName} ${m.lastName} ${m.email} ${m.roomNumber} ${m.fieldOfStudy} ${m.school}`
         .toLowerCase()
         .includes(q);
     });
-  }, [members, query]);
+  }, [members, query, statusFilter]);
 
-  const left = useMemo(
-    () => members.filter((m) => m.status === "left"),
-    [members],
-  );
   const {
-    visible: visibleActive,
-    hasMore: hasMoreActive,
-    remaining: remainingActive,
-    showMore: showMoreActive,
-  } = useLoadMore(active, 10);
+    visible,
+    hasMore,
+    remaining,
+    showMore,
+  } = useLoadMore(filtered, 10);
 
   const confirming = members.find((m) => m.id === confirmId) ?? null;
+  const activeCount = members.filter((m) => m.status === "active").length;
+  const leftCount = members.filter((m) => m.status === "left").length;
 
   function confirmRemove() {
     if (!confirmId) return;
@@ -86,8 +140,8 @@ export function ManagerResidents({
           Résidents
         </h2>
         <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
-          Quand un étudiant quitte la résidence, retire-le ici. Son accès est
-          coupé tout de suite ; le compte n’est pas effacé.
+          Cherche, filtre, exporte ta liste. Retire un étudiant qui part : accès
+          coupé tout de suite, compte conservé.
         </p>
       </div>
 
@@ -97,97 +151,118 @@ export function ManagerResidents({
         </p>
       ) : null}
 
-      <div className="animate-hero-rise-delay mt-8">
-        <label htmlFor="member-search" className="text-sm font-medium text-ink">
-          Rechercher
-        </label>
-        <input
-          id="member-search"
-          className={fieldClass}
-          placeholder="Nom, chambre, e-mail…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+      <div className="animate-hero-rise-delay mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <label htmlFor="member-search" className="text-sm font-medium text-ink">
+            Rechercher
+          </label>
+          <input
+            id="member-search"
+            className={fieldClass}
+            placeholder="Nom, chambre, e-mail, école…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => downloadResidentsCsv(filtered, statusFilter)}
+          disabled={filtered.length === 0}
+          className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-50"
+        >
+          Exporter CSV ({filtered.length})
+        </button>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        {(
+          [
+            { id: "active", label: `Actifs · ${activeCount}` },
+            { id: "left", label: `Partis · ${leftCount}` },
+            { id: "all", label: `Tous · ${members.length}` },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setStatusFilter(tab.id)}
+            className={`inline-flex h-10 items-center rounded-lg px-3.5 text-sm font-medium transition-colors ${
+              statusFilter === tab.id
+                ? "bg-accent text-white"
+                : "border border-line bg-surface text-muted hover:bg-wash hover:text-ink"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <section className="mt-10">
         <h3 className="font-display text-sm font-semibold tracking-wide text-ink">
-          Actifs · {active.length}
+          Liste · {filtered.length}
         </h3>
-        <ul className="mt-2 divide-y divide-line border-y border-line">
-          {visibleActive.map((member) => (
-            <li key={member.id} className="py-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h4 className="font-display text-lg font-semibold text-ink">
-                    {member.firstName} {member.lastName}
-                  </h4>
-                  <p className="mt-1 text-sm text-ink">
-                    Chambre {member.roomNumber}
-                    <span className="text-muted">
-                      {" "}
-                      · {member.fieldOfStudy}
-                    </span>
-                  </p>
-                  <p className="mt-1 text-sm text-muted">{member.email}</p>
-                  <p className="mt-1 text-xs text-muted">
-                    Validé le {member.joinedAt}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => {
-                    setConfirmId(member.id);
-                    setReason(REASONS[0]);
-                    setError(null);
-                  }}
-                  className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-60"
-                >
-                  Retirer de la résidence
-                </button>
-              </div>
-            </li>
-          ))}
-          {active.length === 0 ? (
-            <li className="py-10 text-center text-sm text-muted">
-              Aucun résident actif trouvé.
-            </li>
-          ) : null}
-        </ul>
-        {hasMoreActive ? (
-          <LoadMoreButton remaining={remainingActive} onClick={showMoreActive} />
-        ) : null}
+        {filtered.length === 0 ? (
+          <div className="mt-2">
+            <EmptyState
+              title="Aucun résident pour ce filtre"
+              description="Change le filtre ou la recherche, ou invite de nouveaux étudiants."
+            />
+          </div>
+        ) : (
+          <>
+            <ul className="mt-2 divide-y divide-line border-y border-line">
+              {visible.map((member) => (
+                <li key={member.id} className="py-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h4 className="font-display text-lg font-semibold text-ink">
+                        {member.firstName} {member.lastName}
+                      </h4>
+                      <p className="mt-1 text-sm text-ink">
+                        Chambre {member.roomNumber}
+                        <span className="text-muted">
+                          {" "}
+                          · {member.fieldOfStudy}
+                          {member.school !== "—" ? ` · ${member.school}` : ""}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-sm text-muted">{member.email}</p>
+                      <p className="mt-1 text-xs text-muted">
+                        {member.status === "active"
+                          ? `Validé le ${member.joinedAt}`
+                          : `Parti${member.leftAt ? ` · ${member.leftAt}` : ""}${
+                              member.leaveReason
+                                ? ` · ${member.leaveReason}`
+                                : ""
+                            }`}
+                      </p>
+                    </div>
+                    {member.status === "active" ? (
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => {
+                          setConfirmId(member.id);
+                          setReason(REASONS[0]);
+                          setError(null);
+                        }}
+                        className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-60"
+                      >
+                        Retirer de la résidence
+                      </button>
+                    ) : (
+                      <p className="text-sm font-semibold text-muted">Parti</p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {hasMore ? (
+              <LoadMoreButton remaining={remaining} onClick={showMore} />
+            ) : null}
+          </>
+        )}
       </section>
-
-      {left.length > 0 ? (
-        <section className="mt-12">
-          <h3 className="font-display text-sm font-semibold tracking-wide text-muted">
-            Partis · {left.length}
-          </h3>
-          <ul className="mt-2 divide-y divide-line border-y border-line opacity-80">
-            {left.map((member) => (
-              <li
-                key={member.id}
-                className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="font-medium text-ink">
-                    {member.firstName} {member.lastName}
-                  </p>
-                  <p className="text-xs text-muted">
-                    Chambre {member.roomNumber}
-                    {member.leaveReason ? ` · ${member.leaveReason}` : ""}
-                  </p>
-                </div>
-                <p className="text-sm font-semibold text-muted">
-                  Parti{member.leftAt ? ` · ${member.leftAt}` : ""}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
 
       {confirming ? (
         <div

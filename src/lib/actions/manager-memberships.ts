@@ -163,6 +163,7 @@ export type ResidenceMemberItem = {
   email: string;
   roomNumber: string;
   fieldOfStudy: string;
+  school: string;
   status: "active" | "left";
   joinedAt: string;
   leftAt?: string;
@@ -195,6 +196,7 @@ export async function listResidenceMembers(): Promise<ResidenceMemberItem[]> {
     email: row.user.email,
     roomNumber: row.user.roomNumber ?? "—",
     fieldOfStudy: row.user.fieldOfStudy ?? "—",
+    school: row.user.school ?? "—",
     status: row.status === MembershipStatus.ACTIVE ? "active" : "left",
     joinedAt: formatDate(row.decidedAt ?? row.createdAt),
     leftAt: row.leftAt ? formatDate(row.leftAt) : undefined,
