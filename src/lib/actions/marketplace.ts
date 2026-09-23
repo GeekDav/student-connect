@@ -122,7 +122,7 @@ export async function createMarketItem(input: {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const title = input.title.trim();
   const description = input.description.trim();
@@ -167,7 +167,7 @@ export async function toggleMarketInterest(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const item = await prisma.marketplaceItem.findFirst({
     where: { id: itemId, residenceId: ctx.residenceId },
@@ -225,7 +225,7 @@ export async function markMarketGone(itemId: string): Promise<MarketActionResult
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const item = await prisma.marketplaceItem.findFirst({
     where: {

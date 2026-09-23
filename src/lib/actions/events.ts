@@ -82,7 +82,7 @@ export async function createEvent(input: {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const title = input.title.trim();
   const description = input.description.trim();
@@ -130,7 +130,7 @@ export async function toggleEventJoin(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const event = await prisma.microEvent.findFirst({
     where: { id: eventId, residenceId: ctx.residenceId },
@@ -189,7 +189,7 @@ export async function cancelEvent(eventId: string): Promise<EventActionResult> {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const event = await prisma.microEvent.findFirst({
     where: {
@@ -220,7 +220,7 @@ export async function updateEventSpots(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   if (!Number.isFinite(spotsTotal) || spotsTotal < 2 || spotsTotal > 30) {
     return { ok: false, error: "Entre 2 et 30 places." };

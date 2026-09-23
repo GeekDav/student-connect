@@ -154,7 +154,7 @@ export async function createWallNote(body: string): Promise<WallActionResult> {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const text = body.trim();
   if (!text) return { ok: false, error: "Écris un petit mot." };
@@ -202,7 +202,7 @@ export async function deleteWallNote(noteId: string): Promise<WallActionResult> 
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const note = await prisma.wallNote.findFirst({
     where: {
@@ -228,7 +228,7 @@ export async function createWallReply(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const text = body.trim();
   if (!text) return { ok: false, error: "Écris une réponse." };
@@ -270,7 +270,7 @@ export async function deleteWallReply(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const reply = await prisma.wallNoteReply.findFirst({
     where: {

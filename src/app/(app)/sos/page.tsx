@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SosPage() {
-  await requireActiveStudent();
+  const ctx = await requireActiveStudent();
   const items = await listResidenceSos();
-  return <SosBoard initialItems={items} />;
+  return <SosBoard initialItems={items} readOnly={!ctx.isResident} />;
 }

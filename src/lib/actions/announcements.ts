@@ -4,6 +4,7 @@ import { MembershipStatus, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getActiveStudentContext } from "@/lib/student-context";
 import { deletePublicUpload, saveAnnouncementImage } from "@/lib/uploads";
 
 export type AnnouncementItem = {
@@ -200,22 +201,16 @@ export async function unpublishAnnouncement(
 }
 
 export async function listStudentAnnouncements(): Promise<AnnouncementItem[]> {
-  const session = await getSession();
-  if (!session || session.role !== Role.STUDENT) return [];
-
-  const membership = await prisma.residenceMembership.findFirst({
-    where: { userId: session.userId, status: "ACTIVE" },
-    select: { residenceId: true },
-  });
-  if (!membership) return [];
+  const ctx = await getActiveStudentContext();
+  if (!ctx) return [];
 
   const rows = await prisma.officialAnnouncement.findMany({
-    where: { residenceId: membership.residenceId, published: true },
+    where: { residenceId: ctx.residenceId, published: true },
     orderBy: { createdAt: "desc" },
     take: 20,
     include: {
       reads: {
-        where: { userId: session.userId },
+        where: { userId: ctx.session.userId },
         select: { id: true },
         take: 1,
       },
@@ -223,7 +218,9 @@ export async function listStudentAnnouncements(): Promise<AnnouncementItem[]> {
   });
 
   return rows.map((row) =>
-    mapAnnouncement(row, { unread: row.reads.length === 0 }),
+    mapAnnouncement(row, {
+      unread: ctx.isResident ? row.reads.length === 0 : false,
+    }),
   );
 }
 

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function EvenementsPage() {
-  await requireActiveStudent();
+  const ctx = await requireActiveStudent();
   const events = await listResidenceEvents();
-  return <EventsBoard initialEvents={events} />;
+  return <EventsBoard initialEvents={events} readOnly={!ctx.isResident} />;
 }

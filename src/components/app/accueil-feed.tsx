@@ -14,6 +14,7 @@ export function AccueilFeed({
   sosItems,
   marketItems,
   wallNotes,
+  readOnly = false,
 }: {
   firstName: string;
   announcements: AnnouncementItem[];
@@ -21,6 +22,7 @@ export function AccueilFeed({
   sosItems: SosItem[];
   marketItems: MarketItem[];
   wallNotes: WallNoteItem[];
+  readOnly?: boolean;
 }) {
   const openEvents = events.filter((e) => e.spotsTaken < e.spotsTotal);
   const openSos = sosItems.filter((s) => s.status !== "closed");
@@ -49,7 +51,9 @@ export function AccueilFeed({
           Dans ta résidence
         </h1>
         <p className="mt-2 max-w-md text-base leading-relaxed text-muted">
-          Annonces, activités et coups de main — uniquement ici.
+          {readOnly
+            ? "Consultation de l’activité de la résidence."
+            : "Annonces, activités et coups de main — uniquement ici."}
         </p>
       </div>
 
@@ -63,7 +67,9 @@ export function AccueilFeed({
           </p>
         ) : (
           <p className="mt-1.5 text-sm text-muted">
-            Calme pour l’instant — propose un event, un SOS ou un petit mot.
+            {readOnly
+              ? "Rien d’urgent pour le moment."
+              : "Calme pour l’instant — propose un event, un SOS ou un petit mot."}
           </p>
         )}
         <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm">
@@ -79,6 +85,7 @@ export function AccueilFeed({
         </div>
       </div>
 
+      {!readOnly ? (
       <div className="animate-hero-rise-delay mt-8 flex gap-2 overflow-x-auto pb-1">
         {[
           { href: "/evenements", label: "Proposer un event" },
@@ -94,12 +101,13 @@ export function AccueilFeed({
           </Link>
         ))}
       </div>
+      ) : null}
 
       <div className="animate-hero-rise-delay-2 mt-10">
         <AccueilAnnouncements initial={announcements} />
       </div>
 
-      <WallNotesSection initialNotes={wallNotes} />
+      <WallNotesSection initialNotes={wallNotes} readOnly={readOnly} />
 
       <section className="mt-12">
         <div className="flex items-end justify-between gap-3">

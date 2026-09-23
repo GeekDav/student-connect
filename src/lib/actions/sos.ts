@@ -103,7 +103,7 @@ export async function createSos(input: {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const title = input.title.trim();
   const description = input.description.trim();
@@ -134,7 +134,7 @@ export async function toggleSosHelp(sosId: string): Promise<SosActionResult> {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const sos = await prisma.sosRequest.findFirst({
     where: { id: sosId, residenceId: ctx.residenceId },
@@ -187,7 +187,7 @@ export async function resolveSos(sosId: string): Promise<SosActionResult> {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const sos = await prisma.sosRequest.findFirst({
     where: {

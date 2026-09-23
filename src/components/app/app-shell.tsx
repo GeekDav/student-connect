@@ -21,15 +21,19 @@ export function AppShell({
   firstName,
   lastName,
   avatarUrl,
+  managerView = false,
 }: {
   children: ReactNode;
   residenceName: string;
   firstName: string;
   lastName: string;
   avatarUrl?: string | null;
+  /** Gestionnaire consultant les boards étudiants (lecture seule). */
+  managerView?: boolean;
 }) {
   const pathname = usePathname();
   const fullName = `${firstName} ${lastName}`.trim();
+  const homeHref = managerView ? "/gestionnaire" : "/accueil";
 
   return (
     <div className="min-h-[100svh]">
@@ -37,14 +41,24 @@ export function AppShell({
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <div className="min-w-0">
             <Link
-              href="/accueil"
+              href={homeHref}
               className="font-display text-sm font-semibold tracking-wide text-ink transition-opacity hover:opacity-70"
             >
               Student-Connect
             </Link>
-            <p className="mt-0.5 truncate text-xs text-muted">{residenceName}</p>
+            <p className="mt-0.5 truncate text-xs text-muted">
+              {managerView ? `Vue résidence · ${residenceName}` : residenceName}
+            </p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            {managerView ? (
+              <Link
+                href="/gestionnaire"
+                className="text-sm font-semibold text-accent transition-colors hover:opacity-80"
+              >
+                Dashboard
+              </Link>
+            ) : null}
             <Link
               href="/messages"
               className="text-sm font-medium text-muted transition-colors hover:text-ink"

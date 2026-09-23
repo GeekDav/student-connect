@@ -38,7 +38,13 @@ const EMPTY_FORM: CreateForm = {
   spotsTotal: "4",
 };
 
-export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
+export function EventsBoard({
+  initialEvents,
+  readOnly = false,
+}: {
+  initialEvents: EventItem[];
+  readOnly?: boolean;
+}) {
   const [events, setEvents] = useState(initialEvents);
   const [mode, setMode] = useState<"list" | "create">("list");
   const [form, setForm] = useState<CreateForm>(EMPTY_FORM);
@@ -172,7 +178,7 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
     });
   }
 
-  if (mode === "create") {
+  if (mode === "create" && !readOnly) {
     return (
       <div>
         <div className="animate-hero-rise">
@@ -314,10 +320,12 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
             Événements
           </h1>
           <p className="mt-2 max-w-md text-base leading-relaxed text-muted">
-            FIFA, sorties, révisions… propose ou rejoins une activité dans ta
-            résidence.
+            {readOnly
+              ? "Activités proposées par les résidents — consultation seule."
+              : "FIFA, sorties, révisions… propose ou rejoins une activité dans ta résidence."}
           </p>
         </div>
+        {!readOnly ? (
         <button
           type="button"
           onClick={() => setMode("create")}
@@ -325,6 +333,7 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
         >
           Proposer
         </button>
+        ) : null}
       </div>
 
       {formError ? (
@@ -333,6 +342,7 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
         </p>
       ) : null}
 
+      {!readOnly ? (
       <div className="animate-hero-rise-delay mt-8">
         <BoardScopeFilter
           value={scope}
@@ -341,6 +351,7 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
           mineCount={mineCount}
         />
       </div>
+      ) : null}
 
       <section className="mt-8">
         <h2 className="font-display text-sm font-semibold tracking-wide text-ink">
@@ -352,6 +363,7 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
               key={event.id}
               event={event}
               busy={isPending}
+              readOnly={readOnly}
               onToggle={() => onToggleJoin(event.id)}
               onCancel={() => onCancel(event.id)}
               onUpdateSpots={(spots) => onUpdateSpots(event.id, spots)}
@@ -359,9 +371,11 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
           ))}
           {openEvents.length === 0 ? (
             <li className="py-10 text-center text-sm text-muted">
-              {scope === "mine"
-                ? "Tu n’as aucun événement ouvert. Propose-en un !"
-                : "Aucune place ouverte pour le moment. Propose quelque chose !"}
+              {readOnly
+                ? "Aucun événement ouvert pour le moment."
+                : scope === "mine"
+                  ? "Tu n’as aucun événement ouvert. Propose-en un !"
+                  : "Aucune place ouverte pour le moment. Propose quelque chose !"}
             </li>
           ) : null}
         </ul>
@@ -386,6 +400,7 @@ export function EventsBoard({ initialEvents }: { initialEvents: EventItem[] }) {
                   key={event.id}
                   event={event}
                   busy={isPending}
+                  readOnly={readOnly}
                   onToggle={() => onToggleJoin(event.id)}
                   onCancel={() => onCancel(event.id)}
                   onUpdateSpots={(spots) => onUpdateSpots(event.id, spots)}
@@ -405,12 +420,14 @@ function EventRow({
   onToggle,
   onCancel,
   onUpdateSpots,
+  readOnly = false,
 }: {
   event: EventItem;
   busy: boolean;
   onToggle: () => void;
   onCancel: () => void;
   onUpdateSpots: (spotsTotal: number) => void;
+  readOnly?: boolean;
 }) {
   const remaining = event.spotsTotal - event.spotsTaken;
   const isFull = remaining <= 0;
@@ -456,7 +473,7 @@ function EventRow({
             Par {event.author} · {event.spotsTaken}/{event.spotsTotal} inscrits
             {!isFull ? ` · ${remaining} place${remaining > 1 ? "s" : ""}` : ""}
           </p>
-          {event.isMine ? (
+          {!readOnly && event.isMine ? (
             <div className="mt-3">
               {editingSpots ? (
                 <div className="flex flex-wrap items-center gap-2">
@@ -511,6 +528,7 @@ function EventRow({
           ) : null}
         </div>
 
+        {!readOnly ? (
         <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:items-stretch">
           <button
             type="button"
@@ -543,7 +561,9 @@ function EventRow({
             <ContactAuthorLink authorId={event.authorId} isMine={false} />
           )}
         </div>
+        ) : null}
       </div>
+      {!readOnly ? (
       <div className="mt-3">
         <ReportButton
           targetType="event"
@@ -551,6 +571,7 @@ function EventRow({
           isMine={event.isMine}
         />
       </div>
+      ) : null}
     </li>
   );
 }

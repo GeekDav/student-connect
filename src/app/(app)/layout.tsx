@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { MembershipStatus, ResidenceStatus } from "@prisma/client";
+import { MembershipStatus, ResidenceStatus, Role } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app/app-shell";
 import { ResidencePauseBanner } from "@/components/ui/residence-pause-banner";
@@ -20,6 +20,7 @@ export default async function StudentAppLayout({
       firstName: true,
       lastName: true,
       avatarUrl: true,
+      role: true,
       memberships: {
         where: { status: MembershipStatus.ACTIVE },
         include: {
@@ -32,9 +33,28 @@ export default async function StudentAppLayout({
 
   if (!user) redirect("/connexion");
 
-  const membership = user.memberships[0];
-  const residenceName = membership?.residence.name ?? "Ta résidence";
-  const isPaused = membership?.residence.status === ResidenceStatus.PAUSED;
+  const isStaff =
+    user.role === Role.MANAGER || user.role === Role.SUPER_ADMIN;
+
+  let residenceName = "Ta résidence";
+  let isPaused = false;
+
+  if (isStaff) {
+    const residence = await prisma.residence.findFirst({
+      where:
+        user.role === Role.SUPER_ADMIN
+          ? undefined
+          : { managerId: session.userId },
+      select: { name: true, status: true },
+      orderBy: { createdAt: "asc" },
+    });
+    residenceName = residence?.name ?? "Résidence";
+    isPaused = residence?.status === ResidenceStatus.PAUSED;
+  } else {
+    const membership = user.memberships[0];
+    residenceName = membership?.residence.name ?? "Ta résidence";
+    isPaused = membership?.residence.status === ResidenceStatus.PAUSED;
+  }
 
   return (
     <AppShell
@@ -42,8 +62,14 @@ export default async function StudentAppLayout({
       firstName={user.firstName}
       lastName={user.lastName}
       avatarUrl={user.avatarUrl}
+      managerView={isStaff}
     >
-      {isPaused ? <ResidencePauseBanner variant="student" /> : null}
+      {isPaused ? (
+        <ResidencePauseBanner
+          variant={isStaff ? "manager" : "student"}
+          planType={undefined}
+        />
+      ) : null}
       {children}
     </AppShell>
   );

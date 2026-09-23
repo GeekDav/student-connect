@@ -104,7 +104,7 @@ export async function ManagerDashboard({
     {
       label: "SOS ouverts",
       value: String(openSos),
-      href: "/accueil",
+      href: "/sos",
       hint: "Entraide en cours",
     },
     {

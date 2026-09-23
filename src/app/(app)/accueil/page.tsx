@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { MembershipStatus } from "@prisma/client";
 import { AccueilFeed } from "@/components/app/accueil-feed";
 import { listStudentAnnouncements } from "@/lib/actions/announcements";
 import { listResidenceEvents } from "@/lib/actions/events";
 import { listResidenceMarket } from "@/lib/actions/marketplace";
 import { listResidenceSos } from "@/lib/actions/sos";
 import { listWallNotes } from "@/lib/actions/wall";
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { requireActiveStudent } from "@/lib/student";
 
 export const metadata: Metadata = {
   title: "Accueil — Student-Connect",
@@ -16,13 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AccueilPage() {
-  const session = await getSession();
-  if (!session) redirect("/connexion");
-
-  const membership = await prisma.residenceMembership.findFirst({
-    where: { userId: session.userId, status: MembershipStatus.ACTIVE },
-  });
-  if (!membership) redirect("/en-attente");
+  const ctx = await requireActiveStudent();
 
   const [announcements, events, sosItems, marketItems, wallNotes] =
     await Promise.all([
@@ -35,12 +26,13 @@ export default async function AccueilPage() {
 
   return (
     <AccueilFeed
-      firstName={session.firstName}
+      firstName={ctx.session.firstName}
       announcements={announcements}
       events={events}
       sosItems={sosItems}
       marketItems={marketItems}
       wallNotes={wallNotes}
+      readOnly={!ctx.isResident}
     />
   );
 }

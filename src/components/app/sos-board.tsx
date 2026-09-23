@@ -53,7 +53,13 @@ function statusClass(status: SosItem["status"]) {
   }
 }
 
-export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
+export function SosBoard({
+  initialItems,
+  readOnly = false,
+}: {
+  initialItems: SosItem[];
+  readOnly?: boolean;
+}) {
   const [items, setItems] = useState(initialItems);
   const [mode, setMode] = useState<"list" | "create">("list");
   const [form, setForm] = useState<CreateForm>(EMPTY_FORM);
@@ -147,7 +153,7 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
     });
   }
 
-  if (mode === "create") {
+  if (mode === "create" && !readOnly) {
     return (
       <div>
         <div className="animate-hero-rise">
@@ -238,10 +244,12 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
             SOS
           </h1>
           <p className="mt-2 max-w-md text-base leading-relaxed text-muted">
-            Entraide flash entre voisins : un objet, un coup de main, une
-            question urgente.
+            {readOnly
+              ? "Entraide flash des résidents — consultation seule."
+              : "Entraide flash entre voisins : un objet, un coup de main, une question urgente."}
           </p>
         </div>
+        {!readOnly ? (
         <button
           type="button"
           onClick={() => setMode("create")}
@@ -249,6 +257,7 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
         >
           Lancer un SOS
         </button>
+        ) : null}
       </div>
 
       {formError ? (
@@ -257,6 +266,7 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
         </p>
       ) : null}
 
+      {!readOnly ? (
       <div className="animate-hero-rise-delay mt-8">
         <BoardScopeFilter
           value={scope}
@@ -265,6 +275,7 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
           mineCount={mineCount}
         />
       </div>
+      ) : null}
 
       <section className="mt-8">
         <h2 className="font-display text-sm font-semibold tracking-wide text-ink">
@@ -276,15 +287,18 @@ export function SosBoard({ initialItems }: { initialItems: SosItem[] }) {
               key={item.id}
               item={item}
               busy={isPending}
-              onHelp={() => onToggleHelp(item.id)}
-              onResolve={() => onResolve(item.id)}
+              onHelp={readOnly ? undefined : () => onToggleHelp(item.id)}
+              onResolve={readOnly ? undefined : () => onResolve(item.id)}
+              readOnly={readOnly}
             />
           ))}
           {openItems.length === 0 ? (
             <li className="py-10 text-center text-sm text-muted">
-              {scope === "mine"
-                ? "Tu n’as aucun SOS en cours."
-                : "Aucun SOS ouvert. Tout va bien — ou lance le tien."}
+              {readOnly
+                ? "Aucun SOS ouvert pour le moment."
+                : scope === "mine"
+                  ? "Tu n’as aucun SOS en cours."
+                  : "Aucun SOS ouvert. Tout va bien — ou lance le tien."}
             </li>
           ) : null}
         </ul>
@@ -320,11 +334,13 @@ function SosRow({
   busy,
   onHelp,
   onResolve,
+  readOnly = false,
 }: {
   item: SosItem;
   busy?: boolean;
   onHelp?: () => void;
   onResolve?: () => void;
+  readOnly?: boolean;
 }) {
   const isClosed = item.status === "closed";
 
@@ -344,7 +360,7 @@ function SosRow({
           : ""}
       </p>
 
-      {!isClosed ? (
+      {!isClosed && !readOnly ? (
         <div className="mt-4 flex flex-wrap gap-2">
           {!item.isMine && onHelp ? (
             <button
@@ -373,6 +389,7 @@ function SosRow({
           ) : null}
         </div>
       ) : null}
+      {!readOnly ? (
       <div className="mt-3">
         <ReportButton
           targetType="sos"
@@ -380,6 +397,7 @@ function SosRow({
           isMine={item.isMine}
         />
       </div>
+      ) : null}
     </li>
   );
 }

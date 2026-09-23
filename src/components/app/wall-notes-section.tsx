@@ -22,8 +22,10 @@ const replyFieldClass =
 
 export function WallNotesSection({
   initialNotes,
+  readOnly = false,
 }: {
   initialNotes: WallNoteItem[];
+  readOnly?: boolean;
 }) {
   const [notes, setNotes] = useState(initialNotes);
   const [draft, setDraft] = useState("");
@@ -110,10 +112,12 @@ export function WallNotesSection({
         Petit mur
       </h2>
       <p className="mt-1 text-sm text-muted">
-        Pose une question ou une idée · réponses dessous · 1 post / jour ·
-        disparaît après 7 jours
+        {readOnly
+          ? "Messages des résidents (consultation)."
+          : "Pose une question ou une idée · réponses dessous · 1 post / jour · disparaît après 7 jours"}
       </p>
 
+      {!readOnly ? (
       <form onSubmit={onCreate} className="mt-4 space-y-3">
         <textarea
           className={`${fieldClass} min-h-[5rem] resize-y`}
@@ -141,6 +145,7 @@ export function WallNotesSection({
           </button>
         </div>
       </form>
+      ) : null}
 
       {error ? (
         <p className="mt-3 text-sm text-red-700" role="alert">
@@ -159,7 +164,7 @@ export function WallNotesSection({
                   {note.author} · {note.timeLabel}
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
-                  {!note.isMine ? (
+                  {!readOnly && !note.isMine ? (
                     <Link
                       href={`/messages?with=${note.authorId}`}
                       className="text-xs font-semibold text-accent hover:opacity-70"
@@ -167,12 +172,14 @@ export function WallNotesSection({
                       Message privé
                     </Link>
                   ) : null}
+                  {!readOnly ? (
                   <ReportButton
                     targetType="wall"
                     targetId={note.id}
                     isMine={note.isMine}
                   />
-                  {note.isMine ? (
+                  ) : null}
+                  {!readOnly && note.isMine ? (
                     <button
                       type="button"
                       disabled={isPending}
@@ -196,7 +203,7 @@ export function WallNotesSection({
                         <p className="text-xs text-muted">
                           {reply.author} · {reply.timeLabel}
                         </p>
-                        {reply.isMine ? (
+                        {!readOnly && reply.isMine ? (
                           <button
                             type="button"
                             disabled={isPending}
@@ -205,7 +212,8 @@ export function WallNotesSection({
                           >
                             Retirer
                           </button>
-                        ) : (
+                        ) : null}
+                        {!readOnly && !reply.isMine ? (
                           <>
                             <Link
                               href={`/messages?with=${reply.authorId}`}
@@ -219,13 +227,14 @@ export function WallNotesSection({
                               isMine={false}
                             />
                           </>
-                        )}
+                        ) : null}
                       </div>
                     </li>
                   ))}
                 </ul>
               ) : null}
 
+              {!readOnly ? (
               <form
                 onSubmit={(e) => onReply(note.id, e)}
                 className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center"
@@ -265,6 +274,7 @@ export function WallNotesSection({
                   </button>
                 </div>
               </form>
+              ) : null}
             </li>
           );
         })}

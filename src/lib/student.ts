@@ -1,19 +1,29 @@
-import { MembershipStatus, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { getActiveStudentContext } from "@/lib/student-context";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 
+/**
+ * Accès aux pages étudiants.
+ * Les gestionnaires / super-admins de la résidence peuvent consulter (lecture seule).
+ */
 export async function requireActiveStudent() {
   const session = await getSession();
   if (!session) redirect("/connexion");
-  if (session.role !== Role.STUDENT) redirect("/");
 
-  const membership = await prisma.residenceMembership.findFirst({
-    where: { userId: session.userId, status: MembershipStatus.ACTIVE },
-    include: { residence: true },
-  });
+  if (
+    session.role !== Role.STUDENT &&
+    session.role !== Role.MANAGER &&
+    session.role !== Role.SUPER_ADMIN
+  ) {
+    redirect("/");
+  }
 
-  if (!membership) redirect("/en-attente");
+  const ctx = await getActiveStudentContext();
+  if (!ctx) {
+    if (session.role === Role.STUDENT) redirect("/en-attente");
+    redirect("/gestionnaire");
+  }
 
-  return { session, membership, residence: membership.residence };
+  return ctx;
 }

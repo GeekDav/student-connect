@@ -310,7 +310,7 @@ export async function ensureConversationWith(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   if (peerUserId === ctx.session.userId) {
     return { ok: false, error: "Tu ne peux pas t’écrire à toi-même." };
@@ -371,7 +371,7 @@ export async function sendMessage(
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const text = body.trim();
   if (!text) return { ok: false, error: "Écris un message." };
@@ -449,7 +449,7 @@ export async function deleteMessages(
   if (!access) {
     return { ok: false, error: "Conversation introuvable." };
   }
-  if (!access.ctx.writable) return writeBlockedResult();
+  if (!access.ctx.writable) return writeBlockedResult(access.ctx);
 
   const ids = [...new Set(messageIds.map((id) => id.trim()).filter(Boolean))];
   if (ids.length === 0) {
@@ -506,7 +506,7 @@ export async function clearConversation(
   if (!access) {
     return { ok: false, error: "Conversation introuvable." };
   }
-  if (!access.ctx.writable) return writeBlockedResult();
+  if (!access.ctx.writable) return writeBlockedResult(access.ctx);
 
   await prisma.message.deleteMany({
     where: { conversationId },

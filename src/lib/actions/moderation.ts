@@ -243,7 +243,7 @@ export async function createReport(input: {
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
-  if (!ctx.writable) return writeBlockedResult();
+  if (!ctx.writable) return writeBlockedResult(ctx);
 
   const reason = input.reason.trim();
   if (!reason) return { ok: false, error: "Indique un motif de signalement." };
