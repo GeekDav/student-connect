@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BackToTop } from "@/components/ui/back-to-top";
 import { AnchorLink } from "./anchor-link";
 import { Reveal } from "./reveal";
 import { ScrollToHash } from "./scroll-to-hash";
@@ -332,6 +333,7 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+      <BackToTop placement="page" offset={360} />
     </div>
   );
 }
