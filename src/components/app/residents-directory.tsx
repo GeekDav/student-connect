@@ -19,8 +19,10 @@ function uniqueSorted(values: string[]) {
 
 export function ResidentsDirectory({
   initialResidents,
+  readOnly = false,
 }: {
   initialResidents: DirectoryResident[];
+  readOnly?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [field, setField] = useState("");
@@ -255,11 +257,13 @@ export function ResidentsDirectory({
                 </p>
               ) : null}
               <div className="mt-3">
+                {!readOnly ? (
                 <ContactAuthorLink
                   authorId={resident.id}
                   isMine={resident.isMine}
                   label="Envoyer un message"
                 />
+                ) : null}
               </div>
             </div>
           </li>

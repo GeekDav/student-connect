@@ -10,7 +10,12 @@ export const metadata: Metadata = {
 };
 
 export default async function ResidentsPage() {
-  await requireActiveStudent();
+  const ctx = await requireActiveStudent();
   const residents = await listResidenceDirectory();
-  return <ResidentsDirectory initialResidents={residents} />;
+  return (
+    <ResidentsDirectory
+      initialResidents={residents}
+      readOnly={!ctx.isResident}
+    />
+  );
 }

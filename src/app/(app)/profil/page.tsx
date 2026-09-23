@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Role } from "@prisma/client";
 import { ProfileEditor } from "@/components/app/profile-editor";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -12,6 +13,11 @@ export const metadata: Metadata = {
 export default async function ProfilPage() {
   const session = await getSession();
   if (!session) redirect("/connexion");
+  if (session.role === Role.MANAGER || session.role === Role.SUPER_ADMIN) {
+    redirect(
+      session.role === Role.SUPER_ADMIN ? "/super-admin" : "/gestionnaire/compte",
+    );
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },

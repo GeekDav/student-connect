@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RecycleriePage() {
-  await requireActiveStudent();
+  const ctx = await requireActiveStudent();
   const items = await listResidenceMarket();
-  return <MarketplaceBoard initialItems={items} />;
+  return <MarketplaceBoard initialItems={items} readOnly={!ctx.isResident} />;
 }

@@ -141,14 +141,21 @@ export function AccueilFeed({
           </ul>
         ) : (
           <p className="mt-4 text-sm text-muted">
-            Pas encore d’événement.{" "}
-            <Link
-              href="/evenements"
-              className="font-medium text-ink hover:opacity-70"
-            >
-              Propose le premier
-            </Link>
-            .
+            Pas encore d’événement
+            {!readOnly ? (
+              <>
+                .{" "}
+                <Link
+                  href="/evenements"
+                  className="font-medium text-ink hover:opacity-70"
+                >
+                  Propose le premier
+                </Link>
+                .
+              </>
+            ) : (
+              "."
+            )}
           </p>
         )}
       </section>
@@ -223,14 +230,21 @@ export function AccueilFeed({
           </ul>
         ) : (
           <p className="mt-4 text-sm text-muted">
-            Aucune annonce pour le moment.{" "}
-            <Link
-              href="/recyclerie"
-              className="font-medium text-ink hover:opacity-70"
-            >
-              Publie un don
-            </Link>
-            .
+            Aucune annonce pour le moment
+            {!readOnly ? (
+              <>
+                .{" "}
+                <Link
+                  href="/recyclerie"
+                  className="font-medium text-ink hover:opacity-70"
+                >
+                  Publie un don
+                </Link>
+                .
+              </>
+            ) : (
+              "."
+            )}
           </p>
         )}
       </section>

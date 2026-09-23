@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { MembershipStatus } from "@prisma/client";
+import { MembershipStatus, Role } from "@prisma/client";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -15,6 +15,8 @@ export const metadata: Metadata = {
 export default async function EnAttentePage() {
   const session = await getSession();
   if (!session) redirect("/connexion");
+  if (session.role === Role.MANAGER) redirect("/gestionnaire");
+  if (session.role === Role.SUPER_ADMIN) redirect("/super-admin");
 
   const membership = await prisma.residenceMembership.findFirst({
     where: { userId: session.userId },

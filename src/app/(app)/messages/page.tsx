@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { MessagesBoard } from "@/components/app/messages-board";
 import {
   ensureConversationWith,
@@ -18,7 +19,10 @@ export default async function MessagesPage({
 }: {
   searchParams: Promise<{ with?: string }>;
 }) {
-  await requireActiveStudent();
+  const ctx = await requireActiveStudent();
+  // Messagerie privée = résidents uniquement
+  if (!ctx.isResident) redirect("/gestionnaire");
+
   const params = await searchParams;
 
   let initialActiveId: string | null = null;

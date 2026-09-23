@@ -34,6 +34,10 @@ export function AppShell({
   const pathname = usePathname();
   const fullName = `${firstName} ${lastName}`.trim();
   const homeHref = managerView ? "/gestionnaire" : "/accueil";
+  const profileHref = managerView ? "/gestionnaire/compte" : "/profil";
+  const navItems = managerView
+    ? NAV.filter((item) => item.href !== "/profil")
+    : NAV;
 
   return (
     <div className="min-h-[100svh]">
@@ -58,13 +62,14 @@ export function AppShell({
               >
                 Dashboard
               </Link>
-            ) : null}
-            <Link
-              href="/messages"
-              className="text-sm font-medium text-muted transition-colors hover:text-ink"
-            >
-              Messages
-            </Link>
+            ) : (
+              <Link
+                href="/messages"
+                className="text-sm font-medium text-muted transition-colors hover:text-ink"
+              >
+                Messages
+              </Link>
+            )}
             <Link
               href="/recyclerie"
               className="text-sm font-medium text-muted transition-colors hover:text-ink"
@@ -73,7 +78,7 @@ export function AppShell({
             </Link>
             <LogoutButton className="hidden text-sm font-medium text-muted transition-colors hover:text-ink disabled:opacity-60 sm:inline" />
             <Link
-              href="/profil"
+              href={profileHref}
               className="transition-transform hover:-translate-y-0.5"
               aria-label="Mon profil"
             >
@@ -92,7 +97,7 @@ export function AppShell({
         aria-label="Navigation principale"
       >
         <ul className="mx-auto flex max-w-2xl items-stretch justify-between px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1">
-          {NAV.map((item) => {
+          {navItems.map((item) => {
             const active =
               pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
@@ -126,9 +131,9 @@ export function AppShell({
       >
         <ul className="flex flex-wrap gap-2 border-t border-line pt-6">
           {[
-            ...NAV,
+            ...navItems,
             { href: "/recyclerie", label: "Recyclerie" },
-            { href: "/messages", label: "Messages" },
+            ...(managerView ? [] : [{ href: "/messages", label: "Messages" }]),
           ].map((item) => {
             const active =
               pathname === item.href || pathname.startsWith(`${item.href}/`);

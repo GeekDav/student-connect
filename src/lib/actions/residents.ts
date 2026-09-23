@@ -1,8 +1,8 @@
 "use server";
 
 import { MembershipStatus, Role } from "@prisma/client";
-import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getActiveStudentContext } from "@/lib/student-context";
 
 export type DirectoryResident = {
   id: string;
@@ -27,17 +27,12 @@ function parseInterests(value: string | null | undefined): string[] {
 }
 
 export async function listResidenceDirectory(): Promise<DirectoryResident[]> {
-  const session = await getSession();
-  if (!session || session.role !== Role.STUDENT) return [];
-
-  const membership = await prisma.residenceMembership.findFirst({
-    where: { userId: session.userId, status: MembershipStatus.ACTIVE },
-  });
-  if (!membership) return [];
+  const ctx = await getActiveStudentContext();
+  if (!ctx) return [];
 
   const rows = await prisma.residenceMembership.findMany({
     where: {
-      residenceId: membership.residenceId,
+      residenceId: ctx.residenceId,
       status: MembershipStatus.ACTIVE,
       user: { role: Role.STUDENT },
     },
@@ -76,7 +71,7 @@ export async function listResidenceDirectory(): Promise<DirectoryResident[]> {
         : undefined,
     bio: row.user.bio?.trim() || undefined,
     avatarUrl: row.user.avatarUrl ?? undefined,
-    isMine: row.user.id === session.userId,
+    isMine: row.user.id === ctx.session.userId,
     isAvailable: Boolean(
       row.user.availableUntil && row.user.availableUntil.getTime() > now,
     ),

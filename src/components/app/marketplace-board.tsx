@@ -65,8 +65,10 @@ function statusClass(status: MarketItem["status"]) {
 
 export function MarketplaceBoard({
   initialItems,
+  readOnly = false,
 }: {
   initialItems: MarketItem[];
+  readOnly?: boolean;
 }) {
   const [items, setItems] = useState(initialItems);
   const [filter, setFilter] = useState<"all" | "don" | "vente">("all");
@@ -176,7 +178,7 @@ export function MarketplaceBoard({
     });
   }
 
-  if (mode === "create") {
+  if (mode === "create" && !readOnly) {
     return (
       <div>
         <div className="animate-hero-rise">
@@ -321,10 +323,12 @@ export function MarketplaceBoard({
             Recyclerie
           </h1>
           <p className="mt-2 max-w-md text-base leading-relaxed text-muted">
-            Dons et petites ventes entre résidents — sans livraisons, sans
-            inconnus hors immeuble.
+            {readOnly
+              ? "Dons et ventes des résidents — consultation seule."
+              : "Dons et petites ventes entre résidents — sans livraisons, sans inconnus hors immeuble."}
           </p>
         </div>
+        {!readOnly ? (
         <button
           type="button"
           onClick={() => setMode("create")}
@@ -332,6 +336,7 @@ export function MarketplaceBoard({
         >
           Publier
         </button>
+        ) : null}
       </div>
 
       {formError ? (
@@ -340,6 +345,7 @@ export function MarketplaceBoard({
         </p>
       ) : null}
 
+      {!readOnly ? (
       <div className="animate-hero-rise-delay mt-8">
         <BoardScopeFilter
           value={scope}
@@ -348,8 +354,9 @@ export function MarketplaceBoard({
           mineCount={mineCount}
         />
       </div>
+      ) : null}
 
-      <div className="mt-4 flex gap-2">
+      <div className={`${readOnly ? "mt-8" : "mt-4"} flex gap-2`}>
         {(
           [
             { id: "all", label: "Tout" },
@@ -382,15 +389,20 @@ export function MarketplaceBoard({
               key={item.id}
               item={item}
               busy={isPending}
-              onInterest={() => onToggleInterest(item.id)}
-              onMarkGone={() => onMarkGone(item.id)}
+              readOnly={readOnly}
+              onInterest={
+                readOnly ? undefined : () => onToggleInterest(item.id)
+              }
+              onMarkGone={readOnly ? undefined : () => onMarkGone(item.id)}
             />
           ))}
           {activeItems.length === 0 ? (
             <li className="py-10 text-center text-sm text-muted">
-              {scope === "mine"
-                ? "Tu n’as aucune annonce active pour ce filtre."
-                : "Aucune annonce pour ce filtre. Publie la première !"}
+              {readOnly
+                ? "Aucune annonce pour ce filtre."
+                : scope === "mine"
+                  ? "Tu n’as aucune annonce active pour ce filtre."
+                  : "Aucune annonce pour ce filtre. Publie la première !"}
             </li>
           ) : null}
         </ul>
@@ -411,7 +423,7 @@ export function MarketplaceBoard({
           {showGone ? (
             <ul className="mt-2 divide-y divide-line border-y border-line opacity-75">
               {goneItems.map((item) => (
-                <MarketRow key={item.id} item={item} />
+                <MarketRow key={item.id} item={item} readOnly={readOnly} />
               ))}
             </ul>
           ) : null}
@@ -426,11 +438,13 @@ function MarketRow({
   busy,
   onInterest,
   onMarkGone,
+  readOnly = false,
 }: {
   item: MarketItem;
   busy?: boolean;
   onInterest?: () => void;
   onMarkGone?: () => void;
+  readOnly?: boolean;
 }) {
   const isGone = item.status === "gone";
 
@@ -462,7 +476,7 @@ function MarketRow({
         </span>
       </p>
 
-      {!isGone ? (
+      {!isGone && !readOnly ? (
         <div className="mt-4 flex flex-wrap gap-2">
           {!item.isMine && onInterest ? (
             <button
@@ -491,6 +505,7 @@ function MarketRow({
           ) : null}
         </div>
       ) : null}
+      {!readOnly ? (
       <div className="mt-3">
         <ReportButton
           targetType="recyclerie"
@@ -498,6 +513,7 @@ function MarketRow({
           isMine={item.isMine}
         />
       </div>
+      ) : null}
     </li>
   );
 }
