@@ -6,8 +6,8 @@ import { requireManagerContext } from "@/lib/manager";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Abonnement — Gestionnaire",
-  description: "Gère l’abonnement Stripe de ta résidence.",
+  title: "Offre — Gestionnaire",
+  description: "Offre et phase pilote de ta résidence Student-Connect.",
 };
 
 export default async function ManagerBillingPage({

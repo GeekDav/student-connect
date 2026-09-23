@@ -10,8 +10,8 @@ const NAV = [
   { href: "/gestionnaire", label: "Dashboard", short: "Accueil", exact: true },
   {
     href: "/gestionnaire/abonnement",
-    label: "Abonnement",
-    short: "Abo",
+    label: "Offre",
+    short: "Offre",
     exact: false,
   },
   {

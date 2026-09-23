@@ -3,6 +3,7 @@
 import { Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
+import { isBillingEnabled } from "@/lib/billing-mode";
 import { prisma } from "@/lib/db";
 import {
   getBillingUrls,
@@ -13,6 +14,7 @@ import {
 
 export type BillingInfo = {
   configured: boolean;
+  billingEnabled: boolean;
   residenceId: string;
   residenceName: string;
   planType: "PILOT" | "PAID";
@@ -54,6 +56,7 @@ export async function getBillingInfo(): Promise<BillingInfo | null> {
 
   return {
     configured: isStripeConfigured(),
+    billingEnabled: isBillingEnabled(),
     residenceId: ctx.residence.id,
     residenceName: ctx.residence.name,
     planType: ctx.residence.planType,
@@ -65,6 +68,13 @@ export async function getBillingInfo(): Promise<BillingInfo | null> {
 }
 
 export async function createCheckoutSession(): Promise<BillingActionResult> {
+  if (!isBillingEnabled()) {
+    return {
+      ok: false,
+      error: "La facturation est désactivée pendant la phase pilote.",
+    };
+  }
+
   const ctx = await getManagerBillingResidence();
   if (!ctx) return { ok: false, error: "Action non autorisée." };
 
@@ -123,6 +133,13 @@ export async function createCheckoutSession(): Promise<BillingActionResult> {
 }
 
 export async function createBillingPortalSession(): Promise<BillingActionResult> {
+  if (!isBillingEnabled()) {
+    return {
+      ok: false,
+      error: "La facturation est désactivée pendant la phase pilote.",
+    };
+  }
+
   const ctx = await getManagerBillingResidence();
   if (!ctx) return { ok: false, error: "Action non autorisée." };
 

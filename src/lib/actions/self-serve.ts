@@ -6,6 +6,7 @@ import { setSessionCookie } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/mail/mailer";
 import { residenceActivatedEmail } from "@/lib/mail/templates";
+import { isBillingEnabled } from "@/lib/billing-mode";
 import {
   getBillingUrls,
   getStripe,
@@ -30,6 +31,7 @@ function parseManagerName(fullName: string) {
 
 /**
  * Crée résidence + gestionnaire, ouvre Checkout avec essai 14 jours.
+ * Désactivé tant que BILLING_ENABLED n’est pas true (phase pilote).
  */
 export async function startSelfServeResidence(input: {
   residenceName: string;
@@ -41,6 +43,14 @@ export async function startSelfServeResidence(input: {
   managerPassword: string;
   managerPasswordConfirm?: string;
 }): Promise<SelfServeResult> {
+  if (!isBillingEnabled()) {
+    return {
+      ok: false,
+      error:
+        "La création en ligne est fermée pendant la phase pilote. Contacte Student-Connect pour rejoindre le programme.",
+    };
+  }
+
   if (!isStripeConfigured()) {
     return {
       ok: false,

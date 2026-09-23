@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Reveal } from "./reveal";
-import type { PublicPricing } from "@/lib/stripe";
 
 const features = [
   {
@@ -24,20 +23,20 @@ const features = [
 
 const managerSteps = [
   {
-    title: "Crée l’espace de ta résidence",
-    text: "Nom, adresse, ton compte gestionnaire — en quelques minutes.",
+    title: "On t’ouvre l’espace",
+    text: "Pendant la phase pilote, Student-Connect active ta résidence avec toi — pas d’inscription publique payante.",
   },
   {
-    title: "Essaie 14 jours",
-    text: "Invite des résidents, publie, modère. Carte enregistrée, tu peux annuler avant la fin de l’essai.",
+    title: "Tu animes le quotidien",
+    text: "Invitations, annonces, validation des inscriptions, modération : tout au même endroit.",
   },
   {
-    title: "Anime au quotidien",
-    text: "Annonces, invitations, validation des inscriptions : tout centralisé.",
+    title: "Tu nous fais un retour",
+    text: "Tes besoins concrets nous aident à améliorer l’outil avant une éventuelle offre payante, annoncée à l’avance.",
   },
 ];
 
-export function LandingPage({ pricing }: { pricing: PublicPricing }) {
+export function LandingPage() {
   return (
     <div className="bg-background text-foreground">
       <header className="animate-nav absolute inset-x-0 top-0 z-20">
@@ -50,7 +49,7 @@ export function LandingPage({ pricing }: { pricing: PublicPricing }) {
           </Link>
           <div className="flex items-center gap-4">
             <Link
-              href="/creer-residence"
+              href="/#partenaires"
               className="hidden text-sm font-medium text-white/85 transition-colors hover:text-white sm:inline"
             >
               Pour les résidences
@@ -104,10 +103,10 @@ export function LandingPage({ pricing }: { pricing: PublicPricing }) {
               Rejoindre ma résidence
             </Link>
             <Link
-              href="/creer-residence"
+              href="/#partenaires"
               className="inline-flex h-12 items-center justify-center rounded-lg border border-white/35 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur-sm transition-[background-color,border-color] duration-200 hover:border-white/55 hover:bg-white/18"
             >
-              Équiper ma résidence
+              Je gère une résidence
             </Link>
           </div>
         </div>
@@ -160,7 +159,10 @@ export function LandingPage({ pricing }: { pricing: PublicPricing }) {
         </div>
       </section>
 
-      <section className="relative overflow-hidden border-y border-line bg-wash">
+      <section
+        id="partenaires"
+        className="relative overflow-hidden border-y border-line bg-wash"
+      >
         <div
           className="pointer-events-none absolute inset-0 opacity-70"
           style={{
@@ -171,13 +173,18 @@ export function LandingPage({ pricing }: { pricing: PublicPricing }) {
         />
         <div className="relative mx-auto max-w-3xl px-5 py-20 sm:px-8 sm:py-24">
           <Reveal>
-            <h2 className="font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+              Phase pilote
+            </p>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
               Pour les gestionnaires de résidence
             </h2>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-              Un espace pour publier les infos officielles, valider les
-              inscriptions et faire vivre le bâtiment — sans app dispersée ni
-              groupe WhatsApp interminable.
+              Student-Connect est actuellement{" "}
+              <strong className="font-semibold text-ink">gratuit</strong> pour
+              un nombre limité de résidences partenaires. On cherche des retours
+              d’usage concrets pour peaufiner l’outil — un abonnement pourra
+              arriver plus tard, annoncé clairement à l’avance.
             </p>
           </Reveal>
           <ul className="mt-12 divide-y divide-line border-y border-line">
@@ -199,43 +206,49 @@ export function LandingPage({ pricing }: { pricing: PublicPricing }) {
               </Reveal>
             ))}
           </ul>
+          <Reveal>
+            <p className="mt-10 text-base leading-relaxed text-muted">
+              Déjà partenaire ?{" "}
+              <Link
+                href="/connexion?next=/gestionnaire"
+                className="font-semibold text-accent transition-opacity hover:opacity-70"
+              >
+                Connexion espace gestionnaire
+              </Link>
+            </p>
+          </Reveal>
         </div>
       </section>
 
-      <section id="tarif" className="bg-surface">
+      <section id="offre" className="bg-surface">
         <Reveal className="mx-auto max-w-3xl px-5 py-20 sm:px-8 sm:py-24">
           <h2 className="font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            Un tarif simple
+            Offre pilote
           </h2>
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted">
-            Une résidence, un abonnement. Le prix affiché vient de Stripe : tu
-            le changes dans le Dashboard, la page suit.
+            Pas de tarif public pour l’instant : on ouvre les espaces avec les
+            résidences sélectionnées.
           </p>
 
           <div className="mt-10 rounded-3xl border border-line bg-background px-6 py-8 sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-              Essai {pricing.trialDays} jours
+              Gratuit — phase pilote
             </p>
             <p className="mt-4 font-display text-5xl font-semibold tracking-tight text-ink">
-              {pricing.configured ? pricing.amountLabel : "—"}
+              0 €
             </p>
-            <p className="mt-2 text-base text-muted">{pricing.intervalLabel}</p>
+            <p className="mt-2 text-base text-muted">
+              pour les résidences partenaires pendant le lancement
+            </p>
             <ul className="mt-6 space-y-2 text-sm leading-relaxed text-muted">
               <li>Espace étudiants + espace gestionnaire</li>
               <li>Invitations, annonces, modération</li>
-              <li>Annule avant la fin de l’essai : 0 €</li>
+              <li>Retours d’usage bienvenus pour améliorer le produit</li>
             </ul>
-            <Link
-              href="/creer-residence"
-              className="mt-8 inline-flex h-12 items-center justify-center rounded-lg bg-accent px-6 text-sm font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-accent-hover hover:-translate-y-0.5"
-            >
-              Démarrer l’essai gratuit
-            </Link>
-            {!pricing.configured ? (
-              <p className="mt-4 text-xs text-muted">
-                Tarif bientôt affiché — Stripe en cours de configuration.
-              </p>
-            ) : null}
+            <p className="mt-8 text-sm leading-relaxed text-muted">
+              Pour candidater au pilote, contacte l’équipe Student-Connect.
+              Les comptes gestionnaire sont ouverts par nos soins.
+            </p>
           </div>
         </Reveal>
       </section>
@@ -247,7 +260,7 @@ export function LandingPage({ pricing }: { pricing: PublicPricing }) {
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted">
             Étudiant : crée ton compte avec une invitation ou une demande à
-            valider. Gestionnaire : ouvre l’espace de ton bâtiment.
+            valider. Gestionnaire partenaire : connecte-toi à ton espace.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -257,10 +270,10 @@ export function LandingPage({ pricing }: { pricing: PublicPricing }) {
               Créer mon compte étudiant
             </Link>
             <Link
-              href="/creer-residence"
+              href="/connexion?next=/gestionnaire"
               className="inline-flex h-12 items-center justify-center rounded-lg border border-line bg-surface px-6 text-sm font-semibold text-ink transition-colors hover:bg-wash"
             >
-              Équiper ma résidence
+              Espace gestionnaire
             </Link>
           </div>
         </Reveal>
@@ -275,11 +288,11 @@ export function LandingPage({ pricing }: { pricing: PublicPricing }) {
             Student-Connect
           </Link>
           <div className="flex flex-wrap gap-5 text-sm text-muted">
-            <Link href="/#tarif" className="hover:text-ink">
-              Tarif
+            <Link href="/#partenaires" className="hover:text-ink">
+              Phase pilote
             </Link>
-            <Link href="/creer-residence" className="hover:text-ink">
-              Pour les résidences
+            <Link href="/#offre" className="hover:text-ink">
+              Offre
             </Link>
             <Link href="/mentions-legales" className="hover:text-ink">
               Mentions légales

@@ -72,6 +72,52 @@ export function ManagerBilling({
     info.subscriptionStatus === "incomplete_expired" ||
     info.status === "PAUSED";
 
+  if (!info.billingEnabled) {
+    return (
+      <div>
+        <div className="animate-hero-rise">
+          <h2 className="font-display text-3xl font-semibold tracking-tight text-ink">
+            Offre
+          </h2>
+          <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
+            « {info.residenceName} » — phase pilote.
+          </p>
+        </div>
+        <div className="animate-hero-rise-delay mt-8 rounded-2xl border border-line bg-surface px-5 py-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+            Gratuit
+          </p>
+          <p className="mt-3 font-display text-2xl font-semibold text-ink">
+            Inclus dans le pilote
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
+            Aucun paiement pour le moment. L’espace est ouvert avec
+            Student-Connect. Si un abonnement arrive plus tard, tu seras
+            prévenu à l’avance. Pause / réouverture : contacte le support.
+          </p>
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+            <li className="rounded-xl border border-line bg-wash/40 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Plan
+              </p>
+              <p className="mt-1 font-display text-lg font-semibold text-ink">
+                {info.planType === "PILOT" ? "Pilote" : "Payant (préparé)"}
+              </p>
+            </li>
+            <li className="rounded-xl border border-line bg-wash/40 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Espace
+              </p>
+              <p className="mt-1 font-display text-lg font-semibold text-ink">
+                {info.status === "ACTIVE" ? "Actif" : "En pause"}
+              </p>
+            </li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="animate-hero-rise">
