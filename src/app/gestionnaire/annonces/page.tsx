@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { ManagerAnnonces } from "@/components/manager/manager-annonces";
-import { listManagerAnnouncements } from "@/lib/actions/announcements";
+import {
+  getActiveResidentsCount,
+  listManagerAnnouncements,
+} from "@/lib/actions/announcements";
 import { requireManagerContext } from "@/lib/manager";
 
 export const metadata: Metadata = {
@@ -20,6 +23,11 @@ export default async function GestionnaireAnnoncesPage() {
     );
   }
 
-  const items = await listManagerAnnouncements();
-  return <ManagerAnnonces initialItems={items} />;
+  const [items, activeResidents] = await Promise.all([
+    listManagerAnnouncements(),
+    getActiveResidentsCount(),
+  ]);
+  return (
+    <ManagerAnnonces initialItems={items} activeResidents={activeResidents} />
+  );
 }

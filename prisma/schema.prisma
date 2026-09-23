@@ -97,6 +97,7 @@ model User {
   conversationsB   Conversation[]        @relation("ConversationUserB")
   reportsFiled     ModerationReport[]    @relation("ReportReporter")
   announcements    OfficialAnnouncement[]
+  announcementReads AnnouncementRead[]
   wallNotes        WallNote[]            @relation("WallNoteAuthor")
   wallReplies      WallNoteReply[]       @relation("WallReplyAuthor")
   invitationsCreated ResidenceInvitation[] @relation("InvitationCreator")
@@ -203,8 +204,23 @@ model OfficialAnnouncement {
   authorId    String
   residence   Residence @relation(fields: [residenceId], references: [id], onDelete: Cascade)
   author      User      @relation(fields: [authorId], references: [id])
+  reads       AnnouncementRead[]
 
   @@index([residenceId, published])
+}
+
+/** Lecture d’une annonce officielle par un étudiant. */
+model AnnouncementRead {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  announcementId String
+  userId         String
+  announcement   OfficialAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+  @@index([announcementId])
+  @@index([userId])
 }
 
 model MicroEvent {

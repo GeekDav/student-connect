@@ -1,7 +1,6 @@
 import Link from "next/link";
+import { AccueilAnnouncements } from "@/components/app/accueil-announcements";
 import { WallNotesSection } from "@/components/app/wall-notes-section";
-import { EmptyState } from "@/components/ui/empty-state";
-import { ViewAnnouncementImage } from "@/components/ui/view-announcement-image";
 import type { AnnouncementItem } from "@/lib/actions/announcements";
 import type { EventItem } from "@/lib/actions/events";
 import type { MarketItem } from "@/lib/actions/marketplace";
@@ -96,49 +95,9 @@ export function AccueilFeed({
         ))}
       </div>
 
-      <section className="animate-hero-rise-delay-2 mt-10">
-        <h2 className="font-display text-sm font-semibold tracking-wide text-accent">
-          Tableau d’affichage
-        </h2>
-        {announcements.length > 0 ? (
-          <ul className="mt-4 space-y-3">
-            {announcements.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-2xl border border-accent/20 bg-accent/[0.04] px-5 py-5"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-accent">
-                  Annonce officielle
-                </p>
-                <h3 className="mt-2 font-display text-xl font-semibold text-ink">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-base leading-relaxed text-muted">
-                  {item.body}
-                </p>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <p className="text-xs text-muted">
-                    Administration · {item.publishedAt}
-                  </p>
-                  {item.imageUrl ? (
-                    <ViewAnnouncementImage
-                      src={item.imageUrl}
-                      title={item.title}
-                    />
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="mt-4">
-            <EmptyState
-              title="Tableau d’affichage vide"
-              description="Les annonces officielles de ta résidence apparaîtront ici."
-            />
-          </div>
-        )}
-      </section>
+      <div className="animate-hero-rise-delay-2 mt-10">
+        <AccueilAnnouncements initial={announcements} />
+      </div>
 
       <WallNotesSection initialNotes={wallNotes} />
 

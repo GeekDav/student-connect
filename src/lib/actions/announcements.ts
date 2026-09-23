@@ -1,6 +1,6 @@
 "use server";
 
-import { Role } from "@prisma/client";
+import { MembershipStatus, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -13,6 +13,10 @@ export type AnnouncementItem = {
   imageUrl?: string;
   publishedAt: string;
   published: boolean;
+  /** Lectures uniques (gestionnaire). */
+  readCount?: number;
+  /** Non lu par l’étudiant connecté. */
+  unread?: boolean;
 };
 
 function formatDate(date: Date) {
@@ -22,14 +26,17 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-function mapAnnouncement(row: {
-  id: string;
-  title: string;
-  body: string;
-  imageUrl: string | null;
-  createdAt: Date;
-  published: boolean;
-}): AnnouncementItem {
+function mapAnnouncement(
+  row: {
+    id: string;
+    title: string;
+    body: string;
+    imageUrl: string | null;
+    createdAt: Date;
+    published: boolean;
+  },
+  extras?: { readCount?: number; unread?: boolean },
+): AnnouncementItem {
   return {
     id: row.id,
     title: row.title,
@@ -37,6 +44,8 @@ function mapAnnouncement(row: {
     imageUrl: row.imageUrl ?? undefined,
     publishedAt: formatDate(row.createdAt),
     published: row.published,
+    readCount: extras?.readCount,
+    unread: extras?.unread,
   };
 }
 
@@ -70,9 +79,25 @@ export async function listManagerAnnouncements(): Promise<AnnouncementItem[]> {
   const rows = await prisma.officialAnnouncement.findMany({
     where: { residenceId },
     orderBy: { createdAt: "desc" },
+    include: { _count: { select: { reads: true } } },
   });
 
-  return rows.map(mapAnnouncement);
+  return rows.map((row) =>
+    mapAnnouncement(row, { readCount: row._count.reads }),
+  );
+}
+
+export async function getActiveResidentsCount(): Promise<number> {
+  const session = await getSession();
+  if (!session) return 0;
+  if (session.role !== Role.MANAGER && session.role !== Role.SUPER_ADMIN) {
+    return 0;
+  }
+  const residenceId = await getManagerResidenceId(session.userId, session.role);
+  if (!residenceId) return 0;
+  return prisma.residenceMembership.count({
+    where: { residenceId, status: MembershipStatus.ACTIVE },
+  });
 }
 
 export type AnnouncementActionResult =
@@ -124,7 +149,7 @@ export async function createAnnouncement(
     revalidatePath("/gestionnaire/annonces");
     revalidatePath("/accueil");
 
-    return { ok: true, item: mapAnnouncement(row) };
+    return { ok: true, item: mapAnnouncement(row, { readCount: 0 }) };
   } catch (error) {
     await deletePublicUpload(imageUrl);
     throw error;
@@ -188,7 +213,59 @@ export async function listStudentAnnouncements(): Promise<AnnouncementItem[]> {
     where: { residenceId: membership.residenceId, published: true },
     orderBy: { createdAt: "desc" },
     take: 20,
+    include: {
+      reads: {
+        where: { userId: session.userId },
+        select: { id: true },
+        take: 1,
+      },
+    },
   });
 
-  return rows.map(mapAnnouncement);
+  return rows.map((row) =>
+    mapAnnouncement(row, { unread: row.reads.length === 0 }),
+  );
+}
+
+/** Marque des annonces comme lues (étudiant). */
+export async function markAnnouncementsRead(
+  announcementIds: string[],
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await getSession();
+  if (!session || session.role !== Role.STUDENT) {
+    return { ok: false, error: "Action non autorisée." };
+  }
+
+  const ids = [...new Set(announcementIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0) return { ok: true };
+
+  const membership = await prisma.residenceMembership.findFirst({
+    where: { userId: session.userId, status: MembershipStatus.ACTIVE },
+    select: { residenceId: true },
+  });
+  if (!membership) return { ok: false, error: "Aucune résidence active." };
+
+  const owned = await prisma.officialAnnouncement.findMany({
+    where: {
+      id: { in: ids },
+      residenceId: membership.residenceId,
+      published: true,
+    },
+    select: { id: true },
+  });
+
+  if (owned.length === 0) return { ok: true };
+
+  await prisma.announcementRead.createMany({
+    data: owned.map((row) => ({
+      announcementId: row.id,
+      userId: session.userId,
+    })),
+    skipDuplicates: true,
+  });
+
+  revalidatePath("/accueil");
+  revalidatePath("/gestionnaire/annonces");
+
+  return { ok: true };
 }

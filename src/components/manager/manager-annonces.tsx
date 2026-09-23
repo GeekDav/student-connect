@@ -22,8 +22,10 @@ const labelClass = "block text-sm font-medium text-ink";
 
 export function ManagerAnnonces({
   initialItems,
+  activeResidents,
 }: {
   initialItems: AnnouncementItem[];
+  activeResidents: number;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState(initialItems);
@@ -108,8 +110,8 @@ export function ManagerAnnonces({
           Nouvelle annonce
         </h2>
         <p className="mt-2 text-base text-muted">
-          Texte + image optionnelle. L’image s’ouvre en grand au clic « Voir
-          l’image », sans casser le fil.
+          Texte + image optionnelle. Tu verras combien de résidents ont ouvert
+          l’annonce. L’image s’ouvre en grand au clic « Voir l’image ».
         </p>
 
         <form onSubmit={onCreate} className="mt-8 space-y-5" noValidate>
@@ -208,8 +210,8 @@ export function ManagerAnnonces({
             Annonces
           </h2>
           <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
-            Remplace le tableau d’affichage du hall : infos officielles,
-            coupures, soirées résidence.
+            Remplace le tableau d’affichage du hall. Tu vois combien de
+            résidents ont ouvert chaque annonce.
           </p>
         </div>
         <button
@@ -261,6 +263,14 @@ export function ManagerAnnonces({
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-3">
                     <p className="text-xs text-muted">{item.publishedAt}</p>
+                    <p className="text-xs font-semibold text-ink">
+                      {item.readCount ?? 0}
+                      {activeResidents > 0
+                        ? ` / ${activeResidents} lecture${
+                            (item.readCount ?? 0) > 1 ? "s" : ""
+                          }`
+                        : ` lecture${(item.readCount ?? 0) > 1 ? "s" : ""}`}
+                    </p>
                     {item.imageUrl ? (
                       <ViewAnnouncementImage
                         src={item.imageUrl}
