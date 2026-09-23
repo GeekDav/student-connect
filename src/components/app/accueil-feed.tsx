@@ -86,7 +86,7 @@ export function AccueilFeed({
       </div>
 
       {!readOnly ? (
-      <div className="animate-hero-rise-delay mt-8 flex gap-2 overflow-x-auto pb-1">
+      <div className="animate-hero-rise-delay mt-8 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {[
           { href: "/evenements", label: "Proposer un event" },
           { href: "/sos", label: "Lancer un SOS" },
