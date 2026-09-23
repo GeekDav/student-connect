@@ -42,8 +42,14 @@ export default async function CreateResidencePage({
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              href="/connexion?next=/gestionnaire"
+              href="/nous-contacter"
               className="inline-flex h-11 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
+            >
+              Nous contacter
+            </Link>
+            <Link
+              href="/connexion?next=/gestionnaire"
+              className="inline-flex h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash"
             >
               Connexion gestionnaire
             </Link>

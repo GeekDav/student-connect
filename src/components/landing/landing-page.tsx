@@ -208,12 +208,20 @@ export function LandingPage() {
           </ul>
           <Reveal>
             <p className="mt-10 text-base leading-relaxed text-muted">
+              Intéressé par le pilote ?{" "}
+              <Link
+                href="/nous-contacter"
+                className="font-semibold text-accent transition-opacity hover:opacity-70"
+              >
+                Nous contacter
+              </Link>
+              {" · "}
               Déjà partenaire ?{" "}
               <Link
                 href="/connexion?next=/gestionnaire"
                 className="font-semibold text-accent transition-opacity hover:opacity-70"
               >
-                Connexion espace gestionnaire
+                Connexion
               </Link>
             </p>
           </Reveal>
@@ -246,9 +254,21 @@ export function LandingPage() {
               <li>Retours d’usage bienvenus pour améliorer le produit</li>
             </ul>
             <p className="mt-8 text-sm leading-relaxed text-muted">
-              Pour candidater au pilote, contacte l’équipe Student-Connect.
-              Les comptes gestionnaire sont ouverts par nos soins.
+              Pour candidater au pilote, utilise{" "}
+              <Link
+                href="/nous-contacter"
+                className="font-semibold text-accent"
+              >
+                Nous contacter
+              </Link>
+              . Les comptes gestionnaire sont ouverts par nos soins.
             </p>
+            <Link
+              href="/nous-contacter"
+              className="mt-6 inline-flex h-11 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
+            >
+              Candidater au pilote
+            </Link>
           </div>
         </Reveal>
       </section>
@@ -288,6 +308,9 @@ export function LandingPage() {
             Student-Connect
           </Link>
           <div className="flex flex-wrap gap-5 text-sm text-muted">
+            <Link href="/nous-contacter" className="hover:text-ink">
+              Nous contacter
+            </Link>
             <Link href="/#partenaires" className="hover:text-ink">
               Phase pilote
             </Link>

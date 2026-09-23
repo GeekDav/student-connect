@@ -174,3 +174,35 @@ export function weeklyPausedReminderEmail(input: {
 
   return { subject, text, html, template: "weekly_paused_reminder" };
 }
+
+export function pilotContactEmail(input: {
+  name: string;
+  residenceName: string;
+  city: string;
+  email: string;
+  message: string;
+}) {
+  const subject = `Candidature pilote — ${input.residenceName} (${input.city})`;
+  const text = [
+    `Nouvelle candidature phase pilote`,
+    ``,
+    `Nom : ${input.name}`,
+    `Résidence : ${input.residenceName}`,
+    `Ville : ${input.city}`,
+    `E-mail : ${input.email}`,
+    ``,
+    `Message :`,
+    input.message,
+  ].join("\n");
+
+  const html = wrapHtml(
+    "Candidature pilote",
+    `<p><strong>Nom :</strong> ${input.name}<br/>
+     <strong>Résidence :</strong> ${input.residenceName}<br/>
+     <strong>Ville :</strong> ${input.city}<br/>
+     <strong>E-mail :</strong> <a href="mailto:${input.email}">${input.email}</a></p>
+     <p style="white-space:pre-wrap;">${input.message.replace(/</g, "&lt;")}</p>`,
+  );
+
+  return { subject, text, html, template: "pilot_contact" };
+}
