@@ -26,6 +26,7 @@ type CreateForm = {
   title: string;
   description: string;
   startsAt: string;
+  endsAt: string;
   where: string;
   spotsTotal: string;
 };
@@ -34,16 +35,27 @@ const EMPTY_FORM: CreateForm = {
   title: "",
   description: "",
   startsAt: "",
+  endsAt: "",
   where: "",
   spotsTotal: "4",
 };
 
-/** Valeur min pour datetime-local (maintenant, arrondi à la minute). */
+/** Valeur pour datetime-local (arrondi à la minute). */
+function toDateTimeLocal(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function minDateTimeLocal() {
   const d = new Date();
   d.setSeconds(0, 0);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return toDateTimeLocal(d);
+}
+
+function suggestEndFromStart(startsAtLocal: string) {
+  const start = new Date(startsAtLocal);
+  if (Number.isNaN(start.getTime())) return "";
+  return toDateTimeLocal(new Date(start.getTime() + 2 * 60 * 60 * 1000));
 }
 
 export function EventsBoard({
@@ -100,7 +112,24 @@ export function EventsBoard({
   } = useLoadMore(openEvents, 8);
 
   function update<K extends keyof CreateForm>(key: K, value: CreateForm[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === "startsAt" && typeof value === "string" && value) {
+        const prevEnd = prev.endsAt ? new Date(prev.endsAt).getTime() : NaN;
+        const prevStart = prev.startsAt
+          ? new Date(prev.startsAt).getTime()
+          : NaN;
+        const endWasAuto =
+          !prev.endsAt ||
+          (!Number.isNaN(prevStart) &&
+            !Number.isNaN(prevEnd) &&
+            Math.abs(prevEnd - (prevStart + 2 * 60 * 60 * 1000)) < 60_000);
+        if (endWasAuto) {
+          next.endsAt = suggestEndFromStart(value);
+        }
+      }
+      return next;
+    });
     setErrors((prev) => ({ ...prev, [key]: undefined }));
     setFormError(null);
   }
@@ -166,13 +195,32 @@ export function EventsBoard({
       next.description = "Ajoute une petite description.";
     }
     if (!form.startsAt.trim()) {
-      next.startsAt = "Choisis une date et une heure.";
+      next.startsAt = "Choisis une date et une heure de début.";
     } else {
       const start = new Date(form.startsAt);
       if (Number.isNaN(start.getTime())) {
-        next.startsAt = "Date/heure invalide.";
+        next.startsAt = "Date/heure de début invalide.";
       } else if (start.getTime() < Date.now() - 60_000) {
-        next.startsAt = "Choisis une date/heure dans le futur.";
+        next.startsAt = "Choisis un début dans le futur.";
+      }
+    }
+    if (!form.endsAt.trim()) {
+      next.endsAt = "Choisis une heure de fin.";
+    } else {
+      const start = new Date(form.startsAt);
+      const end = new Date(form.endsAt);
+      if (Number.isNaN(end.getTime())) {
+        next.endsAt = "Date/heure de fin invalide.";
+      } else if (
+        !Number.isNaN(start.getTime()) &&
+        end.getTime() < start.getTime()
+      ) {
+        next.endsAt = "La fin doit être après (ou égale au) début.";
+      } else if (
+        !Number.isNaN(start.getTime()) &&
+        end.getTime() - start.getTime() > 48 * 60 * 60 * 1000
+      ) {
+        next.endsAt = "Durée max 48 h.";
       }
     }
     if (!form.where.trim()) next.where = "Indique où ça se passe.";
@@ -189,6 +237,7 @@ export function EventsBoard({
         title: form.title,
         description: form.description,
         startsAt: form.startsAt,
+        endsAt: form.endsAt,
         where: form.where,
         spotsTotal: spots,
       });
@@ -281,7 +330,7 @@ export function EventsBoard({
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label htmlFor="startsAt" className={labelClass}>
-                Date et heure
+                Début
               </label>
               <input
                 id="startsAt"
@@ -291,10 +340,6 @@ export function EventsBoard({
                 value={form.startsAt}
                 onChange={(e) => update("startsAt", e.target.value)}
               />
-              <p className="mt-1.5 text-xs leading-relaxed text-muted">
-                Durée indicative 2 h. Après l’heure de fin, l’événement est
-                retiré automatiquement — tu n’as rien à faire.
-              </p>
               {errors.startsAt ? (
                 <p className="mt-1.5 text-sm text-red-700" role="alert">
                   {errors.startsAt}
@@ -302,24 +347,47 @@ export function EventsBoard({
               ) : null}
             </div>
             <div>
-              <label htmlFor="spotsTotal" className={labelClass}>
-                Places
+              <label htmlFor="endsAt" className={labelClass}>
+                Fin
               </label>
               <input
-                id="spotsTotal"
-                type="number"
-                min={2}
-                max={30}
-                className={fieldClass}
-                value={form.spotsTotal}
-                onChange={(e) => update("spotsTotal", e.target.value)}
+                id="endsAt"
+                type="datetime-local"
+                className={`${fieldClass} [color-scheme:light]`}
+                min={form.startsAt || minDateTimeLocal()}
+                value={form.endsAt}
+                onChange={(e) => update("endsAt", e.target.value)}
               />
-              {errors.spotsTotal ? (
+              {errors.endsAt ? (
                 <p className="mt-1.5 text-sm text-red-700" role="alert">
-                  {errors.spotsTotal}
+                  {errors.endsAt}
                 </p>
               ) : null}
             </div>
+          </div>
+          <p className="text-xs leading-relaxed text-muted">
+            Ex. début = fin → « 13h25 ». Sinon → « 13h25 – 18h ». Après la fin,
+            l’événement disparaît automatiquement.
+          </p>
+
+          <div>
+            <label htmlFor="spotsTotal" className={labelClass}>
+              Places
+            </label>
+            <input
+              id="spotsTotal"
+              type="number"
+              min={2}
+              max={30}
+              className={fieldClass}
+              value={form.spotsTotal}
+              onChange={(e) => update("spotsTotal", e.target.value)}
+            />
+            {errors.spotsTotal ? (
+              <p className="mt-1.5 text-sm text-red-700" role="alert">
+                {errors.spotsTotal}
+              </p>
+            ) : null}
           </div>
 
           <div>

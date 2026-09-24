@@ -29,6 +29,7 @@ export type EventActionResult =
   | { ok: false; error: string };
 
 const DEFAULT_DURATION_MS = 2 * 60 * 60 * 1000;
+const MAX_DURATION_MS = 48 * 60 * 60 * 1000;
 
 function formatEventWhen(startsAt: Date, endsAt: Date): string {
   const sameDay =
@@ -42,18 +43,27 @@ function formatEventWhen(startsAt: Date, endsAt: Date): string {
     month: "short",
   }).format(startsAt);
 
-  const timeStart = new Intl.DateTimeFormat("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(startsAt);
-
-  if (sameDay) {
-    const timeEnd = new Intl.DateTimeFormat("fr-FR", {
+  const timeStart = compactTime(
+    new Intl.DateTimeFormat("fr-FR", {
       hour: "2-digit",
       minute: "2-digit",
-    }).format(endsAt);
-    // Évite "20:00 – 22:00" trop technique → "20h – 22h" si minutes à 00
-    return `${datePart} · ${compactTime(timeStart)} – ${compactTime(timeEnd)}`;
+    }).format(startsAt),
+  );
+
+  // Début ≈ fin → affiche juste l’heure (ex. « sam. 12 oct. · 13h25 »)
+  if (endsAt.getTime() - startsAt.getTime() < 2 * 60 * 1000) {
+    return `${datePart} · ${timeStart}`;
+  }
+
+  const timeEnd = compactTime(
+    new Intl.DateTimeFormat("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(endsAt),
+  );
+
+  if (sameDay) {
+    return `${datePart} · ${timeStart} – ${timeEnd}`;
   }
 
   const dateEnd = new Intl.DateTimeFormat("fr-FR", {
@@ -61,12 +71,8 @@ function formatEventWhen(startsAt: Date, endsAt: Date): string {
     day: "numeric",
     month: "short",
   }).format(endsAt);
-  const timeEnd = new Intl.DateTimeFormat("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(endsAt);
 
-  return `${datePart} ${compactTime(timeStart)} → ${dateEnd} ${compactTime(timeEnd)}`;
+  return `${datePart} ${timeStart} → ${dateEnd} ${timeEnd}`;
 }
 
 function compactTime(frTime: string) {
@@ -149,6 +155,7 @@ export async function createEvent(input: {
   description: string;
   /** ISO string ou datetime-local value. */
   startsAt: string;
+  endsAt: string;
   where: string;
   spotsTotal: number;
 }): Promise<EventActionResult> {
@@ -172,27 +179,42 @@ export async function createEvent(input: {
 
   const startsAt = parseClientDateTime(input.startsAt);
   if (!startsAt) {
-    return { ok: false, error: "Indique une date et une heure valides." };
+    return { ok: false, error: "Indique une date et une heure de début." };
   }
+
+  const endsAt =
+    parseClientDateTime(input.endsAt) ??
+    new Date(startsAt.getTime() + DEFAULT_DURATION_MS);
 
   const now = Date.now();
   if (startsAt.getTime() < now - 60_000) {
-    return { ok: false, error: "Choisis une date/heure dans le futur." };
+    return { ok: false, error: "Choisis un début dans le futur." };
   }
 
-  // Max 90 jours à l’avance (évite les typos d’année)
   if (startsAt.getTime() > now + 90 * 24 * 60 * 60 * 1000) {
     return { ok: false, error: "Date trop lointaine (max 90 jours)." };
   }
 
-  const endsAt = new Date(startsAt.getTime() + DEFAULT_DURATION_MS);
+  if (endsAt.getTime() < startsAt.getTime()) {
+    return { ok: false, error: "L’heure de fin doit être après le début." };
+  }
+
+  // Point horaire (début = fin) → disparaît juste après cette minute
+  const resolvedEnd =
+    endsAt.getTime() === startsAt.getTime()
+      ? new Date(startsAt.getTime() + 60_000)
+      : endsAt;
+
+  if (resolvedEnd.getTime() - startsAt.getTime() > MAX_DURATION_MS) {
+    return { ok: false, error: "Durée max 48 h." };
+  }
 
   const row = await prisma.microEvent.create({
     data: {
       title,
       description,
       startsAt,
-      endsAt,
+      endsAt: resolvedEnd,
       location: where,
       spotsTotal,
       residenceId: ctx.residenceId,
