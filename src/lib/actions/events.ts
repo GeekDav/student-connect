@@ -30,7 +30,7 @@ export type EventActionResult =
 
 const DEFAULT_DURATION_MS = 2 * 60 * 60 * 1000;
 
-export function formatEventWhen(startsAt: Date, endsAt: Date): string {
+function formatEventWhen(startsAt: Date, endsAt: Date): string {
   const sameDay =
     startsAt.getFullYear() === endsAt.getFullYear() &&
     startsAt.getMonth() === endsAt.getMonth() &&
