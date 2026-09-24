@@ -1,0 +1,21 @@
+---
+description: Form validation UX — custom FR field errors, no native browser tooltips
+alwaysApply: true
+---
+
+# Validation formulaires
+
+Pour **tous** les formulaires (existants et futurs) :
+
+1. Mettre `noValidate` sur le `<form>` — **jamais** s’appuyer sur les bulles natives du navigateur (« Veuillez renseigner ce champ », etc.).
+2. Valider au submit côté client : collecter les erreurs par champ, `setErrors`, `return` si non vide.
+3. Afficher sous chaque champ invalide :
+   ```tsx
+   <p className="mt-1.5 text-sm text-red-700" role="alert">{errors.field}</p>
+   ```
+4. Messages en français, concrets et adaptés au champ (ex. « Indique ton nom. », « Entre une adresse e-mail valide. »).
+5. Effacer l’erreur du champ dès que l’utilisateur le modifie.
+6. Garder une erreur globale (`formError`) pour les échecs serveur / métier.
+7. Retirer `required` HTML si on gère la validation soi-même (évite le double feedback).
+
+Référence : `src/components/auth/connexion-form.tsx`, `src/components/landing/contact-form.tsx`.

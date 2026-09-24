@@ -7,35 +7,75 @@ import { submitPilotContact } from "@/lib/actions/contact";
 const fieldClass =
   "mt-2 w-full rounded-lg border border-line bg-surface px-3.5 py-3 text-[15px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-accent focus:shadow-[0_0_0_3px_rgba(12,107,92,0.12)]";
 
+const labelClass = "block text-sm font-medium text-ink";
+
+type FormState = {
+  name: string;
+  residenceName: string;
+  city: string;
+  email: string;
+  message: string;
+};
+
+type FieldErrors = Partial<Record<keyof FormState, string>>;
+
+const EMPTY: FormState = {
+  name: "",
+  residenceName: "",
+  city: "",
+  email: "",
+  message: "",
+};
+
+function validate(form: FormState): FieldErrors {
+  const next: FieldErrors = {};
+  if (!form.name.trim()) next.name = "Indique ton nom.";
+  if (!form.residenceName.trim()) {
+    next.residenceName = "Indique le nom de la résidence.";
+  }
+  if (!form.city.trim()) next.city = "Indique la ville.";
+  if (!form.email.trim() || !form.email.includes("@")) {
+    next.email = "Entre une adresse e-mail professionnel valide.";
+  }
+  const message = form.message.trim();
+  if (!message) next.message = "Écris un court message.";
+  else if (message.length < 10) {
+    next.message = "Message trop court (10 caractères mini).";
+  } else if (message.length > 2000) {
+    next.message = "Message trop long (2000 caractères max).";
+  }
+  return next;
+}
+
 export function ContactForm() {
-  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [done, setDone] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [form, setForm] = useState({
-    name: "",
-    residenceName: "",
-    city: "",
-    email: "",
-    message: "",
-  });
+  const [form, setForm] = useState<FormState>(EMPTY);
+
+  function update<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setErrors((prev) => ({ ...prev, [key]: undefined }));
+    setFormError(null);
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setError(null);
+    const next = validate(form);
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
+
+    setFormError(null);
     startTransition(async () => {
       const result = await submitPilotContact(form);
       if (!result.ok) {
-        setError(result.error);
+        setFormError(result.error);
         return;
       }
       setDone(true);
-      setForm({
-        name: "",
-        residenceName: "",
-        city: "",
-        email: "",
-        message: "",
-      });
+      setForm(EMPTY);
+      setErrors({});
     });
   }
 
@@ -61,89 +101,97 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4" noValidate>
       <div>
-        <label htmlFor="contact-name" className="text-sm font-medium text-ink">
+        <label htmlFor="contact-name" className={labelClass}>
           Ton nom
         </label>
         <input
           id="contact-name"
           className={fieldClass}
-          required
           value={form.name}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          onChange={(e) => update("name", e.target.value)}
         />
+        {errors.name ? (
+          <p className="mt-1.5 text-sm text-red-700" role="alert">
+            {errors.name}
+          </p>
+        ) : null}
       </div>
       <div>
-        <label
-          htmlFor="contact-residence"
-          className="text-sm font-medium text-ink"
-        >
+        <label htmlFor="contact-residence" className={labelClass}>
           Nom de la résidence
         </label>
         <input
           id="contact-residence"
           className={fieldClass}
-          required
           value={form.residenceName}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, residenceName: e.target.value }))
-          }
+          onChange={(e) => update("residenceName", e.target.value)}
         />
+        {errors.residenceName ? (
+          <p className="mt-1.5 text-sm text-red-700" role="alert">
+            {errors.residenceName}
+          </p>
+        ) : null}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="contact-city" className="text-sm font-medium text-ink">
+          <label htmlFor="contact-city" className={labelClass}>
             Ville
           </label>
           <input
             id="contact-city"
             className={fieldClass}
-            required
             value={form.city}
-            onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+            onChange={(e) => update("city", e.target.value)}
           />
+          {errors.city ? (
+            <p className="mt-1.5 text-sm text-red-700" role="alert">
+              {errors.city}
+            </p>
+          ) : null}
         </div>
         <div>
-          <label
-            htmlFor="contact-email"
-            className="text-sm font-medium text-ink"
-          >
+          <label htmlFor="contact-email" className={labelClass}>
             E-mail professionnel
           </label>
           <input
             id="contact-email"
             type="email"
             className={fieldClass}
-            required
             autoComplete="email"
             value={form.email}
-            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            onChange={(e) => update("email", e.target.value)}
           />
+          {errors.email ? (
+            <p className="mt-1.5 text-sm text-red-700" role="alert">
+              {errors.email}
+            </p>
+          ) : null}
         </div>
       </div>
       <div>
-        <label
-          htmlFor="contact-message"
-          className="text-sm font-medium text-ink"
-        >
+        <label htmlFor="contact-message" className={labelClass}>
           Message
         </label>
         <textarea
           id="contact-message"
           className={`${fieldClass} min-h-28 resize-y`}
-          required
-          minLength={10}
           maxLength={2000}
           value={form.message}
-          onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+          onChange={(e) => update("message", e.target.value)}
           placeholder="Taille de la résidence, ton rôle, pourquoi tu es intéressé…"
         />
+        {errors.message ? (
+          <p className="mt-1.5 text-sm text-red-700" role="alert">
+            {errors.message}
+          </p>
+        ) : null}
       </div>
 
-      {error ? (
+      {formError ? (
         <p className="text-sm text-red-700" role="alert">
-          {error}
+          {formError}
         </p>
       ) : null}
 
