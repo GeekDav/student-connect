@@ -560,9 +560,9 @@ export function InscriptionForm({
         ) : (
           <Link
             href="/connexion"
-            className="inline-flex h-12 items-center justify-center text-sm font-medium text-muted transition-colors hover:text-ink"
+            className="inline-flex h-12 items-center justify-center gap-1 text-sm font-medium text-muted transition-colors hover:text-ink"
           >
-            Déjà un compte ?{" "}
+            <span>Déjà un compte ?</span>
             <span className="font-bold text-ink">Connexion</span>
           </Link>
         )}
