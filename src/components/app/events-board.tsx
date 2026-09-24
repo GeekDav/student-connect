@@ -48,6 +48,12 @@ function todayLocalDate() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+function nowLocalTime() {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function combineLocal(date: string, time: string): Date | null {
   if (!date.trim() || !time.trim()) return null;
   const d = new Date(`${date}T${time}`);
@@ -112,38 +118,7 @@ export function EventsBoard({
   } = useLoadMore(openEvents, 8);
 
   function update<K extends keyof CreateForm>(key: K, value: CreateForm[K]) {
-    setForm((prev) => {
-      const next = { ...prev, [key]: value };
-      // Suggestion fin = début + 2 h (même jour), si pas encore choisi ou encore l’auto
-      if (key === "startTime" && typeof value === "string" && value) {
-        const [h, m] = value.split(":").map(Number);
-        if (Number.isFinite(h) && Number.isFinite(m)) {
-          const endWasEmpty = !prev.endTime;
-          const prevStart = prev.startTime;
-          let wasAuto = endWasEmpty;
-          if (prevStart && prev.endTime) {
-            const [sh, sm] = prevStart.split(":").map(Number);
-            const [eh, em] = prev.endTime.split(":").map(Number);
-            if (
-              Number.isFinite(sh) &&
-              Number.isFinite(sm) &&
-              Number.isFinite(eh) &&
-              Number.isFinite(em)
-            ) {
-              const prevStartMin = sh * 60 + sm;
-              const prevEndMin = eh * 60 + em;
-              wasAuto = prevEndMin === prevStartMin + 120;
-            }
-          }
-          if (wasAuto) {
-            const endMin = Math.min(h * 60 + m + 120, 23 * 60 + 59);
-            const pad = (n: number) => String(n).padStart(2, "0");
-            next.endTime = `${pad(Math.floor(endMin / 60))}:${pad(endMin % 60)}`;
-          }
-        }
-      }
-      return next;
-    });
+    setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
     setFormError(null);
   }
@@ -369,6 +344,9 @@ export function EventsBoard({
                 id="startTime"
                 type="time"
                 className={`${fieldClass} [color-scheme:light]`}
+                min={
+                  form.date === todayLocalDate() ? nowLocalTime() : undefined
+                }
                 value={form.startTime}
                 onChange={(e) => update("startTime", e.target.value)}
               />
@@ -387,6 +365,10 @@ export function EventsBoard({
                 id="endTime"
                 type="time"
                 className={`${fieldClass} [color-scheme:light]`}
+                min={
+                  form.startTime ||
+                  (form.date === todayLocalDate() ? nowLocalTime() : undefined)
+                }
                 value={form.endTime}
                 onChange={(e) => update("endTime", e.target.value)}
               />
@@ -398,8 +380,9 @@ export function EventsBoard({
             </div>
           </div>
           <p className="text-xs leading-relaxed text-muted">
-            Une seule date · ex. « 13h25 » ou « 13h25 – 18h ». Après la fin,
-            l’événement disparaît automatiquement.
+            Une seule date · laisse la fin vide pour « 13h », ou renseigne-la
+            pour « 13h – 18h ». Après la fin, l’événement disparaît
+            automatiquement.
           </p>
 
           <div>
