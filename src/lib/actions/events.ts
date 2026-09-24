@@ -28,8 +28,7 @@ export type EventActionResult =
   | { ok: true; item?: EventItem }
   | { ok: false; error: string };
 
-const DEFAULT_DURATION_MS = 2 * 60 * 60 * 1000;
-const MAX_DURATION_MS = 48 * 60 * 60 * 1000;
+const POINT_EVENT_BUFFER_MS = 60_000;
 
 function formatEventWhen(startsAt: Date, endsAt: Date): string {
   const sameDay =
@@ -184,30 +183,38 @@ export async function createEvent(input: {
 
   const endsAt =
     parseClientDateTime(input.endsAt) ??
-    new Date(startsAt.getTime() + DEFAULT_DURATION_MS);
+    new Date(startsAt.getTime() + 60_000);
 
   const now = Date.now();
   if (startsAt.getTime() < now - 60_000) {
-    return { ok: false, error: "Choisis un début dans le futur." };
+    return { ok: false, error: "Choisis un horaire dans le futur." };
   }
 
   if (startsAt.getTime() > now + 90 * 24 * 60 * 60 * 1000) {
     return { ok: false, error: "Date trop lointaine (max 90 jours)." };
   }
 
+  const sameDay =
+    startsAt.getFullYear() === endsAt.getFullYear() &&
+    startsAt.getMonth() === endsAt.getMonth() &&
+    startsAt.getDate() === endsAt.getDate();
+
+  if (!sameDay) {
+    return {
+      ok: false,
+      error: "Un événement = une seule date (heures de début et fin le même jour).",
+    };
+  }
+
   if (endsAt.getTime() < startsAt.getTime()) {
     return { ok: false, error: "L’heure de fin doit être après le début." };
   }
 
-  // Point horaire (début = fin) → disparaît juste après cette minute
+  // Point horaire (pas de fin / fin = début) → disparaît juste après cette minute
   const resolvedEnd =
-    endsAt.getTime() === startsAt.getTime()
+    endsAt.getTime() <= startsAt.getTime()
       ? new Date(startsAt.getTime() + 60_000)
       : endsAt;
-
-  if (resolvedEnd.getTime() - startsAt.getTime() > MAX_DURATION_MS) {
-    return { ok: false, error: "Durée max 48 h." };
-  }
 
   const row = await prisma.microEvent.create({
     data: {
