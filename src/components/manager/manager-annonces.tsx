@@ -18,6 +18,7 @@ import {
   prepareImageForUpload,
   uploadTransportError,
 } from "@/lib/client-image";
+import { STUDENT_FEED_ANNOUNCEMENT_LIMIT } from "@/lib/announcement-limits";
 
 const fieldClass =
   "mt-2 w-full rounded-lg border border-line bg-surface px-3.5 py-3 text-[15px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-accent focus:shadow-[0_0_0_3px_rgba(12,107,92,0.12)]";
@@ -253,9 +254,28 @@ export function ManagerAnnonces({
         </p>
       ) : null}
 
+      {published.length >= STUDENT_FEED_ANNOUNCEMENT_LIMIT ? (
+        <div
+          className="mt-6 rounded-2xl border border-[#c9853a]/40 bg-[#fff6eb] px-5 py-4"
+          role="status"
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9a4b1a]">
+            Feed étudiant plein
+          </p>
+          <p className="mt-1.5 text-sm leading-relaxed text-ink">
+            {published.length} annonces publiées — les étudiants ne voient que
+            les {STUDENT_FEED_ANNOUNCEMENT_LIMIT} plus récentes. Retire
+            (dépublie) celles qui ne sont plus utiles pour libérer de la place.
+          </p>
+        </div>
+      ) : null}
+
       <section className="animate-hero-rise-delay mt-10">
         <h3 className="font-display text-sm font-semibold tracking-wide text-ink">
           Publiées · {published.length}
+          {published.length >= STUDENT_FEED_ANNOUNCEMENT_LIMIT
+            ? ` / ${STUDENT_FEED_ANNOUNCEMENT_LIMIT} visibles`
+            : ""}
         </h3>
         {published.length === 0 ? (
           <div className="mt-2">

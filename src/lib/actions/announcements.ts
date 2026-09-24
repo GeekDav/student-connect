@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getActiveStudentContext } from "@/lib/student-context";
+import { STUDENT_FEED_ANNOUNCEMENT_LIMIT } from "@/lib/announcement-limits";
 import { deletePublicUpload, saveAnnouncementImage } from "@/lib/uploads";
 
 export type AnnouncementItem = {
@@ -207,7 +208,7 @@ export async function listStudentAnnouncements(): Promise<AnnouncementItem[]> {
   const rows = await prisma.officialAnnouncement.findMany({
     where: { residenceId: ctx.residenceId, published: true },
     orderBy: { createdAt: "desc" },
-    take: 20,
+    take: STUDENT_FEED_ANNOUNCEMENT_LIMIT,
     include: {
       reads: {
         where: { userId: ctx.session.userId },

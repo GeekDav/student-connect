@@ -6,6 +6,7 @@ import {
   SosStatus,
 } from "@prisma/client";
 import { getSession } from "@/lib/auth";
+import { STUDENT_FEED_ANNOUNCEMENT_LIMIT } from "@/lib/announcement-limits";
 import { prisma } from "@/lib/db";
 
 type InboxItem = {
@@ -97,36 +98,48 @@ export async function ManagerDashboard({
       value: String(activeMembers),
       href: "/gestionnaire/residents",
       hint: "Annuaire opérationnel",
+      warn: false,
     },
     {
       label: "À valider",
       value: String(pendingCount),
       href: "/gestionnaire/inscriptions",
       hint: "Inscriptions en attente",
+      warn: false,
     },
     {
       label: "SOS ouverts",
       value: String(openSos),
       href: "/sos",
       hint: "Entraide en cours",
+      warn: false,
     },
     {
       label: "Signalements",
       value: String(openReports),
       href: "/gestionnaire/moderation",
       hint: "Modération à traiter",
+      warn: false,
     },
     {
       label: "Annonces live",
-      value: String(publishedAnnouncements),
+      value:
+        publishedAnnouncements >= STUDENT_FEED_ANNOUNCEMENT_LIMIT
+          ? `${publishedAnnouncements} · plein`
+          : String(publishedAnnouncements),
       href: "/gestionnaire/annonces",
-      hint: "Tableau d’affichage",
+      hint:
+        publishedAnnouncements >= STUDENT_FEED_ANNOUNCEMENT_LIMIT
+          ? `Feed étudiant plafonné à ${STUDENT_FEED_ANNOUNCEMENT_LIMIT}`
+          : "Tableau d’affichage",
+      warn: publishedAnnouncements >= STUDENT_FEED_ANNOUNCEMENT_LIMIT,
     },
     {
       label: "Events (7 j.)",
       value: String(recentEvents),
       href: "/evenements",
       hint: "Activité récente",
+      warn: false,
     },
   ];
 
@@ -232,7 +245,11 @@ export async function ManagerDashboard({
             <li key={card.label}>
               <Link
                 href={card.href}
-                className="block rounded-2xl border border-line bg-surface px-5 py-5 transition-[border-color,background-color] hover:border-accent/35 hover:bg-wash/40"
+                className={`block rounded-2xl border px-5 py-5 transition-[border-color,background-color] ${
+                  card.warn
+                    ? "border-[#c9853a]/50 bg-[#fff6eb] hover:border-[#c9853a]/70"
+                    : "border-line bg-surface hover:border-accent/35 hover:bg-wash/40"
+                }`}
               >
                 <p className="text-sm font-medium text-muted">{card.label}</p>
                 <p className="mt-3 font-display text-4xl font-semibold text-ink">
@@ -244,6 +261,29 @@ export async function ManagerDashboard({
           ))}
         </ul>
       </section>
+
+      {publishedAnnouncements >= STUDENT_FEED_ANNOUNCEMENT_LIMIT ? (
+        <div
+          className="animate-hero-rise-delay mt-8 rounded-2xl border border-[#c9853a]/40 bg-[#fff6eb] px-5 py-4"
+          role="status"
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9a4b1a]">
+            Tableau d’affichage
+          </p>
+          <p className="mt-1.5 text-sm leading-relaxed text-ink">
+            Tu as {publishedAnnouncements} annonces live. Les étudiants n’en
+            voient que les {STUDENT_FEED_ANNOUNCEMENT_LIMIT} plus récentes.
+            Dépublie celles qui ne sont plus d’actualité pour libérer de la
+            place.
+          </p>
+          <Link
+            href="/gestionnaire/annonces"
+            className="mt-3 inline-flex text-sm font-semibold text-[#9a4b1a] transition-opacity hover:opacity-70"
+          >
+            Gérer les annonces →
+          </Link>
+        </div>
+      ) : null}
 
       <section className="animate-hero-rise-delay-2 mt-12">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
