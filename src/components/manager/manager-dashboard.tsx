@@ -66,7 +66,10 @@ export async function ManagerDashboard({
           where: { residenceId, status: SosStatus.OPEN },
         }),
         prisma.microEvent.count({
-          where: { residenceId, createdAt: { gte: weekAgo } },
+          where: {
+            residenceId,
+            startsAt: { gte: weekAgo },
+          },
         }),
         prisma.residenceMembership.findMany({
           where: { residenceId, status: MembershipStatus.PENDING },

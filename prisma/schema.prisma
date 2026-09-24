@@ -227,7 +227,10 @@ model MicroEvent {
   id          String   @id @default(cuid())
   title       String
   description String
-  whenLabel   String
+  /** Début de l’événement (source de vérité). */
+  startsAt    DateTime
+  /** Fin — après quoi l’event disparaît automatiquement des listes. */
+  endsAt      DateTime
   location    String
   spotsTotal  Int
   createdAt   DateTime @default(now())
@@ -240,6 +243,8 @@ model MicroEvent {
   participants EventParticipant[]
 
   @@index([residenceId])
+  @@index([endsAt])
+  @@index([residenceId, endsAt])
 }
 
 model EventParticipant {

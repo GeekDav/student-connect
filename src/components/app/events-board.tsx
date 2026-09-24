@@ -25,7 +25,7 @@ const labelClass = "block text-sm font-medium text-ink";
 type CreateForm = {
   title: string;
   description: string;
-  whenLabel: string;
+  startsAt: string;
   where: string;
   spotsTotal: string;
 };
@@ -33,10 +33,18 @@ type CreateForm = {
 const EMPTY_FORM: CreateForm = {
   title: "",
   description: "",
-  whenLabel: "",
+  startsAt: "",
   where: "",
   spotsTotal: "4",
 };
+
+/** Valeur min pour datetime-local (maintenant, arrondi à la minute). */
+function minDateTimeLocal() {
+  const d = new Date();
+  d.setSeconds(0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export function EventsBoard({
   initialEvents,
@@ -56,10 +64,21 @@ export function EventsBoard({
   const [scope, setScope] = useState<BoardScope>("all");
   const [isPending, startTransition] = useTransition();
 
+  useEffect(() => {
+    setEvents(initialEvents);
+  }, [initialEvents]);
+
+  const liveEvents = useMemo(
+    () => events.filter((event) => new Date(event.endsAt).getTime() > Date.now()),
+    [events],
+  );
+
   const scopedEvents = useMemo(
     () =>
-      scope === "mine" ? events.filter((event) => event.isMine) : events,
-    [events, scope],
+      scope === "mine"
+        ? liveEvents.filter((event) => event.isMine)
+        : liveEvents,
+    [liveEvents, scope],
   );
   const openEvents = useMemo(
     () => scopedEvents.filter((event) => event.spotsTaken < event.spotsTotal),
@@ -70,8 +89,8 @@ export function EventsBoard({
     [scopedEvents],
   );
   const mineCount = useMemo(
-    () => events.filter((event) => event.isMine).length,
-    [events],
+    () => liveEvents.filter((event) => event.isMine).length,
+    [liveEvents],
   );
   const {
     visible: visibleOpen,
@@ -146,8 +165,15 @@ export function EventsBoard({
     if (!form.description.trim()) {
       next.description = "Ajoute une petite description.";
     }
-    if (!form.whenLabel.trim()) {
-      next.whenLabel = "Indique quand (ex. Ce soir · 20h).";
+    if (!form.startsAt.trim()) {
+      next.startsAt = "Choisis une date et une heure.";
+    } else {
+      const start = new Date(form.startsAt);
+      if (Number.isNaN(start.getTime())) {
+        next.startsAt = "Date/heure invalide.";
+      } else if (start.getTime() < Date.now() - 60_000) {
+        next.startsAt = "Choisis une date/heure dans le futur.";
+      }
     }
     if (!form.where.trim()) next.where = "Indique où ça se passe.";
     if (!Number.isFinite(spots) || spots < 2 || spots > 30) {
@@ -162,7 +188,7 @@ export function EventsBoard({
       const result = await createEvent({
         title: form.title,
         description: form.description,
-        whenLabel: form.whenLabel,
+        startsAt: form.startsAt,
         where: form.where,
         spotsTotal: spots,
       });
@@ -171,7 +197,11 @@ export function EventsBoard({
         return;
       }
       if (result.item) {
-        setEvents((prev) => [result.item!, ...prev]);
+        setEvents((prev) =>
+          [...prev.filter((e) => e.id !== result.item!.id), result.item!].sort(
+            (a, b) => a.startsAt.localeCompare(b.startsAt),
+          ),
+        );
       }
       setForm(EMPTY_FORM);
       setMode("list");
@@ -193,7 +223,8 @@ export function EventsBoard({
             Proposer une activité
           </h1>
           <p className="mt-2 max-w-md text-base leading-relaxed text-muted">
-            Un micro-événement visible uniquement dans ta résidence.
+            Un micro-événement visible uniquement dans ta résidence. Une fois
+            la date passée, il disparaît automatiquement de la liste.
           </p>
         </div>
 
@@ -214,7 +245,9 @@ export function EventsBoard({
               onChange={(e) => update("title", e.target.value)}
             />
             {errors.title ? (
-              <p className="mt-1.5 text-sm text-red-700">{errors.title}</p>
+              <p className="mt-1.5 text-sm text-red-700" role="alert">
+                {errors.title}
+              </p>
             ) : null}
           </div>
 
@@ -239,24 +272,33 @@ export function EventsBoard({
               />
             </div>
             {errors.description ? (
-              <p className="mt-1.5 text-sm text-red-700">{errors.description}</p>
+              <p className="mt-1.5 text-sm text-red-700" role="alert">
+                {errors.description}
+              </p>
             ) : null}
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label htmlFor="whenLabel" className={labelClass}>
-                Quand
+              <label htmlFor="startsAt" className={labelClass}>
+                Date et heure
               </label>
               <input
-                id="whenLabel"
-                className={fieldClass}
-                placeholder="Ex. Ce soir · 20h"
-                value={form.whenLabel}
-                onChange={(e) => update("whenLabel", e.target.value)}
+                id="startsAt"
+                type="datetime-local"
+                className={`${fieldClass} [color-scheme:light]`}
+                min={minDateTimeLocal()}
+                value={form.startsAt}
+                onChange={(e) => update("startsAt", e.target.value)}
               />
-              {errors.whenLabel ? (
-                <p className="mt-1.5 text-sm text-red-700">{errors.whenLabel}</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted">
+                Durée indicative 2 h. Après l’heure de fin, l’événement est
+                retiré automatiquement — tu n’as rien à faire.
+              </p>
+              {errors.startsAt ? (
+                <p className="mt-1.5 text-sm text-red-700" role="alert">
+                  {errors.startsAt}
+                </p>
               ) : null}
             </div>
             <div>
@@ -273,7 +315,9 @@ export function EventsBoard({
                 onChange={(e) => update("spotsTotal", e.target.value)}
               />
               {errors.spotsTotal ? (
-                <p className="mt-1.5 text-sm text-red-700">{errors.spotsTotal}</p>
+                <p className="mt-1.5 text-sm text-red-700" role="alert">
+                  {errors.spotsTotal}
+                </p>
               ) : null}
             </div>
           </div>
@@ -322,7 +366,7 @@ export function EventsBoard({
           <p className="mt-2 max-w-md text-base leading-relaxed text-muted">
             {readOnly
               ? "Activités proposées par les résidents — consultation seule."
-              : "FIFA, sorties, révisions… propose ou rejoins une activité dans ta résidence."}
+              : "FIFA, sorties, révisions… propose ou rejoins une activité. Les dates passées disparaissent toutes seules."}
           </p>
         </div>
         {!readOnly ? (
@@ -347,7 +391,7 @@ export function EventsBoard({
         <BoardScopeFilter
           value={scope}
           onChange={setScope}
-          allCount={events.length}
+          allCount={liveEvents.length}
           mineCount={mineCount}
         />
       </div>
