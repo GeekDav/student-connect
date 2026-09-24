@@ -109,7 +109,7 @@ export function ContactForm() {
             htmlFor="contact-email"
             className="text-sm font-medium text-ink"
           >
-            E-mail
+            E-mail professionnel
           </label>
           <input
             id="contact-email"
