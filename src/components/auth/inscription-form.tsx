@@ -562,7 +562,8 @@ export function InscriptionForm({
             href="/connexion"
             className="inline-flex h-12 items-center justify-center text-sm font-medium text-muted transition-colors hover:text-ink"
           >
-            Déjà un compte ? Connexion
+            Déjà un compte ?{" "}
+            <span className="font-bold text-ink">Connexion</span>
           </Link>
         )}
         <button
