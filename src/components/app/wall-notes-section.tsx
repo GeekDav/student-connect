@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition, type FormEvent } from "react";
+import { FeedSectionHeader } from "@/components/app/feed-section-header";
 import { ReportButton } from "@/components/app/report-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EmojiPickerButton } from "@/components/ui/emoji-picker";
@@ -108,14 +109,15 @@ export function WallNotesSection({
 
   return (
     <section className="mt-12">
-      <h2 className="font-display text-sm font-semibold tracking-wide text-ink">
-        Petit mur
-      </h2>
-      <p className="mt-1 text-sm text-muted">
-        {readOnly
-          ? "Messages des résidents (consultation)."
-          : "Pose une question ou une idée · réponses dessous · 1 post / jour · disparaît après 7 jours"}
-      </p>
+      <FeedSectionHeader
+        title="Petit mur"
+        tone="wall"
+        subtitle={
+          readOnly
+            ? "Messages des résidents"
+            : "1 post / jour · disparaît après 7 jours"
+        }
+      />
 
       {!readOnly ? (
       <form onSubmit={onCreate} className="mt-4 space-y-3">

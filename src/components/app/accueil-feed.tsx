@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AccueilAnnouncements } from "@/components/app/accueil-announcements";
+import { FeedSectionHeader } from "@/components/app/feed-section-header";
 import { WallNotesSection } from "@/components/app/wall-notes-section";
 import type { AnnouncementItem } from "@/lib/actions/announcements";
 import type { EventItem } from "@/lib/actions/events";
@@ -110,17 +111,11 @@ export function AccueilFeed({
       <WallNotesSection initialNotes={wallNotes} readOnly={readOnly} />
 
       <section className="mt-12">
-        <div className="flex items-end justify-between gap-3">
-          <h2 className="font-display text-sm font-semibold tracking-wide text-ink">
-            Événements récents
-          </h2>
-          <Link
-            href="/evenements"
-            className="text-sm font-medium text-accent transition-opacity hover:opacity-70"
-          >
-            Tout voir
-          </Link>
-        </div>
+        <FeedSectionHeader
+          title="Événements récents"
+          tone="events"
+          href="/evenements"
+        />
         {openEvents.length > 0 ? (
           <ul className="mt-2 divide-y divide-line border-y border-line">
             {openEvents.slice(0, 4).map((item) => (
@@ -161,17 +156,7 @@ export function AccueilFeed({
       </section>
 
       <section className="mt-12">
-        <div className="flex items-end justify-between gap-3">
-          <h2 className="font-display text-sm font-semibold tracking-wide text-ink">
-            SOS en cours
-          </h2>
-          <Link
-            href="/sos"
-            className="text-sm font-medium text-accent transition-opacity hover:opacity-70"
-          >
-            Tout voir
-          </Link>
-        </div>
+        <FeedSectionHeader title="SOS en cours" tone="sos" href="/sos" />
         {openSos.length > 0 ? (
           <ul className="mt-2 divide-y divide-line border-y border-line">
             {openSos.slice(0, 4).map((item) => (
@@ -197,17 +182,11 @@ export function AccueilFeed({
       </section>
 
       <section className="mt-12">
-        <div className="flex items-end justify-between gap-3">
-          <h2 className="font-display text-sm font-semibold tracking-wide text-ink">
-            Recyclerie
-          </h2>
-          <Link
-            href="/recyclerie"
-            className="text-sm font-medium text-accent transition-opacity hover:opacity-70"
-          >
-            Tout voir
-          </Link>
-        </div>
+        <FeedSectionHeader
+          title="Recyclerie"
+          tone="market"
+          href="/recyclerie"
+        />
         {activeMarket.length > 0 ? (
           <ul className="mt-2 divide-y divide-line border-y border-line">
             {activeMarket.slice(0, 4).map((item) => (

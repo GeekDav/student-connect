@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { FeedSectionHeader } from "@/components/app/feed-section-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ViewAnnouncementImage } from "@/components/ui/view-announcement-image";
 import {
@@ -35,10 +36,12 @@ export function AccueilAnnouncements({
   }, [initial]);
 
   return (
-    <section>
-      <h2 className="font-display text-sm font-semibold tracking-wide text-accent">
-        Tableau d’affichage
-      </h2>
+    <section className="mt-10">
+      <FeedSectionHeader
+        title="Tableau d’affichage"
+        tone="official"
+        subtitle="Annonces de la résidence"
+      />
       {items.length > 0 ? (
         <ul className="mt-4 space-y-3">
           {items.map((item) => (
