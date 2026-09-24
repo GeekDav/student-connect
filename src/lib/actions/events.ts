@@ -28,8 +28,6 @@ export type EventActionResult =
   | { ok: true; item?: EventItem }
   | { ok: false; error: string };
 
-const POINT_EVENT_BUFFER_MS = 60_000;
-
 function formatEventWhen(startsAt: Date, endsAt: Date): string {
   const sameDay =
     startsAt.getFullYear() === endsAt.getFullYear() &&
