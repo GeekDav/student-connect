@@ -10,6 +10,13 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import {
+  MARKET_MAX_ACTIVE,
+  MARKET_PROLONG_DAYS,
+  MARKET_TTL_DAYS,
+  addDays,
+  formatUntilLabel,
+} from "@/lib/board-ttl";
 
 export type MarketItem = {
   id: string;
@@ -18,19 +25,25 @@ export type MarketItem = {
   author: string;
   authorId: string;
   timeLabel: string;
+  expiresLabel: string;
   type: "don" | "vente";
   priceLabel?: string;
   location: string;
-  status: "available" | "reserved" | "gone";
+  status: "available" | "reserved" | "gone" | "expired";
   interests: number;
   iInterested: boolean;
   isMine: boolean;
+  canProlong: boolean;
 };
 
 export type MarketActionResult =
   | { ok: true; item?: MarketItem }
   | { ok: false; error: string };
 
+const ACTIVE_STATUSES: MarketplaceStatus[] = [
+  MarketplaceStatus.AVAILABLE,
+  MarketplaceStatus.RESERVED,
+];
 
 function formatRelative(date: Date) {
   const diffMs = Date.now() - date.getTime();
@@ -56,6 +69,8 @@ function mapStatus(status: MarketplaceStatus): MarketItem["status"] {
       return "reserved";
     case MarketplaceStatus.GONE:
       return "gone";
+    case MarketplaceStatus.EXPIRED:
+      return "expired";
   }
 }
 
@@ -69,12 +84,17 @@ function mapItem(
     location: string;
     status: MarketplaceStatus;
     createdAt: Date;
+    expiresAt: Date;
+    prolongedOnce: boolean;
     authorId: string;
     author: { firstName: string; lastName: string };
     interests: { userId: string }[];
   },
   userId: string,
 ): MarketItem {
+  const isMine = row.authorId === userId;
+  const active = ACTIVE_STATUSES.includes(row.status);
+  const canReviveExpired = row.status === MarketplaceStatus.EXPIRED;
   return {
     id: row.id,
     title: row.title,
@@ -82,13 +102,18 @@ function mapItem(
     author: `${row.author.firstName} ${row.author.lastName.charAt(0)}.`,
     authorId: row.authorId,
     timeLabel: formatRelative(row.createdAt),
+    expiresLabel: formatUntilLabel(row.expiresAt),
     type: mapType(row.type),
     priceLabel: row.priceLabel ?? undefined,
     location: row.location,
     status: mapStatus(row.status),
     interests: row.interests.length,
     iInterested: row.interests.some((i) => i.userId === userId),
-    isMine: row.authorId === userId,
+    isMine,
+    canProlong:
+      isMine &&
+      !row.prolongedOnce &&
+      (active || canReviveExpired),
   };
 }
 
@@ -97,9 +122,22 @@ const marketInclude = {
   interests: { select: { userId: true } },
 } as const;
 
+async function expireDueMarket(residenceId: string) {
+  await prisma.marketplaceItem.updateMany({
+    where: {
+      residenceId,
+      status: { in: ACTIVE_STATUSES },
+      expiresAt: { lt: new Date() },
+    },
+    data: { status: MarketplaceStatus.EXPIRED },
+  });
+}
+
 export async function listResidenceMarket(): Promise<MarketItem[]> {
   const ctx = await getActiveStudentContext();
   if (!ctx) return [];
+
+  await expireDueMarket(ctx.residenceId);
 
   const rows = await prisma.marketplaceItem.findMany({
     where: { residenceId: ctx.residenceId },
@@ -140,6 +178,23 @@ export async function createMarketItem(input: {
     return { ok: false, error: "Indique un prix (ex. 10 €)." };
   }
 
+  await expireDueMarket(ctx.residenceId);
+
+  const activeCount = await prisma.marketplaceItem.count({
+    where: {
+      residenceId: ctx.residenceId,
+      authorId: ctx.session.userId,
+      status: { in: ACTIVE_STATUSES },
+      expiresAt: { gt: new Date() },
+    },
+  });
+  if (activeCount >= MARKET_MAX_ACTIVE) {
+    return {
+      ok: false,
+      error: `Tu as déjà ${MARKET_MAX_ACTIVE} annonces actives. Marque-en une comme partie ou attends qu’elle expire.`,
+    };
+  }
+
   const row = await prisma.marketplaceItem.create({
     data: {
       title,
@@ -148,6 +203,7 @@ export async function createMarketItem(input: {
       priceLabel: input.type === "vente" ? priceLabel : null,
       location,
       status: MarketplaceStatus.AVAILABLE,
+      expiresAt: addDays(new Date(), MARKET_TTL_DAYS),
       residenceId: ctx.residenceId,
       authorId: ctx.session.userId,
     },
@@ -169,6 +225,8 @@ export async function toggleMarketInterest(
   }
   if (!ctx.writable) return writeBlockedResult(ctx);
 
+  await expireDueMarket(ctx.residenceId);
+
   const item = await prisma.marketplaceItem.findFirst({
     where: { id: itemId, residenceId: ctx.residenceId },
     include: marketInclude,
@@ -177,6 +235,9 @@ export async function toggleMarketInterest(
   if (!item) return { ok: false, error: "Annonce introuvable." };
   if (item.status === MarketplaceStatus.GONE) {
     return { ok: false, error: "Cet objet est déjà parti." };
+  }
+  if (item.status === MarketplaceStatus.EXPIRED) {
+    return { ok: false, error: "Cette annonce a expiré." };
   }
   if (item.authorId === ctx.session.userId) {
     return { ok: false, error: "Tu ne peux pas marquer d’intérêt sur ton annonce." };
@@ -241,6 +302,9 @@ export async function markMarketGone(itemId: string): Promise<MarketActionResult
       error: "Annonce introuvable ou tu n’en es pas l’auteur.",
     };
   }
+  if (item.status === MarketplaceStatus.GONE) {
+    return { ok: false, error: "Cette annonce est déjà marquée comme partie." };
+  }
 
   await prisma.marketplaceItem.update({
     where: { id: item.id },
@@ -249,6 +313,88 @@ export async function markMarketGone(itemId: string): Promise<MarketActionResult
 
   const refreshed = await prisma.marketplaceItem.findUniqueOrThrow({
     where: { id: item.id },
+    include: marketInclude,
+  });
+
+  revalidatePath("/recyclerie");
+  revalidatePath("/accueil");
+
+  return { ok: true, item: mapItem(refreshed, ctx.session.userId) };
+}
+
+export async function prolongMarketItem(
+  itemId: string,
+): Promise<MarketActionResult> {
+  const ctx = await getActiveStudentContext();
+  if (!ctx) {
+    return { ok: false, error: "Tu dois être un résident validé." };
+  }
+  if (!ctx.writable) return writeBlockedResult(ctx);
+
+  await expireDueMarket(ctx.residenceId);
+
+  const item = await prisma.marketplaceItem.findFirst({
+    where: {
+      id: itemId,
+      residenceId: ctx.residenceId,
+      authorId: ctx.session.userId,
+    },
+  });
+
+  if (!item) {
+    return {
+      ok: false,
+      error: "Annonce introuvable ou tu n’en es pas l’auteur.",
+    };
+  }
+  if (item.prolongedOnce) {
+    return { ok: false, error: "Tu as déjà prolongé cette annonce une fois." };
+  }
+  if (item.status === MarketplaceStatus.GONE) {
+    return { ok: false, error: "Cette annonce est déjà partie." };
+  }
+  if (
+    item.status !== MarketplaceStatus.AVAILABLE &&
+    item.status !== MarketplaceStatus.RESERVED &&
+    item.status !== MarketplaceStatus.EXPIRED
+  ) {
+    return { ok: false, error: "Cette annonce ne peut plus être prolongée." };
+  }
+
+  if (item.status === MarketplaceStatus.EXPIRED) {
+    const activeCount = await prisma.marketplaceItem.count({
+      where: {
+        residenceId: ctx.residenceId,
+        authorId: ctx.session.userId,
+        status: { in: ACTIVE_STATUSES },
+        expiresAt: { gt: new Date() },
+        NOT: { id: item.id },
+      },
+    });
+    if (activeCount >= MARKET_MAX_ACTIVE) {
+      return {
+        ok: false,
+        error: `Tu as déjà ${MARKET_MAX_ACTIVE} annonces actives. Marque-en une comme partie avant de prolonger celle-ci.`,
+      };
+    }
+  }
+
+  const base =
+    item.status === MarketplaceStatus.EXPIRED ||
+    item.expiresAt.getTime() < Date.now()
+      ? new Date()
+      : item.expiresAt;
+
+  const refreshed = await prisma.marketplaceItem.update({
+    where: { id: item.id },
+    data: {
+      expiresAt: addDays(base, MARKET_PROLONG_DAYS),
+      prolongedOnce: true,
+      status:
+        item.status === MarketplaceStatus.EXPIRED
+          ? MarketplaceStatus.AVAILABLE
+          : item.status,
+    },
     include: marketInclude,
   });
 

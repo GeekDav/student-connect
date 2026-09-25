@@ -12,6 +12,7 @@ import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 import {
   createMarketItem,
   markMarketGone,
+  prolongMarketItem,
   toggleMarketInterest,
   type MarketItem,
 } from "@/lib/actions/marketplace";
@@ -37,6 +38,10 @@ const EMPTY_FORM: CreateForm = {
   location: "",
 };
 
+function isActiveStatus(status: MarketItem["status"]) {
+  return status === "available" || status === "reserved";
+}
+
 function typeLabel(type: MarketItem["type"]) {
   return type === "don" ? "Don" : "Vente";
 }
@@ -49,6 +54,8 @@ function statusLabel(status: MarketItem["status"]) {
       return "Réservé";
     case "gone":
       return "Parti";
+    case "expired":
+      return "Expiré";
   }
 }
 
@@ -59,6 +66,7 @@ function statusClass(status: MarketItem["status"]) {
     case "reserved":
       return "text-[#9a4b1a]";
     case "gone":
+    case "expired":
       return "text-muted";
   }
 }
@@ -79,6 +87,7 @@ export function MarketplaceBoard({
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [showGone, setShowGone] = useState(false);
+  const [showExpired, setShowExpired] = useState(false);
   const [scope, setScope] = useState<BoardScope>("all");
   const [isPending, startTransition] = useTransition();
 
@@ -90,7 +99,7 @@ export function MarketplaceBoard({
   const activeItems = useMemo(
     () =>
       scopedItems.filter((item) => {
-        if (item.status === "gone") return false;
+        if (!isActiveStatus(item.status)) return false;
         if (filter === "all") return true;
         return item.type === filter;
       }),
@@ -102,13 +111,18 @@ export function MarketplaceBoard({
     [scopedItems],
   );
 
+  const expiredItems = useMemo(
+    () => scopedItems.filter((item) => item.status === "expired"),
+    [scopedItems],
+  );
+
   const activeAllCount = useMemo(
-    () => items.filter((item) => item.status !== "gone").length,
+    () => items.filter((item) => isActiveStatus(item.status)).length,
     [items],
   );
   const mineCount = useMemo(
     () =>
-      items.filter((item) => item.isMine && item.status !== "gone").length,
+      items.filter((item) => item.isMine && isActiveStatus(item.status)).length,
     [items],
   );
   const {
@@ -144,6 +158,18 @@ export function MarketplaceBoard({
     setFormError(null);
     startTransition(async () => {
       const result = await markMarketGone(id);
+      if (!result.ok) {
+        setFormError(result.error);
+        return;
+      }
+      if (result.item) replaceItem(result.item);
+    });
+  }
+
+  function onProlong(id: string) {
+    setFormError(null);
+    startTransition(async () => {
+      const result = await prolongMarketItem(id);
       if (!result.ok) {
         setFormError(result.error);
         return;
@@ -200,6 +226,12 @@ export function MarketplaceBoard({
           <p className="mt-2 max-w-md text-base leading-relaxed text-muted">
             Donne ou vends un objet uniquement aux résidents de ton bâtiment.
           </p>
+          <p className="mt-4 max-w-lg rounded-lg border border-line bg-wash px-4 py-3 text-sm leading-relaxed text-muted">
+            Visible <span className="font-medium text-ink">30 jours</span>. Tu
+            peux le marquer parti à tout moment, ou le prolonger une fois (+14
+            j.). Passé ce délai, l’annonce passe en « expirée ». Max 3 annonces
+            actives.
+          </p>
         </div>
 
         <form
@@ -239,7 +271,9 @@ export function MarketplaceBoard({
               onChange={(e) => update("title", e.target.value)}
             />
             {errors.title ? (
-              <p className="mt-1.5 text-sm text-red-700">{errors.title}</p>
+              <p className="mt-1.5 text-sm text-red-700" role="alert">
+                {errors.title}
+              </p>
             ) : null}
           </div>
 
@@ -264,7 +298,9 @@ export function MarketplaceBoard({
               />
             </div>
             {errors.description ? (
-              <p className="mt-1.5 text-sm text-red-700">{errors.description}</p>
+              <p className="mt-1.5 text-sm text-red-700" role="alert">
+                {errors.description}
+              </p>
             ) : null}
           </div>
 
@@ -281,7 +317,9 @@ export function MarketplaceBoard({
                 onChange={(e) => update("priceLabel", e.target.value)}
               />
               {errors.priceLabel ? (
-                <p className="mt-1.5 text-sm text-red-700">{errors.priceLabel}</p>
+                <p className="mt-1.5 text-sm text-red-700" role="alert">
+                  {errors.priceLabel}
+                </p>
               ) : null}
             </div>
           ) : null}
@@ -298,7 +336,9 @@ export function MarketplaceBoard({
               onChange={(e) => update("location", e.target.value)}
             />
             {errors.location ? (
-              <p className="mt-1.5 text-sm text-red-700">{errors.location}</p>
+              <p className="mt-1.5 text-sm text-red-700" role="alert">
+                {errors.location}
+              </p>
             ) : null}
           </div>
 
@@ -334,13 +374,13 @@ export function MarketplaceBoard({
           </p>
         </div>
         {!readOnly ? (
-        <button
-          type="button"
-          onClick={() => setMode("create")}
-          className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
-        >
-          Publier
-        </button>
+          <button
+            type="button"
+            onClick={() => setMode("create")}
+            className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
+          >
+            Publier
+          </button>
         ) : null}
       </div>
 
@@ -351,14 +391,14 @@ export function MarketplaceBoard({
       ) : null}
 
       {!readOnly ? (
-      <div className="animate-hero-rise-delay mt-8">
-        <BoardScopeFilter
-          value={scope}
-          onChange={setScope}
-          allCount={activeAllCount}
-          mineCount={mineCount}
-        />
-      </div>
+        <div className="animate-hero-rise-delay mt-8">
+          <BoardScopeFilter
+            value={scope}
+            onChange={setScope}
+            allCount={activeAllCount}
+            mineCount={mineCount}
+          />
+        </div>
       ) : null}
 
       <div className={`${readOnly ? "mt-8" : "mt-4"} flex gap-2`}>
@@ -399,6 +439,7 @@ export function MarketplaceBoard({
                 readOnly ? undefined : () => onToggleInterest(item.id)
               }
               onMarkGone={readOnly ? undefined : () => onMarkGone(item.id)}
+              onProlong={readOnly ? undefined : () => onProlong(item.id)}
             />
           ))}
           {activeItems.length === 0 ? (
@@ -434,6 +475,33 @@ export function MarketplaceBoard({
           ) : null}
         </section>
       ) : null}
+
+      {expiredItems.length > 0 ? (
+        <section className="mt-8">
+          <button
+            type="button"
+            onClick={() => setShowExpired((v) => !v)}
+            className="font-display text-sm font-semibold tracking-wide text-muted transition-colors hover:text-ink"
+          >
+            {showExpired ? "Masquer" : "Voir"} les expirés ·{" "}
+            {expiredItems.length}
+          </button>
+          {showExpired ? (
+            <ul className="mt-2 divide-y divide-line border-y border-line opacity-75">
+              {expiredItems.map((item) => (
+                <MarketRow
+                  key={item.id}
+                  item={item}
+                  busy={isPending}
+                  readOnly={readOnly}
+                  onMarkGone={readOnly ? undefined : () => onMarkGone(item.id)}
+                  onProlong={readOnly ? undefined : () => onProlong(item.id)}
+                />
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -443,15 +511,20 @@ function MarketRow({
   busy,
   onInterest,
   onMarkGone,
+  onProlong,
   readOnly = false,
 }: {
   item: MarketItem;
   busy?: boolean;
   onInterest?: () => void;
   onMarkGone?: () => void;
+  onProlong?: () => void;
   readOnly?: boolean;
 }) {
-  const isGone = item.status === "gone";
+  const active = isActiveStatus(item.status);
+  const expired = item.status === "expired";
+  const showAuthorActions =
+    !readOnly && item.isMine && (active || expired);
 
   return (
     <li className="py-6">
@@ -475,15 +548,16 @@ function MarketRow({
         <span className="font-normal text-muted">
           {" "}
           · {item.author} · {item.timeLabel}
+          {active ? ` · ${item.expiresLabel}` : ""}
           {item.interests > 0
             ? ` · ${item.interests} intéressé${item.interests > 1 ? "s" : ""}`
             : ""}
         </span>
       </p>
 
-      {!isGone && !readOnly ? (
+      {(active || expired) && !readOnly ? (
         <div className="mt-4 flex flex-wrap gap-2">
-          {!item.isMine && onInterest ? (
+          {active && !item.isMine && onInterest ? (
             <button
               type="button"
               disabled={busy}
@@ -497,8 +571,10 @@ function MarketRow({
               {item.iInterested ? "Retirer mon intérêt" : "Je suis intéressé"}
             </button>
           ) : null}
-          <ContactAuthorLink authorId={item.authorId} isMine={item.isMine} />
-          {item.isMine && onMarkGone ? (
+          {active ? (
+            <ContactAuthorLink authorId={item.authorId} isMine={item.isMine} />
+          ) : null}
+          {showAuthorActions && onMarkGone ? (
             <button
               type="button"
               disabled={busy}
@@ -508,16 +584,26 @@ function MarketRow({
               Marquer comme parti
             </button>
           ) : null}
+          {showAuthorActions && item.canProlong && onProlong ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onProlong}
+              className="inline-flex h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-60"
+            >
+              Prolonger (+14 j.)
+            </button>
+          ) : null}
         </div>
       ) : null}
       {!readOnly ? (
-      <div className="mt-3">
-        <ReportButton
-          targetType="recyclerie"
-          targetId={item.id}
-          isMine={item.isMine}
-        />
-      </div>
+        <div className="mt-3">
+          <ReportButton
+            targetType="recyclerie"
+            targetId={item.id}
+            isMine={item.isMine}
+          />
+        </div>
       ) : null}
     </li>
   );

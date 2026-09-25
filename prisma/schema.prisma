@@ -36,6 +36,8 @@ enum SosStatus {
   OPEN
   HELPED
   CLOSED
+  /** Fin de durée auto — distinct de CLOSED (résolu par l’auteur). */
+  EXPIRED
 }
 
 enum MarketplaceType {
@@ -47,6 +49,8 @@ enum MarketplaceStatus {
   AVAILABLE
   RESERVED
   GONE
+  /** Fin de durée auto — distinct de GONE (parti, marqué par l’auteur). */
+  EXPIRED
 }
 
 enum ReportTargetType {
@@ -259,12 +263,15 @@ model EventParticipant {
 }
 
 model SosRequest {
-  id          String    @id @default(cuid())
-  title       String
-  description String
-  status      SosStatus @default(OPEN)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  title         String
+  description   String
+  status        SosStatus @default(OPEN)
+  /** Fin de visibilité « en cours » (TTL 7 j., +7 j. si prolongé 1×). */
+  expiresAt     DateTime
+  prolongedOnce Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   residenceId String
   authorId    String
@@ -273,6 +280,7 @@ model SosRequest {
   helpers     SosHelp[]
 
   @@index([residenceId, status])
+  @@index([expiresAt])
 }
 
 model SosHelp {
@@ -287,15 +295,18 @@ model SosHelp {
 }
 
 model MarketplaceItem {
-  id          String            @id @default(cuid())
-  title       String
-  description String
-  type        MarketplaceType
-  priceLabel  String?
-  location    String
-  status      MarketplaceStatus @default(AVAILABLE)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id            String            @id @default(cuid())
+  title         String
+  description   String
+  type          MarketplaceType
+  priceLabel    String?
+  location      String
+  status        MarketplaceStatus @default(AVAILABLE)
+  /** Fin de visibilité active (TTL 30 j., +14 j. si prolongé 1×). */
+  expiresAt     DateTime
+  prolongedOnce Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   residenceId String
   authorId    String
@@ -304,6 +315,7 @@ model MarketplaceItem {
   interests   MarketplaceInterest[]
 
   @@index([residenceId, status])
+  @@index([expiresAt])
 }
 
 model MarketplaceInterest {

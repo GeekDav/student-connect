@@ -26,8 +26,12 @@ export function AccueilFeed({
   readOnly?: boolean;
 }) {
   const openEvents = events.filter((e) => e.spotsTaken < e.spotsTotal);
-  const openSos = sosItems.filter((s) => s.status !== "closed");
-  const activeMarket = marketItems.filter((m) => m.status !== "gone");
+  const openSos = sosItems.filter(
+    (s) => s.status === "open" || s.status === "helped",
+  );
+  const activeMarket = marketItems.filter(
+    (m) => m.status === "available" || m.status === "reserved",
+  );
 
   const todayBits = [
     openEvents.length > 0

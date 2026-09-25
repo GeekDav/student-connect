@@ -64,7 +64,11 @@ export async function ManagerDashboard({
           where: { residenceId, status: "OPEN" },
         }),
         prisma.sosRequest.count({
-          where: { residenceId, status: SosStatus.OPEN },
+          where: {
+            residenceId,
+            status: { in: [SosStatus.OPEN, SosStatus.HELPED] },
+            expiresAt: { gt: new Date() },
+          },
         }),
         prisma.microEvent.count({
           where: {
@@ -84,7 +88,11 @@ export async function ManagerDashboard({
           take: 5,
         }),
         prisma.sosRequest.findMany({
-          where: { residenceId, status: SosStatus.OPEN },
+          where: {
+            residenceId,
+            status: { in: [SosStatus.OPEN, SosStatus.HELPED] },
+            expiresAt: { gt: new Date() },
+          },
           include: { author: { select: { firstName: true, lastName: true } } },
           orderBy: { createdAt: "asc" },
           take: 5,

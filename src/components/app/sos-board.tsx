@@ -11,6 +11,7 @@ import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 import {
   createSos,
+  prolongSos,
   resolveSos,
   toggleSosHelp,
   type SosItem,
@@ -31,6 +32,10 @@ const EMPTY_FORM: CreateForm = {
   description: "",
 };
 
+function isActiveStatus(status: SosItem["status"]) {
+  return status === "open" || status === "helped";
+}
+
 function statusLabel(status: SosItem["status"]) {
   switch (status) {
     case "open":
@@ -39,6 +44,8 @@ function statusLabel(status: SosItem["status"]) {
       return "Quelqu’un aide";
     case "closed":
       return "Résolu";
+    case "expired":
+      return "Expiré";
   }
 }
 
@@ -49,6 +56,7 @@ function statusClass(status: SosItem["status"]) {
     case "helped":
       return "text-accent";
     case "closed":
+    case "expired":
       return "text-muted";
   }
 }
@@ -68,6 +76,7 @@ export function SosBoard({
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [showClosed, setShowClosed] = useState(false);
+  const [showExpired, setShowExpired] = useState(false);
   const [scope, setScope] = useState<BoardScope>("all");
   const [isPending, startTransition] = useTransition();
 
@@ -76,20 +85,24 @@ export function SosBoard({
     [items, scope],
   );
   const openItems = useMemo(
-    () => scopedItems.filter((item) => item.status !== "closed"),
+    () => scopedItems.filter((item) => isActiveStatus(item.status)),
     [scopedItems],
   );
   const closedItems = useMemo(
     () => scopedItems.filter((item) => item.status === "closed"),
     [scopedItems],
   );
+  const expiredItems = useMemo(
+    () => scopedItems.filter((item) => item.status === "expired"),
+    [scopedItems],
+  );
   const openAllCount = useMemo(
-    () => items.filter((item) => item.status !== "closed").length,
+    () => items.filter((item) => isActiveStatus(item.status)).length,
     [items],
   );
   const mineCount = useMemo(
     () =>
-      items.filter((item) => item.isMine && item.status !== "closed").length,
+      items.filter((item) => item.isMine && isActiveStatus(item.status)).length,
     [items],
   );
   const {
@@ -125,6 +138,18 @@ export function SosBoard({
     setFormError(null);
     startTransition(async () => {
       const result = await resolveSos(id);
+      if (!result.ok) {
+        setFormError(result.error);
+        return;
+      }
+      if (result.item) replaceItem(result.item);
+    });
+  }
+
+  function onProlong(id: string) {
+    setFormError(null);
+    startTransition(async () => {
+      const result = await prolongSos(id);
       if (!result.ok) {
         setFormError(result.error);
         return;
@@ -175,6 +200,12 @@ export function SosBoard({
           <p className="mt-2 max-w-md text-base leading-relaxed text-muted">
             Un besoin court et urgent, visible uniquement dans ta résidence.
           </p>
+          <p className="mt-4 max-w-lg rounded-lg border border-line bg-wash px-4 py-3 text-sm leading-relaxed text-muted">
+            Visible <span className="font-medium text-ink">7 jours</span>. Tu
+            peux le marquer résolu à tout moment, ou le prolonger une fois (+7
+            j.). Passé ce délai, il passe en « expiré » (plus en cours). Max 2
+            SOS ouverts.
+          </p>
         </div>
 
         <form
@@ -194,7 +225,9 @@ export function SosBoard({
               onChange={(e) => update("title", e.target.value)}
             />
             {errors.title ? (
-              <p className="mt-1.5 text-sm text-red-700">{errors.title}</p>
+              <p className="mt-1.5 text-sm text-red-700" role="alert">
+                {errors.title}
+              </p>
             ) : null}
           </div>
 
@@ -219,7 +252,9 @@ export function SosBoard({
               />
             </div>
             {errors.description ? (
-              <p className="mt-1.5 text-sm text-red-700">{errors.description}</p>
+              <p className="mt-1.5 text-sm text-red-700" role="alert">
+                {errors.description}
+              </p>
             ) : null}
           </div>
 
@@ -255,13 +290,13 @@ export function SosBoard({
           </p>
         </div>
         {!readOnly ? (
-        <button
-          type="button"
-          onClick={() => setMode("create")}
-          className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
-        >
-          Lancer un SOS
-        </button>
+          <button
+            type="button"
+            onClick={() => setMode("create")}
+            className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-accent-hover hover:-translate-y-0.5"
+          >
+            Lancer un SOS
+          </button>
         ) : null}
       </div>
 
@@ -272,14 +307,14 @@ export function SosBoard({
       ) : null}
 
       {!readOnly ? (
-      <div className="animate-hero-rise-delay mt-8">
-        <BoardScopeFilter
-          value={scope}
-          onChange={setScope}
-          allCount={openAllCount}
-          mineCount={mineCount}
-        />
-      </div>
+        <div className="animate-hero-rise-delay mt-8">
+          <BoardScopeFilter
+            value={scope}
+            onChange={setScope}
+            allCount={openAllCount}
+            mineCount={mineCount}
+          />
+        </div>
       ) : null}
 
       <section className="mt-8">
@@ -294,6 +329,7 @@ export function SosBoard({
               busy={isPending}
               onHelp={readOnly ? undefined : () => onToggleHelp(item.id)}
               onResolve={readOnly ? undefined : () => onResolve(item.id)}
+              onProlong={readOnly ? undefined : () => onProlong(item.id)}
               readOnly={readOnly}
             />
           ))}
@@ -330,6 +366,33 @@ export function SosBoard({
           ) : null}
         </section>
       ) : null}
+
+      {expiredItems.length > 0 ? (
+        <section className="mt-8">
+          <button
+            type="button"
+            onClick={() => setShowExpired((v) => !v)}
+            className="font-display text-sm font-semibold tracking-wide text-muted transition-colors hover:text-ink"
+          >
+            {showExpired ? "Masquer" : "Voir"} les expirés ·{" "}
+            {expiredItems.length}
+          </button>
+          {showExpired ? (
+            <ul className="mt-2 divide-y divide-line border-y border-line opacity-75">
+              {expiredItems.map((item) => (
+                <SosRow
+                  key={item.id}
+                  item={item}
+                  busy={isPending}
+                  onResolve={readOnly ? undefined : () => onResolve(item.id)}
+                  onProlong={readOnly ? undefined : () => onProlong(item.id)}
+                  readOnly={readOnly}
+                />
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -339,15 +402,20 @@ function SosRow({
   busy,
   onHelp,
   onResolve,
+  onProlong,
   readOnly = false,
 }: {
   item: SosItem;
   busy?: boolean;
   onHelp?: () => void;
   onResolve?: () => void;
+  onProlong?: () => void;
   readOnly?: boolean;
 }) {
-  const isClosed = item.status === "closed";
+  const active = isActiveStatus(item.status);
+  const expired = item.status === "expired";
+  const showAuthorActions =
+    !readOnly && item.isMine && (active || expired);
 
   return (
     <li className="py-6">
@@ -360,14 +428,15 @@ function SosRow({
       <p className="mt-2 text-base leading-relaxed text-muted">{item.description}</p>
       <p className="mt-3 text-xs text-muted">
         {item.author} · {item.timeLabel}
+        {active ? ` · ${item.expiresLabel}` : ""}
         {item.helpers > 0
           ? ` · ${item.helpers} aide${item.helpers > 1 ? "s" : ""}`
           : ""}
       </p>
 
-      {!isClosed && !readOnly ? (
+      {(active || expired) && !readOnly ? (
         <div className="mt-4 flex flex-wrap gap-2">
-          {!item.isMine && onHelp ? (
+          {active && !item.isMine && onHelp ? (
             <button
               type="button"
               disabled={busy}
@@ -381,8 +450,10 @@ function SosRow({
               {item.iHelped ? "Retirer mon aide" : "Je peux aider"}
             </button>
           ) : null}
-          <ContactAuthorLink authorId={item.authorId} isMine={item.isMine} />
-          {item.isMine && onResolve ? (
+          {active ? (
+            <ContactAuthorLink authorId={item.authorId} isMine={item.isMine} />
+          ) : null}
+          {showAuthorActions && onResolve ? (
             <button
               type="button"
               disabled={busy}
@@ -392,16 +463,26 @@ function SosRow({
               Marquer résolu
             </button>
           ) : null}
+          {showAuthorActions && item.canProlong && onProlong ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onProlong}
+              className="inline-flex h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash disabled:opacity-60"
+            >
+              Prolonger (+7 j.)
+            </button>
+          ) : null}
         </div>
       ) : null}
       {!readOnly ? (
-      <div className="mt-3">
-        <ReportButton
-          targetType="sos"
-          targetId={item.id}
-          isMine={item.isMine}
-        />
-      </div>
+        <div className="mt-3">
+          <ReportButton
+            targetType="sos"
+            targetId={item.id}
+            isMine={item.isMine}
+          />
+        </div>
       ) : null}
     </li>
   );

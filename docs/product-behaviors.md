@@ -14,8 +14,8 @@ Dernière MAJ : 2026-09-25
 | Tableau d’affichage | **5** puis Voir plus (+5) jusqu’à 20 | **20** plus récentes publiées | Pas d’auto-delete ; hors top 20 = plus visibles étudiants |
 | Petit mur | **6** puis Voir plus (+6) | **30** plus récentes (< 7 j) | **7 jours** après publication |
 | Événements récents | **4** | Jusqu’à 50 (page Events) | Après **heure de fin** |
-| SOS en cours | **4** | Jusqu’à 50 (page SOS) | Manuel / résolution |
-| Recyclerie | **4** | Jusqu’à 50 (page Recyclerie) | Manuel (« parti ») |
+| SOS en cours | **4** | Jusqu’à 50 (page SOS) | **7 j.** → statut **expiré** (≠ résolu) ; prolonger 1× (+7 j.) ; max **2** ouverts / étudiant |
+| Recyclerie | **4** | Jusqu’à 50 (page Recyclerie) | **30 j.** → statut **expiré** (≠ parti) ; prolonger 1× (+14 j.) ; max **3** actives / étudiant |
 
 Titres de section : sticky + barre colorée (repère au scroll).
 
@@ -51,6 +51,28 @@ Titres de section : sticky + barre colorée (repère au scroll).
 - Fin renseignée → disparaît **après l’heure de fin**.
 - Retrait manuel toujours possible avant.
 - Max places 2–30 ; auteur continue de pouvoir ajuster / retirer.
+
+---
+
+## SOS
+
+- Visible **7 jours** puis statut **expiré** (pas « résolu » — résolu = action auteur).
+- Auteur peut **marquer résolu** à tout moment (y compris depuis expiré).
+- **Prolonger 1×** (+7 j.) ; depuis expiré, ça le remet en ouvert.
+- Max **2 SOS** ouverts / étudiant.
+- À la création : encadré d’info (durée, prolonger, expiré, cap).
+- Carte active : libellé « Jusqu’au … ».
+
+---
+
+## Recyclerie
+
+- Visible **30 jours** puis statut **expiré** (pas « parti » — parti = action auteur).
+- Auteur peut **marquer parti** à tout moment (y compris depuis expiré).
+- **Prolonger 1×** (+14 j.) ; depuis expiré, ça le remet en disponible.
+- Max **3** annonces actives / étudiant.
+- À la création : encadré d’info.
+- Carte active : libellé « Jusqu’au … ».
 
 ---
 
