@@ -102,8 +102,13 @@ export function MarketplaceBoard({
     [scopedItems],
   );
 
+  const activeAllCount = useMemo(
+    () => items.filter((item) => item.status !== "gone").length,
+    [items],
+  );
   const mineCount = useMemo(
-    () => items.filter((item) => item.isMine).length,
+    () =>
+      items.filter((item) => item.isMine && item.status !== "gone").length,
     [items],
   );
   const {
@@ -350,7 +355,7 @@ export function MarketplaceBoard({
         <BoardScopeFilter
           value={scope}
           onChange={setScope}
-          allCount={items.length}
+          allCount={activeAllCount}
           mineCount={mineCount}
         />
       </div>
