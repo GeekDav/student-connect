@@ -155,6 +155,9 @@ export function PlatformDashboard({ data }: { data: PlatformDashboardData }) {
             <h3 className="font-display text-sm font-semibold tracking-wide text-ink">
               Plans
             </h3>
+            <p className="mt-1 mb-4 text-sm text-muted">
+              Part pilote vs payant (même total que le portefeuille).
+            </p>
             <DonutChart
               centerLabel="plans"
               centerValue={kpis.residencesTotal}

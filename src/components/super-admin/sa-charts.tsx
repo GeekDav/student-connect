@@ -90,13 +90,11 @@ export function DonutChart({
               />
               {seg.label}
             </span>
-            <span className="flex items-center gap-2">
-              <span className="font-semibold tabular-nums text-ink">
-                {seg.value}
-              </span>
+            <span className="flex items-center gap-2 tabular-nums">
+              <span className="font-semibold text-ink">{seg.value}</span>
               {total > 0 ? (
-                <span className="text-xs tabular-nums text-muted">
-                  {Math.round((seg.value / total) * 100)} %
+                <span className="text-xs text-muted">
+                  sur {total} · {Math.round((seg.value / total) * 100)}&nbsp;%
                 </span>
               ) : null}
             </span>
