@@ -285,14 +285,14 @@ export function PlatformDashboard({ data }: { data: PlatformDashboardData }) {
             <thead>
               <tr className="border-b border-line text-[11px] font-semibold uppercase tracking-wide text-muted">
                 <th className="py-3 pr-3 font-semibold">Résidence</th>
-                <th className="py-3 px-2 font-semibold">Étud.</th>
-                <th className="py-3 px-2 font-semibold">Att.</th>
+                <th className="py-3 px-2 font-semibold">Étudiants</th>
+                <th className="py-3 px-2 font-semibold">Attente</th>
                 <th className="py-3 px-2 font-semibold">SOS</th>
-                <th className="py-3 px-2 font-semibold">Recy.</th>
+                <th className="py-3 px-2 font-semibold">Recyclerie</th>
                 <th className="py-3 px-2 font-semibold">Events</th>
-                <th className="py-3 px-2 font-semibold">Mur 7j</th>
-                <th className="py-3 px-2 font-semibold">Act. 7j</th>
-                <th className="py-3 pl-2 font-semibold">Sign.</th>
+                <th className="py-3 px-2 font-semibold">Mur 7 j.</th>
+                <th className="py-3 px-2 font-semibold">Act. 7 j.</th>
+                <th className="py-3 pl-2 font-semibold">Signalements</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
