@@ -3,7 +3,7 @@
 Document vivant : règles validées en tests / discussions.  
 À la fin du projet → base du PDF commercial + doc A→Z.
 
-Dernière MAJ : 2026-09-24
+Dernière MAJ : 2026-09-25
 
 ---
 
@@ -11,7 +11,7 @@ Dernière MAJ : 2026-09-24
 
 | Section | Affiché | Chargé / limite | Disparition |
 |---|---|---|---|
-| Tableau d’affichage | Toutes les chargées | **20** plus récentes publiées | Pas d’auto-delete ; hors top 20 = plus visibles étudiants |
+| Tableau d’affichage | **5** puis Voir plus (+5) jusqu’à 20 | **20** plus récentes publiées | Pas d’auto-delete ; hors top 20 = plus visibles étudiants |
 | Petit mur | **6** puis Voir plus (+6) | **30** plus récentes (< 7 j) | **7 jours** après publication |
 | Événements récents | **4** | Jusqu’à 50 (page Events) | Après **heure de fin** |
 | SOS en cours | **4** | Jusqu’à 50 (page SOS) | Manuel / résolution |
@@ -23,7 +23,7 @@ Titres de section : sticky + barre colorée (repère au scroll).
 
 ## Annonces officielles (gestionnaire)
 
-- Les étudiants voient au max **20** annonces publiées **les plus récentes**.
+- Les étudiants voient au max **20** annonces publiées **les plus récentes**, affichées par lots de **5** (Voir plus).
 - Publier au-delà de 20 reste possible.
 - À **20+** live : alerte dashboard + page Annonces → demander de **dépublier** les anciennes.
 - Lecture unique trackée (compteur côté gestionnaire).
