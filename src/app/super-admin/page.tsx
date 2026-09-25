@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
-import { ResidencesList } from "@/components/super-admin/residences-list";
-import { listPlatformResidences } from "@/lib/actions/super-admin";
+import { PlatformDashboard } from "@/components/super-admin/platform-dashboard";
+import { getPlatformDashboard } from "@/lib/actions/super-admin-analytics";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
-  title: "Super-admin — Student-Connect",
-  description: "Gère les résidences partenaires et les comptes gestionnaires.",
+  title: "Vue d’ensemble — Super-admin",
+  description:
+    "Cockpit plateforme : activité étudiante et charge gestionnaire par résidence.",
 };
 
 export default async function SuperAdminPage() {
@@ -15,6 +18,8 @@ export default async function SuperAdminPage() {
   if (!session) redirect("/connexion");
   if (session.role !== Role.SUPER_ADMIN) redirect("/");
 
-  const items = await listPlatformResidences();
-  return <ResidencesList initialItems={items} />;
+  const data = await getPlatformDashboard();
+  if (!data) redirect("/");
+
+  return <PlatformDashboard data={data} />;
 }

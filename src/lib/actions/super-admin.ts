@@ -206,6 +206,7 @@ export async function createResidenceWithManager(input: {
   });
 
   revalidatePath("/super-admin");
+  revalidatePath("/super-admin/residences");
   revalidatePath("/super-admin/nouvelle-residence");
   revalidatePath("/super-admin/emails");
   revalidatePath("/inscription");
@@ -295,6 +296,7 @@ export async function toggleResidenceStatus(
   }
 
   revalidatePath("/super-admin");
+  revalidatePath("/super-admin/residences");
   revalidatePath("/super-admin/en-pause");
   revalidatePath("/super-admin/emails");
   revalidatePath("/inscription");
@@ -357,6 +359,7 @@ export async function updateManagerEmail(
   });
 
   revalidatePath("/super-admin");
+  revalidatePath("/super-admin/residences");
 
   return { ok: true, managerEmail: email };
 }
@@ -401,6 +404,7 @@ export async function updateResidenceName(
   });
 
   revalidatePath("/super-admin");
+  revalidatePath("/super-admin/residences");
   revalidatePath("/inscription");
   revalidatePath("/gestionnaire");
 

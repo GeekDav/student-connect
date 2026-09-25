@@ -7,7 +7,8 @@ import { BackToTop } from "@/components/ui/back-to-top";
 import { LogoutButton } from "@/components/ui/logout-button";
 
 const NAV = [
-  { href: "/super-admin", label: "Résidences", exact: true },
+  { href: "/super-admin", label: "Vue d’ensemble", exact: true },
+  { href: "/super-admin/residences", label: "Résidences", exact: false },
   { href: "/super-admin/en-pause", label: "En pause", exact: false },
   { href: "/super-admin/emails", label: "E-mails", exact: false },
   { href: "/super-admin/nouvelle-residence", label: "Créer", exact: false },
@@ -20,7 +21,7 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-[100svh] bg-background">
       <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <Link
@@ -31,7 +32,7 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
               </Link>
               <p className="mt-0.5 text-xs font-medium text-muted">Super-admin</p>
               <h1 className="mt-1 font-display text-lg font-semibold text-ink sm:text-xl">
-                Plateforme
+                Cockpit plateforme
               </h1>
             </div>
             <div className="flex shrink-0 items-center gap-3">
@@ -72,7 +73,7 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         {children}
       </main>
       <BackToTop offset={360} />

@@ -134,7 +134,7 @@ export function ResidencesList({
           <li key={item.id} className="py-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   {editingNameId === item.id ? (
                     <div className="flex w-full flex-wrap items-center gap-2">
                       <input
@@ -163,7 +163,12 @@ export function ResidencesList({
                   ) : (
                     <>
                       <h3 className="font-display text-lg font-semibold text-ink">
-                        {item.name}
+                        <Link
+                          href={`/super-admin/residences/${item.id}`}
+                          className="hover:text-accent"
+                        >
+                          {item.name}
+                        </Link>
                       </h3>
                       <button
                         type="button"
@@ -173,6 +178,12 @@ export function ResidencesList({
                       >
                         Modifier le nom
                       </button>
+                      <Link
+                        href={`/super-admin/residences/${item.id}`}
+                        className="text-xs font-semibold text-muted hover:text-accent"
+                      >
+                        Pulse
+                      </Link>
                     </>
                   )}
                   <span

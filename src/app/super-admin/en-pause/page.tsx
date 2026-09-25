@@ -19,7 +19,7 @@ export default async function SuperAdminPausedPage() {
       <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm text-muted">
-            <Link href="/super-admin" className="text-accent hover:opacity-70">
+            <Link href="/super-admin/residences" className="text-accent hover:opacity-70">
               Toutes les résidences
             </Link>
             <span className="mx-2 text-line">·</span>

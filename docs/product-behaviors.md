@@ -80,6 +80,15 @@ Titres de section : sticky + barre colorée (repère au scroll).
 
 ---
 
+## Super-admin — cockpit
+
+- **Vue d’ensemble** : KPI plateforme, activité 30 j. (stacked), donuts statut/plan, top activité, alertes, table pulse filtrable.
+- **Résidences** : CRUD opérationnel (pause, e-mail gestionnaire, nom) + lien Pulse.
+- **Fiche résidence** : breakdown étudiant + gestionnaire + série 30 j.
+- Principe : mesurer la **vie étudiante** et la **charge gestionnaire** pour piloter l’officialisation — pas un réseau social, un cockpit résidence.
+
+---
+
 ## Images (profil + annonces)
 
 - Formats : JPG / PNG / WebP (pas HEIC).
