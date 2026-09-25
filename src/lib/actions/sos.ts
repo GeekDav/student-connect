@@ -10,8 +10,10 @@ import { prisma } from "@/lib/db";
 import {
   SOS_MAX_ACTIVE,
   SOS_PROLONG_DAYS,
+  SOS_RETENTION_DAYS,
   SOS_TTL_DAYS,
   addDays,
+  daysAgo,
   formatUntilLabel,
 } from "@/lib/board-ttl";
 
@@ -114,11 +116,27 @@ async function expireDueSos(residenceId: string) {
   });
 }
 
+/** Pas un fil social : les terminés ne restent pas indéfiniment en base. */
+async function purgeStaleSos(residenceId: string) {
+  await prisma.sosRequest.deleteMany({
+    where: {
+      residenceId,
+      status: { in: [SosStatus.CLOSED, SosStatus.EXPIRED] },
+      updatedAt: { lt: daysAgo(SOS_RETENTION_DAYS) },
+    },
+  });
+}
+
+async function housekeepingSos(residenceId: string) {
+  await expireDueSos(residenceId);
+  await purgeStaleSos(residenceId);
+}
+
 export async function listResidenceSos(): Promise<SosItem[]> {
   const ctx = await getActiveStudentContext();
   if (!ctx) return [];
 
-  await expireDueSos(ctx.residenceId);
+  await housekeepingSos(ctx.residenceId);
 
   const rows = await prisma.sosRequest.findMany({
     where: { residenceId: ctx.residenceId },
@@ -147,7 +165,7 @@ export async function createSos(input: {
     return { ok: false, error: "Ajoute un détail pour qu’on puisse t’aider." };
   }
 
-  await expireDueSos(ctx.residenceId);
+  await housekeepingSos(ctx.residenceId);
 
   const activeCount = await prisma.sosRequest.count({
     where: {
@@ -189,7 +207,7 @@ export async function toggleSosHelp(sosId: string): Promise<SosActionResult> {
   }
   if (!ctx.writable) return writeBlockedResult(ctx);
 
-  await expireDueSos(ctx.residenceId);
+  await housekeepingSos(ctx.residenceId);
 
   const sos = await prisma.sosRequest.findFirst({
     where: { id: sosId, residenceId: ctx.residenceId },
@@ -285,7 +303,7 @@ export async function prolongSos(sosId: string): Promise<SosActionResult> {
   }
   if (!ctx.writable) return writeBlockedResult(ctx);
 
-  await expireDueSos(ctx.residenceId);
+  await housekeepingSos(ctx.residenceId);
 
   const sos = await prisma.sosRequest.findFirst({
     where: {

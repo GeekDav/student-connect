@@ -3,6 +3,8 @@
 Document vivant : règles validées en tests / discussions.  
 À la fin du projet → base du PDF commercial + doc A→Z.
 
+Principe : **pas un réseau social**. Contenu de résidence, éphémère ; quand un étudiant quitte, le besoin d’historique long disparaît. On retire plutôt que d’accumuler.
+
 Dernière MAJ : 2026-09-25
 
 ---
@@ -14,8 +16,8 @@ Dernière MAJ : 2026-09-25
 | Tableau d’affichage | **5** puis Voir plus (+5) jusqu’à 20 | **20** plus récentes publiées | Pas d’auto-delete ; hors top 20 = plus visibles étudiants |
 | Petit mur | **6** puis Voir plus (+6) | **30** plus récentes (< 7 j) | **7 jours** après publication |
 | Événements récents | **4** | Jusqu’à 50 (page Events) | Après **heure de fin** |
-| SOS en cours | **4** | Jusqu’à 50 (page SOS) | **7 j.** → statut **expiré** (≠ résolu) ; prolonger 1× (+7 j.) ; max **2** ouverts / étudiant |
-| Recyclerie | **4** | Jusqu’à 50 (page Recyclerie) | **30 j.** → statut **expiré** (≠ parti) ; prolonger 1× (+14 j.) ; max **3** actives / étudiant |
+| SOS en cours | **4** | Jusqu’à 50 (page SOS) | **7 j.** → **expiré** ; prolonger 1× ; max 2 ouverts ; purge résolu/expiré à **30 j.** |
+| Recyclerie | **4** | Jusqu’à 50 (page Recyclerie) | **30 j.** → **expiré** ; prolonger 1× ; max 3 actives ; purge parti/expiré à **60 j.** |
 
 Titres de section : sticky + barre colorée (repère au scroll).
 
@@ -62,6 +64,7 @@ Titres de section : sticky + barre colorée (repère au scroll).
 - Max **2 SOS** ouverts / étudiant.
 - À la création : encadré d’info (durée, prolonger, expiré, cap).
 - Carte active : libellé « Jusqu’au … ».
+- Purge DB : résolus / expirés **supprimés 30 j.** après passage hors cours.
 
 ---
 
@@ -73,6 +76,7 @@ Titres de section : sticky + barre colorée (repère au scroll).
 - Max **3** annonces actives / étudiant.
 - À la création : encadré d’info.
 - Carte active : libellé « Jusqu’au … ».
+- Purge DB : partis / expirés **supprimés 60 j.** après passage hors cours.
 
 ---
 

@@ -13,8 +13,10 @@ import { prisma } from "@/lib/db";
 import {
   MARKET_MAX_ACTIVE,
   MARKET_PROLONG_DAYS,
+  MARKET_RETENTION_DAYS,
   MARKET_TTL_DAYS,
   addDays,
+  daysAgo,
   formatUntilLabel,
 } from "@/lib/board-ttl";
 
@@ -133,11 +135,27 @@ async function expireDueMarket(residenceId: string) {
   });
 }
 
+/** Pas un fil social : les terminés ne restent pas indéfiniment en base. */
+async function purgeStaleMarket(residenceId: string) {
+  await prisma.marketplaceItem.deleteMany({
+    where: {
+      residenceId,
+      status: { in: [MarketplaceStatus.GONE, MarketplaceStatus.EXPIRED] },
+      updatedAt: { lt: daysAgo(MARKET_RETENTION_DAYS) },
+    },
+  });
+}
+
+async function housekeepingMarket(residenceId: string) {
+  await expireDueMarket(residenceId);
+  await purgeStaleMarket(residenceId);
+}
+
 export async function listResidenceMarket(): Promise<MarketItem[]> {
   const ctx = await getActiveStudentContext();
   if (!ctx) return [];
 
-  await expireDueMarket(ctx.residenceId);
+  await housekeepingMarket(ctx.residenceId);
 
   const rows = await prisma.marketplaceItem.findMany({
     where: { residenceId: ctx.residenceId },
@@ -178,7 +196,7 @@ export async function createMarketItem(input: {
     return { ok: false, error: "Indique un prix (ex. 10 €)." };
   }
 
-  await expireDueMarket(ctx.residenceId);
+  await housekeepingMarket(ctx.residenceId);
 
   const activeCount = await prisma.marketplaceItem.count({
     where: {
@@ -225,7 +243,7 @@ export async function toggleMarketInterest(
   }
   if (!ctx.writable) return writeBlockedResult(ctx);
 
-  await expireDueMarket(ctx.residenceId);
+  await housekeepingMarket(ctx.residenceId);
 
   const item = await prisma.marketplaceItem.findFirst({
     where: { id: itemId, residenceId: ctx.residenceId },
@@ -331,7 +349,7 @@ export async function prolongMarketItem(
   }
   if (!ctx.writable) return writeBlockedResult(ctx);
 
-  await expireDueMarket(ctx.residenceId);
+  await housekeepingMarket(ctx.residenceId);
 
   const item = await prisma.marketplaceItem.findFirst({
     where: {
