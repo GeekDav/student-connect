@@ -83,8 +83,13 @@ export function SosBoard({
     () => scopedItems.filter((item) => item.status === "closed"),
     [scopedItems],
   );
+  const openAllCount = useMemo(
+    () => items.filter((item) => item.status !== "closed").length,
+    [items],
+  );
   const mineCount = useMemo(
-    () => items.filter((item) => item.isMine).length,
+    () =>
+      items.filter((item) => item.isMine && item.status !== "closed").length,
     [items],
   );
   const {
@@ -271,7 +276,7 @@ export function SosBoard({
         <BoardScopeFilter
           value={scope}
           onChange={setScope}
-          allCount={items.length}
+          allCount={openAllCount}
           mineCount={mineCount}
         />
       </div>
