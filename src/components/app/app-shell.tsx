@@ -27,9 +27,23 @@ function MessagesNavLink({
   className: string;
   children?: ReactNode;
 }) {
+  const pathname = usePathname();
   const { unread } = useMessagesUnread();
+
   return (
-    <Link href="/messages" className={className}>
+    <Link
+      href="/messages"
+      className={className}
+      onClick={() => {
+        // Déjà sur /messages avec une conversation ouverte → retour inbox.
+        if (pathname === "/messages") {
+          window.dispatchEvent(new Event("sc:messages-inbox"));
+          if (window.location.search) {
+            window.history.replaceState(null, "", "/messages");
+          }
+        }
+      }}
+    >
       {children ?? "Messages"}
       <UnreadBadge count={unread} />
     </Link>

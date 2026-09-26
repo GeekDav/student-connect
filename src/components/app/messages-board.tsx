@@ -70,6 +70,21 @@ export function MessagesBoard({
   }
 
   useEffect(() => {
+    function goInbox() {
+      setActiveId(null);
+      setDetail(null);
+      setDraft("");
+      setError(null);
+      setSelectMode(false);
+      setSelectedIds(new Set());
+      lastMessageIdRef.current = null;
+      void refreshUnread();
+    }
+    window.addEventListener("sc:messages-inbox", goInbox);
+    return () => window.removeEventListener("sc:messages-inbox", goInbox);
+  }, [refreshUnread]);
+
+  useEffect(() => {
     if (!activeId) {
       setDetail(null);
       return;
