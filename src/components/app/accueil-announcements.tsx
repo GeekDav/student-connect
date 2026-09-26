@@ -5,7 +5,9 @@ import { FeedSectionHeader } from "@/components/app/feed-section-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
 import { ViewAnnouncementImage } from "@/components/ui/view-announcement-image";
+import { useLivePoll } from "@/hooks/use-live-poll";
 import {
+  listStudentAnnouncements,
   markAnnouncementsRead,
   type AnnouncementItem,
 } from "@/lib/actions/announcements";
@@ -23,6 +25,16 @@ export function AccueilAnnouncements({
   useEffect(() => {
     setItems(initial);
   }, [initial]);
+
+  useLivePoll(listStudentAnnouncements, (next) => {
+    setItems(next);
+    const unreadIds = next.filter((a) => a.unread).map((a) => a.id);
+    if (unreadIds.length === 0) return;
+    void markAnnouncementsRead(unreadIds).then((result) => {
+      if (!result.ok) return;
+      setItems((prev) => prev.map((a) => ({ ...a, unread: false })));
+    });
+  });
 
   useEffect(() => {
     const unreadIds = initial.filter((a) => a.unread).map((a) => a.id);

@@ -85,6 +85,16 @@ Titres de section : sticky + barre colorée (repère au scroll).
 - Badge non-lus (pastille accent) sur **Messages** dans la nav — polling ~2,5 s, sans reload.
 - Conversation ouverte : nouveaux messages apparaissent tout seuls ; lecture → badge diminue.
 - Compteur par conversation dans la liste (déjà en place).
+- Clic **Messages** pendant un chat → retour à l’inbox.
+
+## Temps quasi-réel (étudiant)
+
+Polling léger (~4 s, onglet visible) sur :
+- Mur (+ réponses)
+- SOS / Recyclerie / Events (pages + aperçus Accueil)
+- Annonces officielles (tableau d’affichage)
+
+Les créations propres restent optimistes (affichage immédiat) ; le poll fait apparaître celles des autres / du gestionnaire sans F5.
 
 ---
 

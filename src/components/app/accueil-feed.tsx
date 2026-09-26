@@ -1,19 +1,29 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { AccueilAnnouncements } from "@/components/app/accueil-announcements";
 import { FeedSectionHeader } from "@/components/app/feed-section-header";
 import { WallNotesSection } from "@/components/app/wall-notes-section";
+import { useLivePoll } from "@/hooks/use-live-poll";
 import type { AnnouncementItem } from "@/lib/actions/announcements";
-import type { EventItem } from "@/lib/actions/events";
-import type { MarketItem } from "@/lib/actions/marketplace";
-import type { SosItem } from "@/lib/actions/sos";
+import {
+  listResidenceEvents,
+  type EventItem,
+} from "@/lib/actions/events";
+import {
+  listResidenceMarket,
+  type MarketItem,
+} from "@/lib/actions/marketplace";
+import { listResidenceSos, type SosItem } from "@/lib/actions/sos";
 import type { WallNoteItem } from "@/lib/actions/wall";
 
 export function AccueilFeed({
   firstName,
   announcements,
-  events,
-  sosItems,
-  marketItems,
+  events: initialEvents,
+  sosItems: initialSos,
+  marketItems: initialMarket,
   wallNotes,
   readOnly = false,
 }: {
@@ -25,6 +35,14 @@ export function AccueilFeed({
   wallNotes: WallNoteItem[];
   readOnly?: boolean;
 }) {
+  const [events, setEvents] = useState(initialEvents);
+  const [sosItems, setSosItems] = useState(initialSos);
+  const [marketItems, setMarketItems] = useState(initialMarket);
+
+  useLivePoll(listResidenceEvents, setEvents);
+  useLivePoll(listResidenceSos, setSosItems);
+  useLivePoll(listResidenceMarket, setMarketItems);
+
   const openEvents = events.filter((e) => e.spotsTaken < e.spotsTotal);
   const openSos = sosItems.filter(
     (s) => s.status === "open" || s.status === "helped",

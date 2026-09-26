@@ -9,9 +9,11 @@ import {
 } from "@/components/ui/board-scope-filter";
 import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
+import { useLivePoll } from "@/hooks/use-live-poll";
 import {
   cancelEvent,
   createEvent,
+  listResidenceEvents,
   toggleEventJoin,
   updateEventSpots,
   type EventItem,
@@ -85,6 +87,8 @@ export function EventsBoard({
   useEffect(() => {
     setEvents(initialEvents);
   }, [initialEvents]);
+
+  useLivePoll(listResidenceEvents, setEvents, mode === "list");
 
   const liveEvents = useMemo(
     () => events.filter((event) => new Date(event.endsAt).getTime() > Date.now()),

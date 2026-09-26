@@ -7,11 +7,13 @@ import { ReportButton } from "@/components/app/report-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
+import { useLivePoll } from "@/hooks/use-live-poll";
 import {
   createWallNote,
   createWallReply,
   deleteWallNote,
   deleteWallReply,
+  listWallNotes,
   type WallNoteItem,
 } from "@/lib/actions/wall";
 
@@ -34,6 +36,8 @@ export function WallNotesSection({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { visible, hasMore, remaining, showMore } = useLoadMore(notes, 6);
+
+  useLivePoll(listWallNotes, setNotes);
 
   function onCreate(e: FormEvent) {
     e.preventDefault();

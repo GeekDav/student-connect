@@ -9,8 +9,10 @@ import {
 } from "@/components/ui/board-scope-filter";
 import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
+import { useLivePoll } from "@/hooks/use-live-poll";
 import {
   createSos,
+  listResidenceSos,
   prolongSos,
   resolveSos,
   toggleSosHelp,
@@ -79,6 +81,8 @@ export function SosBoard({
   const [showExpired, setShowExpired] = useState(false);
   const [scope, setScope] = useState<BoardScope>("all");
   const [isPending, startTransition] = useTransition();
+
+  useLivePoll(listResidenceSos, setItems, mode === "list");
 
   const scopedItems = useMemo(
     () => (scope === "mine" ? items.filter((item) => item.isMine) : items),
