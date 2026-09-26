@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition, type FormEvent } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
 import { FeedSectionHeader } from "@/components/app/feed-section-header";
 import { ReportButton } from "@/components/app/report-button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -26,9 +26,12 @@ const replyFieldClass =
 export function WallNotesSection({
   initialNotes,
   readOnly = false,
+  livePoll = true,
 }: {
   initialNotes: WallNoteItem[];
   readOnly?: boolean;
+  /** false quand le parent (Accueil) gère déjà le refresh. */
+  livePoll?: boolean;
 }) {
   const [notes, setNotes] = useState(initialNotes);
   const [draft, setDraft] = useState("");
@@ -37,7 +40,11 @@ export function WallNotesSection({
   const [isPending, startTransition] = useTransition();
   const { visible, hasMore, remaining, showMore } = useLoadMore(notes, 6);
 
-  useLivePoll(listWallNotes, setNotes);
+  useEffect(() => {
+    setNotes(initialNotes);
+  }, [initialNotes]);
+
+  useLivePoll(listWallNotes, setNotes, livePoll);
 
   function onCreate(e: FormEvent) {
     e.preventDefault();

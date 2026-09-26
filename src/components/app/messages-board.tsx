@@ -28,7 +28,7 @@ import {
 const fieldClass =
   "w-full rounded-lg border border-line bg-surface px-3.5 py-3 text-[15px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-accent focus:shadow-[0_0_0_3px_rgba(12,107,92,0.12)]";
 
-const POLL_MS = 2500;
+const POLL_MS = 5_000;
 
 export function MessagesBoard({
   initialConversations,

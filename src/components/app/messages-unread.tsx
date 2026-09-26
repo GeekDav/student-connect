@@ -11,7 +11,7 @@ import {
 } from "react";
 import { getUnreadMessageCount } from "@/lib/actions/messages";
 
-const POLL_MS = 2500;
+const POLL_MS = 10_000;
 
 type MessagesUnreadContextValue = {
   unread: number;

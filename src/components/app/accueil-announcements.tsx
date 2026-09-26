@@ -16,8 +16,11 @@ const PAGE_SIZE = 5;
 
 export function AccueilAnnouncements({
   initial,
+  livePoll = true,
 }: {
   initial: AnnouncementItem[];
+  /** false quand le parent (Accueil) gère déjà le refresh. */
+  livePoll?: boolean;
 }) {
   const [items, setItems] = useState(initial);
   const { visible, remaining, showMore } = useLoadMore(items, PAGE_SIZE);
@@ -26,15 +29,19 @@ export function AccueilAnnouncements({
     setItems(initial);
   }, [initial]);
 
-  useLivePoll(listStudentAnnouncements, (next) => {
-    setItems(next);
-    const unreadIds = next.filter((a) => a.unread).map((a) => a.id);
-    if (unreadIds.length === 0) return;
-    void markAnnouncementsRead(unreadIds).then((result) => {
-      if (!result.ok) return;
-      setItems((prev) => prev.map((a) => ({ ...a, unread: false })));
-    });
-  });
+  useLivePoll(
+    listStudentAnnouncements,
+    (next) => {
+      setItems(next);
+      const unreadIds = next.filter((a) => a.unread).map((a) => a.id);
+      if (unreadIds.length === 0) return;
+      void markAnnouncementsRead(unreadIds).then((result) => {
+        if (!result.ok) return;
+        setItems((prev) => prev.map((a) => ({ ...a, unread: false })));
+      });
+    },
+    livePoll,
+  );
 
   useEffect(() => {
     const unreadIds = initial.filter((a) => a.unread).map((a) => a.id);

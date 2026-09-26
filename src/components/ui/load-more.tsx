@@ -7,9 +7,14 @@ const DEFAULT_PAGE_SIZE = 8;
 export function useLoadMore<T>(items: T[], pageSize = DEFAULT_PAGE_SIZE) {
   const [visibleCount, setVisibleCount] = useState(pageSize);
 
-  // Reset when the filtered list shrinks / changes identity length abruptly
+  // Live-poll ne doit pas replier « Voir plus » : on ajuste seulement si besoin.
   useEffect(() => {
-    setVisibleCount(pageSize);
+    setVisibleCount((current) => {
+      if (items.length === 0) return pageSize;
+      if (current > items.length) return items.length;
+      if (current < pageSize) return Math.min(pageSize, items.length);
+      return current;
+    });
   }, [items.length, pageSize]);
 
   const visible = useMemo(

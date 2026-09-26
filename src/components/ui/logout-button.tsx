@@ -16,10 +16,14 @@ export function LogoutButton({
 
   async function onLogout() {
     setPending(true);
-    const result = await logoutUser();
-    setPending(false);
-    router.push(result.ok ? result.redirectTo : "/");
-    router.refresh();
+    try {
+      const result = await logoutUser();
+      router.push(result.ok ? result.redirectTo : "/");
+      router.refresh();
+    } catch {
+      setPending(false);
+      router.push("/");
+    }
   }
 
   return (

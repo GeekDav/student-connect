@@ -1,20 +1,25 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { startTransition, useEffect, useRef } from "react";
+
+export const LIVE_POLL_DEFAULT_MS = 12_000;
 
 /**
- * Rafraîchit une liste côté client sans reload (onglet visible uniquement).
- * Même spirit que le polling Messages.
+ * Rafraîchit des données sans reload.
+ * - Onglet visible uniquement
+ * - Pas de tick empilé si le précédent tourne encore
+ * - Mises à jour en transition (ne bloque pas les clics)
  */
 export function useLivePoll<T>(
-  fetchList: () => Promise<T[]>,
-  onData: (items: T[]) => void,
+  fetchData: () => Promise<T>,
+  onData: (data: T) => void,
   enabled = true,
-  intervalMs = 4000,
+  intervalMs = LIVE_POLL_DEFAULT_MS,
 ) {
-  const fetchRef = useRef(fetchList);
+  const fetchRef = useRef(fetchData);
   const onDataRef = useRef(onData);
-  fetchRef.current = fetchList;
+  const inFlightRef = useRef(false);
+  fetchRef.current = fetchData;
   onDataRef.current = onData;
 
   useEffect(() => {
@@ -23,19 +28,34 @@ export function useLivePoll<T>(
     let cancelled = false;
 
     async function tick() {
-      if (document.visibilityState !== "visible" || cancelled) return;
+      if (
+        cancelled ||
+        document.visibilityState !== "visible" ||
+        inFlightRef.current
+      ) {
+        return;
+      }
+      inFlightRef.current = true;
       try {
         const next = await fetchRef.current();
-        if (!cancelled) onDataRef.current(next);
+        if (!cancelled) {
+          startTransition(() => {
+            onDataRef.current(next);
+          });
+        }
       } catch {
-        /* ignore transient errors */
+        /* ignore */
+      } finally {
+        inFlightRef.current = false;
       }
     }
 
+    const startId = window.setTimeout(tick, Math.min(2500, intervalMs));
     const id = window.setInterval(tick, intervalMs);
     document.addEventListener("visibilitychange", tick);
     return () => {
       cancelled = true;
+      window.clearTimeout(startId);
       window.clearInterval(id);
       document.removeEventListener("visibilitychange", tick);
     };

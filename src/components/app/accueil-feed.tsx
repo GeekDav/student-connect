@@ -6,25 +6,23 @@ import { AccueilAnnouncements } from "@/components/app/accueil-announcements";
 import { FeedSectionHeader } from "@/components/app/feed-section-header";
 import { WallNotesSection } from "@/components/app/wall-notes-section";
 import { useLivePoll } from "@/hooks/use-live-poll";
+import {
+  listAccueilLiveSnapshot,
+} from "@/lib/actions/accueil-live";
+import { markAnnouncementsRead } from "@/lib/actions/announcements";
 import type { AnnouncementItem } from "@/lib/actions/announcements";
-import {
-  listResidenceEvents,
-  type EventItem,
-} from "@/lib/actions/events";
-import {
-  listResidenceMarket,
-  type MarketItem,
-} from "@/lib/actions/marketplace";
-import { listResidenceSos, type SosItem } from "@/lib/actions/sos";
+import type { EventItem } from "@/lib/actions/events";
+import type { MarketItem } from "@/lib/actions/marketplace";
+import type { SosItem } from "@/lib/actions/sos";
 import type { WallNoteItem } from "@/lib/actions/wall";
 
 export function AccueilFeed({
   firstName,
-  announcements,
+  announcements: initialAnnouncements,
   events: initialEvents,
   sosItems: initialSos,
   marketItems: initialMarket,
-  wallNotes,
+  wallNotes: initialWall,
   readOnly = false,
 }: {
   firstName: string;
@@ -35,13 +33,27 @@ export function AccueilFeed({
   wallNotes: WallNoteItem[];
   readOnly?: boolean;
 }) {
+  const [announcements, setAnnouncements] = useState(initialAnnouncements);
   const [events, setEvents] = useState(initialEvents);
   const [sosItems, setSosItems] = useState(initialSos);
   const [marketItems, setMarketItems] = useState(initialMarket);
+  const [wallNotes, setWallNotes] = useState(initialWall);
 
-  useLivePoll(listResidenceEvents, setEvents);
-  useLivePoll(listResidenceSos, setSosItems);
-  useLivePoll(listResidenceMarket, setMarketItems);
+  useLivePoll(listAccueilLiveSnapshot, (snap) => {
+    setEvents(snap.events);
+    setSosItems(snap.sosItems);
+    setMarketItems(snap.marketItems);
+    setWallNotes(snap.wallNotes);
+    setAnnouncements(snap.announcements);
+    const unreadIds = snap.announcements
+      .filter((a) => a.unread)
+      .map((a) => a.id);
+    if (unreadIds.length === 0) return;
+    void markAnnouncementsRead(unreadIds).then((result) => {
+      if (!result.ok) return;
+      setAnnouncements((prev) => prev.map((a) => ({ ...a, unread: false })));
+    });
+  });
 
   const openEvents = events.filter((e) => e.spotsTaken < e.spotsTotal);
   const openSos = sosItems.filter(
@@ -127,10 +139,14 @@ export function AccueilFeed({
       ) : null}
 
       <div className="animate-hero-rise-delay-2 mt-10">
-        <AccueilAnnouncements initial={announcements} />
+        <AccueilAnnouncements initial={announcements} livePoll={false} />
       </div>
 
-      <WallNotesSection initialNotes={wallNotes} readOnly={readOnly} />
+      <WallNotesSection
+        initialNotes={wallNotes}
+        readOnly={readOnly}
+        livePoll={false}
+      />
 
       <section className="mt-12">
         <FeedSectionHeader

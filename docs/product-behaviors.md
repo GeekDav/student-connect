@@ -89,7 +89,7 @@ Titres de section : sticky + barre colorée (repère au scroll).
 
 ## Temps quasi-réel (étudiant)
 
-Polling léger (~4 s, onglet visible) sur :
+Polling léger (~12 s feeds, ~10 s badge messages, ~5 s chat ouvert ; onglet visible) sur :
 - Mur (+ réponses)
 - SOS / Recyclerie / Events (pages + aperçus Accueil)
 - Annonces officielles (tableau d’affichage)
