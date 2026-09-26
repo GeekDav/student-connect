@@ -80,6 +80,14 @@ Titres de section : sticky + barre colorée (repère au scroll).
 
 ---
 
+## Messages
+
+- Badge non-lus (pastille accent) sur **Messages** dans la nav — polling ~2,5 s, sans reload.
+- Conversation ouverte : nouveaux messages apparaissent tout seuls ; lecture → badge diminue.
+- Compteur par conversation dans la liste (déjà en place).
+
+---
+
 ## Super-admin — cockpit
 
 - **Vue d’ensemble** : KPI plateforme, activité 30 j. (stacked), donuts statut/plan, top activité, alertes, table pulse filtrable.

@@ -3,6 +3,7 @@ import { MembershipStatus, ResidenceStatus, Role } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app/app-shell";
 import { ResidencePauseBanner } from "@/components/ui/residence-pause-banner";
+import { getUnreadMessageCount } from "@/lib/actions/messages";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -38,6 +39,7 @@ export default async function StudentAppLayout({
 
   let residenceName = "Ta résidence";
   let isPaused = false;
+  let initialUnread = 0;
 
   if (isStaff) {
     const residence = await prisma.residence.findFirst({
@@ -54,6 +56,7 @@ export default async function StudentAppLayout({
     const membership = user.memberships[0];
     residenceName = membership?.residence.name ?? "Ta résidence";
     isPaused = membership?.residence.status === ResidenceStatus.PAUSED;
+    initialUnread = await getUnreadMessageCount();
   }
 
   return (
@@ -63,6 +66,7 @@ export default async function StudentAppLayout({
       lastName={user.lastName}
       avatarUrl={user.avatarUrl}
       managerView={isStaff}
+      initialUnread={initialUnread}
     >
       {isPaused ? (
         <ResidencePauseBanner

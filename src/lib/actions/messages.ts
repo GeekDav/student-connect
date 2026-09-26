@@ -234,6 +234,39 @@ export async function listConversations(): Promise<ConversationSummary[]> {
   });
 }
 
+/** Total non lus (badge nav) — une requête SQL, adapté au polling. */
+export async function getUnreadMessageCount(): Promise<number> {
+  const ctx = await getActiveStudentContext();
+  if (!ctx) return 0;
+
+  const rows = await prisma.$queryRaw<[{ count: bigint }]>`
+    SELECT COUNT(*)::bigint AS count
+    FROM "Message" m
+    INNER JOIN "Conversation" c ON c.id = m."conversationId"
+    WHERE c."residenceId" = ${ctx.residenceId}
+      AND (c."userAId" = ${ctx.session.userId} OR c."userBId" = ${ctx.session.userId})
+      AND m."senderId" <> ${ctx.session.userId}
+      AND m."createdAt" > (
+        CASE
+          WHEN c."userAId" = ${ctx.session.userId} THEN c."userALastReadAt"
+          ELSE c."userBLastReadAt"
+        END
+      )
+  `;
+
+  return Number(rows[0]?.count ?? 0);
+}
+
+/**
+ * Poll conversation ouverte : marque lu + renvoie le fil à jour.
+ * (Réutilise getConversation.)
+ */
+export async function pollConversation(
+  conversationId: string,
+): Promise<ConversationDetail | null> {
+  return getConversation(conversationId);
+}
+
 export async function getConversation(
   conversationId: string,
 ): Promise<ConversationDetail | null> {

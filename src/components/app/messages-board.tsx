@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
 import { ReportButton } from "@/components/app/report-button";
+import { useMessagesUnread } from "@/components/app/messages-unread";
 import { Avatar } from "@/components/ui/avatar";
 import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import {
@@ -9,6 +17,8 @@ import {
   deleteMessages,
   getConversation,
   hideConversation,
+  listConversations,
+  pollConversation,
   sendMessage,
   type ChatMessage,
   type ConversationDetail,
@@ -17,6 +27,8 @@ import {
 
 const fieldClass =
   "w-full rounded-lg border border-line bg-surface px-3.5 py-3 text-[15px] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-accent focus:shadow-[0_0_0_3px_rgba(12,107,92,0.12)]";
+
+const POLL_MS = 2500;
 
 export function MessagesBoard({
   initialConversations,
@@ -29,6 +41,7 @@ export function MessagesBoard({
   initialDetail?: ConversationDetail | null;
   bootstrapError?: string | null;
 }) {
+  const { refreshUnread, setUnread } = useMessagesUnread();
   const [conversations, setConversations] =
     useState<ConversationSummary[]>(initialConversations);
   const [activeId, setActiveId] = useState<string | null>(
@@ -42,11 +55,19 @@ export function MessagesBoard({
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
+  const bottomRef = useRef<HTMLLIElement | null>(null);
+  const lastMessageIdRef = useRef<string | null>(
+    initialDetail?.messages.at(-1)?.id ?? null,
+  );
 
   const activeSummary = useMemo(
     () => conversations.find((c) => c.id === activeId) ?? null,
     [conversations, activeId],
   );
+
+  function syncBadgeFromList(list: ConversationSummary[]) {
+    setUnread(list.reduce((sum, c) => sum + c.unread, 0));
+  }
 
   useEffect(() => {
     if (!activeId) {
@@ -63,12 +84,72 @@ export function MessagesBoard({
         return;
       }
       setDetail(next);
+      lastMessageIdRef.current = next.messages.at(-1)?.id ?? null;
       setConversations((prev) =>
         prev.map((c) => (c.id === next.id ? { ...c, unread: 0 } : c)),
       );
+      void refreshUnread();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once per activeId change
   }, [activeId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function tick() {
+      if (document.visibilityState !== "visible" || cancelled) return;
+
+      try {
+        if (activeId) {
+          const next = await pollConversation(activeId);
+          if (cancelled || !next) return;
+
+          const lastId = next.messages.at(-1)?.id ?? null;
+          const hadNew =
+            lastId !== null && lastId !== lastMessageIdRef.current;
+
+          setDetail(next);
+          setConversations((prev) => {
+            const others = prev.filter((c) => c.id !== next.id);
+            const updated: ConversationSummary = {
+              id: next.id,
+              peerId: next.peerId,
+              peerName: next.peerName,
+              peerField: next.peerField,
+              peerAvatarUrl: next.peerAvatarUrl,
+              preview: next.preview,
+              updatedLabel: next.updatedLabel,
+              unread: 0,
+            };
+            return [updated, ...others];
+          });
+          lastMessageIdRef.current = lastId;
+          void refreshUnread();
+
+          if (hadNew) {
+            requestAnimationFrame(() => {
+              bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+            });
+          }
+        } else {
+          const list = await listConversations();
+          if (cancelled) return;
+          setConversations(list);
+          syncBadgeFromList(list);
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const id = window.setInterval(tick, POLL_MS);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [activeId, refreshUnread]);
 
   function openConversation(id: string) {
     setError(null);
@@ -77,9 +158,12 @@ export function MessagesBoard({
     setSelectedIds(new Set());
     setDetail(null);
     setActiveId(id);
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, unread: 0 } : c)),
-    );
+    lastMessageIdRef.current = null;
+    setConversations((prev) => {
+      const next = prev.map((c) => (c.id === id ? { ...c, unread: 0 } : c));
+      syncBadgeFromList(next);
+      return next;
+    });
   }
 
   function toggleSelect(id: string) {
@@ -111,11 +195,16 @@ export function MessagesBoard({
         setError(result.error);
         return;
       }
-      setConversations((prev) => prev.filter((c) => c.id !== id));
+      setConversations((prev) => {
+        const next = prev.filter((c) => c.id !== id);
+        syncBadgeFromList(next);
+        return next;
+      });
       if (activeId === id) {
         setActiveId(null);
         setDetail(null);
       }
+      void refreshUnread();
     });
   }
 
@@ -136,6 +225,7 @@ export function MessagesBoard({
       }
 
       const message = result.message as ChatMessage;
+      lastMessageIdRef.current = message.id;
       setDetail((prev) =>
         prev && prev.id === activeId
           ? {
@@ -161,6 +251,9 @@ export function MessagesBoard({
         if (!current) return updated;
         return [current, ...updated.filter((c) => c.id !== activeId)];
       });
+      requestAnimationFrame(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
     });
   }
 
@@ -178,6 +271,7 @@ export function MessagesBoard({
         if (!prev || prev.id !== activeId) return prev;
         const messages = prev.messages.filter((m) => !ids.includes(m.id));
         const last = messages[messages.length - 1];
+        lastMessageIdRef.current = last?.id ?? null;
         return {
           ...prev,
           messages,
@@ -219,6 +313,7 @@ export function MessagesBoard({
         setError(result.error);
         return;
       }
+      lastMessageIdRef.current = null;
       setDetail((prev) =>
         prev && prev.id === activeId
           ? {
@@ -265,6 +360,8 @@ export function MessagesBoard({
               setError(null);
               setSelectMode(false);
               setSelectedIds(new Set());
+              lastMessageIdRef.current = null;
+              void refreshUnread();
             }}
             className="text-sm font-medium text-muted transition-colors hover:text-ink"
           >
@@ -339,9 +436,10 @@ export function MessagesBoard({
               Dis bonjour — c’est le début de la conversation.
             </li>
           ) : null}
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <li
               key={message.id}
+              ref={index === messages.length - 1 ? bottomRef : undefined}
               className={`flex items-end gap-2 ${
                 message.fromMe ? "justify-end" : "justify-start"
               }`}
