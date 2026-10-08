@@ -23,6 +23,9 @@ const fieldClass =
 const replyFieldClass =
   "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus:border-accent focus:shadow-[0_0_0_3px_rgba(12,107,92,0.12)]";
 
+/** Affichage UI des réponses (plafond serveur = 40). */
+const REPLY_PAGE_SIZE = 10;
+
 export function WallNotesSection({
   initialNotes,
   readOnly = false,
@@ -36,6 +39,9 @@ export function WallNotesSection({
   const [notes, setNotes] = useState(initialNotes);
   const [draft, setDraft] = useState("");
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replyVisible, setReplyVisible] = useState<Record<string, number>>(
+    {},
+  );
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { visible, hasMore, remaining, showMore } = useLoadMore(notes, 6);
@@ -86,11 +92,18 @@ export function WallNotesSection({
       }
       if (result.reply) {
         setNotes((prev) =>
-          prev.map((note) =>
-            note.id === noteId
-              ? { ...note, replies: [...note.replies, result.reply!] }
-              : note,
-          ),
+          prev.map((note) => {
+            if (note.id !== noteId) return note;
+            const replies = [...note.replies, result.reply!];
+            setReplyVisible((vis) => ({
+              ...vis,
+              [noteId]: Math.max(
+                vis[noteId] ?? REPLY_PAGE_SIZE,
+                replies.length,
+              ),
+            }));
+            return { ...note, replies };
+          }),
         );
         setReplyDrafts((prev) => ({ ...prev, [noteId]: "" }));
       }
@@ -206,45 +219,79 @@ export function WallNotesSection({
               </div>
 
               {note.replies.length > 0 ? (
-                <ul className="mt-4 space-y-3 border-l-2 border-line pl-4">
-                  {note.replies.map((reply) => (
-                    <li key={reply.id}>
-                      <p className="text-sm leading-relaxed text-ink">
-                        {reply.body}
-                      </p>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <p className="text-xs text-muted">
-                          {reply.author} · {reply.timeLabel}
-                        </p>
-                        {!readOnly && reply.isMine ? (
-                          <button
-                            type="button"
-                            disabled={isPending}
-                            onClick={() => onDeleteReply(note.id, reply.id)}
-                            className="text-xs font-semibold text-muted hover:text-ink disabled:opacity-50"
-                          >
-                            Retirer
-                          </button>
-                        ) : null}
-                        {!readOnly && !reply.isMine ? (
-                          <>
-                            <Link
-                              href={`/messages?with=${reply.authorId}`}
-                              className="text-xs font-semibold text-accent hover:opacity-70"
-                            >
-                              Message
-                            </Link>
-                            <ReportButton
-                              targetType="wall_reply"
-                              targetId={reply.id}
-                              isMine={false}
-                            />
-                          </>
-                        ) : null}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-4">
+                  <ul className="space-y-3 border-l-2 border-line pl-4">
+                    {note.replies
+                      .slice(
+                        0,
+                        replyVisible[note.id] ?? REPLY_PAGE_SIZE,
+                      )
+                      .map((reply) => (
+                        <li key={reply.id}>
+                          <p className="text-sm leading-relaxed text-ink">
+                            {reply.body}
+                          </p>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <p className="text-xs text-muted">
+                              {reply.author} · {reply.timeLabel}
+                            </p>
+                            {!readOnly && reply.isMine ? (
+                              <button
+                                type="button"
+                                disabled={isPending}
+                                onClick={() =>
+                                  onDeleteReply(note.id, reply.id)
+                                }
+                                className="text-xs font-semibold text-muted hover:text-ink disabled:opacity-50"
+                              >
+                                Retirer
+                              </button>
+                            ) : null}
+                            {!readOnly && !reply.isMine ? (
+                              <>
+                                <Link
+                                  href={`/messages?with=${reply.authorId}`}
+                                  className="text-xs font-semibold text-accent hover:opacity-70"
+                                >
+                                  Message
+                                </Link>
+                                <ReportButton
+                                  targetType="wall_reply"
+                                  targetId={reply.id}
+                                  isMine={false}
+                                />
+                              </>
+                            ) : null}
+                          </div>
+                        </li>
+                      ))}
+                  </ul>
+                  {(replyVisible[note.id] ?? REPLY_PAGE_SIZE) <
+                  note.replies.length ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setReplyVisible((prev) => ({
+                          ...prev,
+                          [note.id]:
+                            (prev[note.id] ?? REPLY_PAGE_SIZE) +
+                            REPLY_PAGE_SIZE,
+                        }))
+                      }
+                      className="mt-3 text-sm font-semibold text-accent transition-opacity hover:opacity-70"
+                    >
+                      Voir plus ·{" "}
+                      {note.replies.length -
+                        (replyVisible[note.id] ?? REPLY_PAGE_SIZE)}{" "}
+                      réponse
+                      {note.replies.length -
+                        (replyVisible[note.id] ?? REPLY_PAGE_SIZE) >
+                      1
+                        ? "s"
+                        : ""}
+                    </button>
+                  ) : null}
+                </div>
               ) : null}
 
               {!readOnly ? (

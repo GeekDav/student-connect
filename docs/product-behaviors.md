@@ -36,7 +36,7 @@ Titres de section : sticky + barre colorée (repère au scroll).
 
 - **1 post / personne / jour**.
 - Max **280** caractères / note ; **160** / réponse.
-- Max **40** réponses par note.
+- Max **40** réponses par note (plafond serveur) ; UI **10** puis Voir plus (+10).
 - TTL **7 jours** (note + réponses supprimées).
 - Feed = top **30** récentes encore valides ; UI progressive 6 → Voir plus.
 - Pas de “remontée” volontaire demandée pour le pitch : on explique le top 30 comme plafond d’affichage.
