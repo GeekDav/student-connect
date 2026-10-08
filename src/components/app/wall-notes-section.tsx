@@ -92,19 +92,14 @@ export function WallNotesSection({
       }
       if (result.reply) {
         setNotes((prev) =>
-          prev.map((note) => {
-            if (note.id !== noteId) return note;
-            const replies = [...note.replies, result.reply!];
-            setReplyVisible((vis) => ({
-              ...vis,
-              [noteId]: Math.max(
-                vis[noteId] ?? REPLY_PAGE_SIZE,
-                replies.length,
-              ),
-            }));
-            return { ...note, replies };
-          }),
+          prev.map((note) =>
+            note.id === noteId
+              ? { ...note, replies: [...note.replies, result.reply!] }
+              : note,
+          ),
         );
+        // Ta réponse est en bas : on déplie assez pour la voir.
+        setReplyVisible((vis) => ({ ...vis, [noteId]: 40 }));
         setReplyDrafts((prev) => ({ ...prev, [noteId]: "" }));
       }
     });
