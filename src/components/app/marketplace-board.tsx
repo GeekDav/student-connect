@@ -191,8 +191,18 @@ export function MarketplaceBoard({
       next.description = "Ajoute une courte description.";
     }
     if (!form.location.trim()) next.location = "Indique où récupérer l’objet.";
-    if (form.type === "vente" && !form.priceLabel.trim()) {
-      next.priceLabel = "Indique un prix (ex. 10 €).";
+    if (form.type === "vente") {
+      const price = form.priceLabel.trim();
+      if (!price) {
+        next.priceLabel = "Indique un prix en euros (ex. 10).";
+      } else if (!/^\d+$/.test(price)) {
+        next.priceLabel = "Le prix doit être un nombre entier (ex. 10).";
+      } else {
+        const euros = Number.parseInt(price, 10);
+        if (euros < 1 || euros > 99_999) {
+          next.priceLabel = "Indique un prix entre 1 et 99 999 €.";
+        }
+      }
     }
 
     setErrors(next);
@@ -311,15 +321,25 @@ export function MarketplaceBoard({
           {form.type === "vente" ? (
             <div>
               <label htmlFor="priceLabel" className={labelClass}>
-                Prix
+                Prix (€)
               </label>
               <input
                 id="priceLabel"
                 className={fieldClass}
-                placeholder="Ex. 15 €"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="Ex. 15"
                 value={form.priceLabel}
-                onChange={(e) => update("priceLabel", e.target.value)}
+                onChange={(e) =>
+                  update(
+                    "priceLabel",
+                    e.target.value.replace(/\D/g, "").slice(0, 5),
+                  )
+                }
               />
+              <p className="mt-1.5 text-xs text-muted">
+                Entier en euros — affiché ensuite comme « 15 € ».
+              </p>
               {errors.priceLabel ? (
                 <p className="mt-1.5 text-sm text-red-700" role="alert">
                   {errors.priceLabel}

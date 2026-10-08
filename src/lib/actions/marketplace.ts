@@ -183,7 +183,7 @@ export async function createMarketItem(input: {
   const title = input.title.trim();
   const description = input.description.trim();
   const location = input.location.trim();
-  const priceLabel = input.priceLabel.trim();
+  const priceRaw = input.priceLabel.trim();
 
   if (!title) return { ok: false, error: "Donne un titre à l’annonce." };
   if (!description) {
@@ -192,8 +192,26 @@ export async function createMarketItem(input: {
   if (!location) {
     return { ok: false, error: "Indique où récupérer l’objet." };
   }
-  if (input.type === "vente" && !priceLabel) {
-    return { ok: false, error: "Indique un prix (ex. 10 €)." };
+
+  let priceLabel: string | null = null;
+  if (input.type === "vente") {
+    if (!priceRaw) {
+      return { ok: false, error: "Indique un prix en euros (ex. 10)." };
+    }
+    if (!/^\d+$/.test(priceRaw)) {
+      return {
+        ok: false,
+        error: "Le prix doit être un nombre entier en euros (ex. 10).",
+      };
+    }
+    const euros = Number.parseInt(priceRaw, 10);
+    if (!Number.isFinite(euros) || euros < 1 || euros > 99_999) {
+      return {
+        ok: false,
+        error: "Indique un prix entier entre 1 et 99 999 €.",
+      };
+    }
+    priceLabel = `${euros} €`;
   }
 
   await housekeepingMarket(ctx.residenceId);
@@ -218,7 +236,7 @@ export async function createMarketItem(input: {
       title,
       description,
       type: input.type === "don" ? MarketplaceType.DON : MarketplaceType.VENTE,
-      priceLabel: input.type === "vente" ? priceLabel : null,
+      priceLabel,
       location,
       status: MarketplaceStatus.AVAILABLE,
       expiresAt: addDays(new Date(), MARKET_TTL_DAYS),
