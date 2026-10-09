@@ -20,6 +20,11 @@ import {
   formatUntilLabel,
 } from "@/lib/board-ttl";
 
+export type MarketInterestPerson = {
+  id: string;
+  name: string;
+};
+
 export type MarketItem = {
   id: string;
   title: string;
@@ -33,6 +38,8 @@ export type MarketItem = {
   location: string;
   status: "available" | "reserved" | "gone" | "expired";
   interests: number;
+  /** Rempli uniquement pour l’auteur de l’annonce. */
+  interested: MarketInterestPerson[];
   iInterested: boolean;
   isMine: boolean;
   canProlong: boolean;
@@ -90,7 +97,10 @@ function mapItem(
     prolongedOnce: boolean;
     authorId: string;
     author: { firstName: string; lastName: string };
-    interests: { userId: string }[];
+    interests: {
+      userId: string;
+      user: { firstName: string; lastName: string };
+    }[];
   },
   userId: string,
 ): MarketItem {
@@ -110,6 +120,12 @@ function mapItem(
     location: row.location,
     status: mapStatus(row.status),
     interests: row.interests.length,
+    interested: isMine
+      ? row.interests.map((i) => ({
+          id: i.userId,
+          name: `${i.user.firstName} ${i.user.lastName.charAt(0)}.`,
+        }))
+      : [],
     iInterested: row.interests.some((i) => i.userId === userId),
     isMine,
     canProlong:
@@ -121,7 +137,13 @@ function mapItem(
 
 const marketInclude = {
   author: { select: { firstName: true, lastName: true } },
-  interests: { select: { userId: true } },
+  interests: {
+    select: {
+      userId: true,
+      user: { select: { firstName: true, lastName: true } },
+    },
+    orderBy: { createdAt: "asc" as const },
+  },
 } as const;
 
 async function expireDueMarket(residenceId: string) {

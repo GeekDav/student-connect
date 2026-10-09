@@ -579,6 +579,29 @@ function MarketRow({
         </span>
       </p>
 
+      {item.isMine && item.interested.length > 0 && !readOnly ? (
+        <div className="mt-4 rounded-lg border border-line bg-wash/50 px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Intéressé{item.interested.length > 1 ? "s" : ""} — contacte-les
+          </p>
+          <ul className="mt-2 space-y-2">
+            {item.interested.map((person) => (
+              <li
+                key={person.id}
+                className="flex flex-wrap items-center justify-between gap-2"
+              >
+                <span className="text-sm font-medium text-ink">{person.name}</span>
+                <ContactAuthorLink
+                  authorId={person.id}
+                  isMine={false}
+                  label="Envoyer un message"
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {(active || expired) && !readOnly ? (
         <div className="mt-4 flex flex-wrap gap-2">
           {active && !item.isMine && onInterest ? (
