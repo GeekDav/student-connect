@@ -136,6 +136,8 @@ Le dashboard doit répondre en 10 s : *« pourquoi payer / pas un groupe WhatsAp
 - **Canal officiel** : annonces hors bruit + **taux de lecture** de la dernière.
 - **Pouls** : à traiter (inscriptions, signalements, SOS) + **activité 7 j.** (mur, SOS, recyclerie, events, joins).
 - Pas un chat de plus : du **pilotage**.
+- **Démarrage** (tant qu’incomplet) : inviter → valider → 1re annonce. Disparaît ensuite.
+- Limite produit : pas de nouveaux boards / chat gestionnaire — on s’arrête au pilotage.
 
 ---
 

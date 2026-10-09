@@ -58,6 +58,7 @@ export async function ManagerDashboard({
     eventsCreated7d,
     joins7d,
     latestAnnouncement,
+    inviteCount,
   ] = residenceId
     ? await Promise.all([
         prisma.residenceMembership.count({
@@ -139,8 +140,43 @@ export async function ManagerDashboard({
           orderBy: { createdAt: "desc" },
           include: { _count: { select: { reads: true } } },
         }),
+        prisma.residenceInvitation.count({
+          where: { residenceId, revokedAt: null },
+        }),
       ])
-    : [0, 0, 0, 0, 0, 0, [], [], [], 0, 0, 0, 0, 0, 0, null];
+    : [0, 0, 0, 0, 0, 0, [], [], [], 0, 0, 0, 0, 0, 0, null, 0];
+
+  const setupSteps = [
+    {
+      id: "invite",
+      done: inviteCount > 0 || activeMembers > 0 || pendingCount > 0,
+      title: "Inviter des étudiants",
+      detail: "Lien à partager — pas un groupe ouvert.",
+      href: "/gestionnaire/invitations",
+      cta: "Créer une invitation",
+    },
+    {
+      id: "members",
+      done: activeMembers > 0,
+      title: "Valider qui entre",
+      detail:
+        pendingCount > 0
+          ? `${pendingCount} inscription${pendingCount > 1 ? "s" : ""} en attente`
+          : "Dès qu’ils rejoignent via le lien.",
+      href: "/gestionnaire/inscriptions",
+      cta: pendingCount > 0 ? "Voir les inscriptions" : "Ouvrir les inscriptions",
+    },
+    {
+      id: "announce",
+      done: publishedAnnouncements > 0,
+      title: "Publier une annonce officielle",
+      detail: "Hors du bruit du mur — avec lectures.",
+      href: "/gestionnaire/annonces",
+      cta: "Écrire l’annonce",
+    },
+  ] as const;
+  const setupIncomplete = setupSteps.some((s) => !s.done);
+  const showPitch = welcome || setupIncomplete;
 
   const activity7d =
     wallNotes7d + sosCreated7d + marketCreated7d + eventsCreated7d + joins7d;
@@ -262,13 +298,56 @@ export async function ManagerDashboard({
 
       {welcome ? (
         <p className="animate-hero-rise-delay mt-6 rounded-2xl border border-accent/30 bg-wash px-5 py-4 text-sm leading-relaxed text-ink">
-          Bienvenue dans le pilote. Ici tu valides qui entre, tu publies hors
-          du bruit, tu vois l’activité et tu traites les signalements —
-          sans scroller un fil de 200 messages.
+          Bienvenue dans le pilote. Trois gestes pour démarrer — le reste du
+          dashboard sert ensuite à piloter, pas à chatter.
         </p>
       ) : null}
 
-      {residence ? (
+      {residence && setupIncomplete ? (
+        <section className="animate-hero-rise-delay mt-6 rounded-2xl border border-accent/25 bg-accent/[0.04] px-5 py-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
+            Démarrage · {setupSteps.filter((s) => s.done).length}/
+            {setupSteps.length}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            Tant que la résidence est vide, le pouls ne parle pas. Ces trois
+            étapes suffisent — pas de nouvelle feature à apprendre.
+          </p>
+          <ol className="mt-4 space-y-3">
+            {setupSteps.map((step, index) => (
+              <li
+                key={step.id}
+                className="flex flex-col gap-2 rounded-xl border border-line bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ink">
+                    <span className="tabular-nums text-muted">
+                      {index + 1}.
+                    </span>{" "}
+                    {step.title}
+                    {step.done ? (
+                      <span className="ml-2 text-xs font-semibold text-accent">
+                        fait
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted">{step.detail}</p>
+                </div>
+                {!step.done ? (
+                  <Link
+                    href={step.href}
+                    className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-accent px-3.5 text-sm font-semibold text-white transition-[background-color] hover:bg-accent-hover"
+                  >
+                    {step.cta}
+                  </Link>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
+      {residence && showPitch ? (
         <div className="animate-hero-rise-delay mt-6 grid gap-3 sm:grid-cols-3">
           {[
             {
