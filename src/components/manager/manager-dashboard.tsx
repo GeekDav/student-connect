@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  MarketplaceStatus,
   MembershipStatus,
   ResidenceStatus,
   Role,
@@ -36,6 +37,7 @@ export async function ManagerDashboard({
         : null;
 
   const residenceId = residence?.id;
+  const now = new Date();
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -49,6 +51,13 @@ export async function ManagerDashboard({
     pendingRows,
     reportRows,
     sosRows,
+    wallNotes7d,
+    marketActive,
+    sosCreated7d,
+    marketCreated7d,
+    eventsCreated7d,
+    joins7d,
+    latestAnnouncement,
   ] = residenceId
     ? await Promise.all([
         prisma.residenceMembership.count({
@@ -67,7 +76,7 @@ export async function ManagerDashboard({
           where: {
             residenceId,
             status: { in: [SosStatus.OPEN, SosStatus.HELPED] },
-            expiresAt: { gt: new Date() },
+            expiresAt: { gt: now },
           },
         }),
         prisma.microEvent.count({
@@ -91,21 +100,63 @@ export async function ManagerDashboard({
           where: {
             residenceId,
             status: { in: [SosStatus.OPEN, SosStatus.HELPED] },
-            expiresAt: { gt: new Date() },
+            expiresAt: { gt: now },
           },
           include: { author: { select: { firstName: true, lastName: true } } },
           orderBy: { createdAt: "asc" },
           take: 5,
         }),
+        prisma.wallNote.count({
+          where: { residenceId, createdAt: { gte: weekAgo } },
+        }),
+        prisma.marketplaceItem.count({
+          where: {
+            residenceId,
+            status: {
+              in: [MarketplaceStatus.AVAILABLE, MarketplaceStatus.RESERVED],
+            },
+            expiresAt: { gt: now },
+          },
+        }),
+        prisma.sosRequest.count({
+          where: { residenceId, createdAt: { gte: weekAgo } },
+        }),
+        prisma.marketplaceItem.count({
+          where: { residenceId, createdAt: { gte: weekAgo } },
+        }),
+        prisma.microEvent.count({
+          where: { residenceId, createdAt: { gte: weekAgo } },
+        }),
+        prisma.residenceMembership.count({
+          where: {
+            residenceId,
+            status: MembershipStatus.ACTIVE,
+            createdAt: { gte: weekAgo },
+          },
+        }),
+        prisma.officialAnnouncement.findFirst({
+          where: { residenceId, published: true },
+          orderBy: { createdAt: "desc" },
+          include: { _count: { select: { reads: true } } },
+        }),
       ])
-    : [0, 0, 0, 0, 0, 0, [], [], []];
+    : [0, 0, 0, 0, 0, 0, [], [], [], 0, 0, 0, 0, 0, 0, null];
+
+  const activity7d =
+    wallNotes7d + sosCreated7d + marketCreated7d + eventsCreated7d + joins7d;
+
+  const latestReads = latestAnnouncement?._count.reads ?? 0;
+  const readRate =
+    activeMembers > 0 && latestAnnouncement
+      ? Math.round((latestReads / activeMembers) * 100)
+      : null;
 
   const pulse = [
     {
       label: "Résidents actifs",
       value: String(activeMembers),
       href: "/gestionnaire/residents",
-      hint: "Annuaire opérationnel",
+      hint: "Annuaire + export CSV",
       warn: false,
     },
     {
@@ -113,21 +164,21 @@ export async function ManagerDashboard({
       value: String(pendingCount),
       href: "/gestionnaire/inscriptions",
       hint: "Inscriptions en attente",
-      warn: false,
-    },
-    {
-      label: "SOS ouverts",
-      value: String(openSos),
-      href: "/sos",
-      hint: "Entraide en cours",
-      warn: false,
+      warn: pendingCount > 0,
     },
     {
       label: "Signalements",
       value: String(openReports),
       href: "/gestionnaire/moderation",
       hint: "Modération à traiter",
-      warn: false,
+      warn: openReports > 0,
+    },
+    {
+      label: "SOS ouverts",
+      value: String(openSos),
+      href: "/sos",
+      hint: "Entraide en cours",
+      warn: openSos > 0,
     },
     {
       label: "Annonces live",
@@ -139,16 +190,26 @@ export async function ManagerDashboard({
       hint:
         publishedAnnouncements >= STUDENT_FEED_ANNOUNCEMENT_LIMIT
           ? `Feed étudiant plafonné à ${STUDENT_FEED_ANNOUNCEMENT_LIMIT}`
-          : "Tableau d’affichage",
+          : "Canal officiel (hors bruit)",
       warn: publishedAnnouncements >= STUDENT_FEED_ANNOUNCEMENT_LIMIT,
     },
     {
-      label: "Events (7 j.)",
-      value: String(recentEvents),
-      href: "/evenements",
-      hint: "Activité récente",
+      label: "Activité 7 j.",
+      value: String(activity7d),
+      href: "/accueil",
+      hint: "Posts + inscriptions validées",
       warn: false,
     },
+  ];
+
+  const activityBreakdown = [
+    { label: "Nouveaux résidents", value: joins7d },
+    { label: "Notes mur", value: wallNotes7d },
+    { label: "SOS créés", value: sosCreated7d },
+    { label: "Recyclerie", value: marketCreated7d },
+    { label: "Events créés", value: eventsCreated7d },
+    { label: "Events (démarrés)", value: recentEvents },
+    { label: "Recyclerie live", value: marketActive },
   ];
 
   const inbox: InboxItem[] = [
@@ -190,20 +251,50 @@ export async function ManagerDashboard({
         </h2>
         <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
           {residence
-            ? `Pouls de ${residence.name}${
+            ? `Pilotage de ${residence.name}${
                 residence.status === ResidenceStatus.PAUSED
                   ? " · en pause"
                   : ""
-              }`
+              } — ce qu’un groupe WhatsApp ne te montre pas.`
             : "Aucune résidence liée à ce compte pour le moment."}
         </p>
       </div>
 
       {welcome ? (
         <p className="animate-hero-rise-delay mt-6 rounded-2xl border border-accent/30 bg-wash px-5 py-4 text-sm leading-relaxed text-ink">
-          Bienvenue dans le pilote. Invite des étudiants, suis le pouls
-          ci‑dessous, et dis-nous ce qui te manque au quotidien.
+          Bienvenue dans le pilote. Ici tu valides qui entre, tu publies hors
+          du bruit, tu vois l’activité et tu traites les signalements —
+          sans scroller un fil de 200 messages.
         </p>
+      ) : null}
+
+      {residence ? (
+        <div className="animate-hero-rise-delay mt-6 grid gap-3 sm:grid-cols-3">
+          {[
+            {
+              title: "Qui est vraiment résident",
+              text: "Validation, départ, export CSV — pas un groupe ouvert.",
+            },
+            {
+              title: "Canal officiel",
+              text: "Annonces séparées du mur étudiant, avec lectures.",
+            },
+            {
+              title: "Pouls en 10 secondes",
+              text: "À traiter, SOS, activité 7 j. — sans fouiller WhatsApp.",
+            },
+          ].map((card) => (
+            <div
+              key={card.title}
+              className="rounded-2xl border border-line bg-surface px-4 py-4"
+            >
+              <p className="text-sm font-semibold text-ink">{card.title}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted">
+                {card.text}
+              </p>
+            </div>
+          ))}
+        </div>
       ) : null}
 
       {residence?.status === ResidenceStatus.PAUSED ? (
@@ -268,6 +359,73 @@ export async function ManagerDashboard({
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="animate-hero-rise-delay mt-10">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="font-display text-sm font-semibold tracking-wide text-ink">
+            Activité · 7 derniers jours
+          </h3>
+          <p className="text-xs text-muted">
+            Total · {activity7d} — invisible dans un groupe WhatsApp
+          </p>
+        </div>
+        <ul className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4 lg:grid-cols-7">
+          {activityBreakdown.map((item) => (
+            <li key={item.label} className="bg-surface px-3 py-4 sm:px-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                {item.label}
+              </p>
+              <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-ink">
+                {item.value}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="animate-hero-rise-delay mt-10">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="font-display text-sm font-semibold tracking-wide text-ink">
+            Canal officiel
+          </h3>
+          <Link
+            href="/gestionnaire/annonces"
+            className="text-xs font-semibold text-accent transition-opacity hover:opacity-70"
+          >
+            Gérer les annonces →
+          </Link>
+        </div>
+        {latestAnnouncement ? (
+          <div className="mt-4 rounded-2xl border border-accent/20 bg-accent/[0.04] px-5 py-5">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">
+              Dernière annonce publiée
+            </p>
+            <p className="mt-2 font-display text-lg font-semibold text-ink">
+              {latestAnnouncement.title}
+            </p>
+            <p className="mt-3 text-sm text-muted">
+              <span className="font-semibold text-ink">{latestReads}</span>{" "}
+              lecture{latestReads > 1 ? "s" : ""}
+              {readRate !== null ? (
+                <>
+                  {" "}
+                  ·{" "}
+                  <span className="font-semibold text-ink">{readRate} %</span>{" "}
+                  des résidents actifs
+                </>
+              ) : null}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              Sur WhatsApp, tu ne sais pas qui a vraiment vu l’info importante.
+            </p>
+          </div>
+        ) : (
+          <p className="mt-4 rounded-2xl border border-dashed border-line bg-wash/40 px-5 py-8 text-center text-sm text-muted">
+            Aucune annonce live. Publie la première pour séparer l’officiel du
+            bruit étudiant.
+          </p>
+        )}
       </section>
 
       {publishedAnnouncements >= STUDENT_FEED_ANNOUNCEMENT_LIMIT ? (
@@ -363,7 +521,7 @@ export async function ManagerDashboard({
             href="/gestionnaire/residents"
             className="inline-flex h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash"
           >
-            Résidents / export
+            Résidents / export CSV
           </Link>
           <Link
             href="/gestionnaire/annonces"

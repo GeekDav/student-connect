@@ -129,6 +129,14 @@ Les créations propres restent optimistes (affichage immédiat) ; le poll fait a
 - Gestionnaire peut **consulter** boards étudiants (SOS, events, etc.) en **lecture seule** ; Messages privés & profil étudiant → redirigés vers espace gestionnaire.
 - Liens dashboard Events / SOS ne doivent pas “déconnecter” (plus de redirect `/`).
 
+## Gestionnaire — argument vs WhatsApp
+
+Le dashboard doit répondre en 10 s : *« pourquoi payer / pas un groupe WhatsApp ? »*
+- **Gouvernance** : qui entre / part, export CSV résidents.
+- **Canal officiel** : annonces hors bruit + **taux de lecture** de la dernière.
+- **Pouls** : à traiter (inscriptions, signalements, SOS) + **activité 7 j.** (mur, SOS, recyclerie, events, joins).
+- Pas un chat de plus : du **pilotage**.
+
 ---
 
 ## Site public
