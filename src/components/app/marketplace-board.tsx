@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent } from "react";
+import {
+  useMemo,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
 import { ContactAuthorLink } from "@/components/app/contact-author-link";
 import { ReportButton } from "@/components/app/report-button";
 import {
@@ -530,6 +535,8 @@ export function MarketplaceBoard({
   );
 }
 
+const INTERESTED_PAGE_SIZE = 5;
+
 function MarketRow({
   item,
   busy,
@@ -545,10 +552,17 @@ function MarketRow({
   onProlong?: () => void;
   readOnly?: boolean;
 }) {
+  const [interestedVisible, setInterestedVisible] =
+    useState(INTERESTED_PAGE_SIZE);
   const active = isActiveStatus(item.status);
   const expired = item.status === "expired";
   const showAuthorActions =
     !readOnly && item.isMine && (active || expired);
+  const visibleInterested = item.interested.slice(0, interestedVisible);
+  const remainingInterested = Math.max(
+    0,
+    item.interested.length - interestedVisible,
+  );
 
   return (
     <li className="py-6">
@@ -583,9 +597,12 @@ function MarketRow({
         <div className="mt-4 rounded-lg border border-line bg-wash/50 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
             Intéressé{item.interested.length > 1 ? "s" : ""} — contacte-les
+            {item.interested.length > INTERESTED_PAGE_SIZE
+              ? ` · ${item.interested.length}`
+              : ""}
           </p>
           <ul className="mt-2 space-y-2">
-            {item.interested.map((person) => (
+            {visibleInterested.map((person) => (
               <li
                 key={person.id}
                 className="flex flex-wrap items-center justify-between gap-2"
@@ -599,6 +616,18 @@ function MarketRow({
               </li>
             ))}
           </ul>
+          {remainingInterested > 0 ? (
+            <button
+              type="button"
+              onClick={() =>
+                setInterestedVisible((n) => n + INTERESTED_PAGE_SIZE)
+              }
+              className="mt-3 text-sm font-semibold text-accent transition-opacity hover:opacity-70"
+            >
+              Voir plus · {remainingInterested} restant
+              {remainingInterested > 1 ? "s" : ""}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
