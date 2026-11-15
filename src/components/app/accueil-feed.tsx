@@ -12,6 +12,7 @@ import {
 import { markAnnouncementsRead } from "@/lib/actions/announcements";
 import type { AnnouncementItem } from "@/lib/actions/announcements";
 import type { EventItem } from "@/lib/actions/events";
+import { ViewAnnouncementImage } from "@/components/ui/view-announcement-image";
 import type { MarketItem } from "@/lib/actions/marketplace";
 import type { SosItem } from "@/lib/actions/sos";
 import type { WallNoteItem } from "@/lib/actions/wall";
@@ -239,9 +240,17 @@ export function AccueilFeed({
                 <p className="mt-2 text-base leading-relaxed text-muted">
                   {item.description}
                 </p>
-                <p className="mt-3 text-xs text-muted">
-                  {item.location} · {item.author} · {item.timeLabel}
-                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <p className="text-xs text-muted">
+                    {item.location} · {item.author} · {item.timeLabel}
+                  </p>
+                  {item.imageUrl ? (
+                    <ViewAnnouncementImage
+                      src={item.imageUrl}
+                      title={item.title}
+                    />
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>

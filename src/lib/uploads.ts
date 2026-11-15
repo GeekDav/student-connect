@@ -84,7 +84,7 @@ function contentTypeForExt(ext: string) {
 
 async function savePublicImage(
   file: File,
-  folder: "avatars" | "announcements",
+  folder: "avatars" | "announcements" | "marketplace",
 ): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   if (file.size <= 0 || file.size > MAX_BYTES) {
     return { ok: false, error: "Image trop lourde (max 2 Mo)." };
@@ -151,6 +151,10 @@ export async function saveAvatarFile(file: File) {
 
 export async function saveAnnouncementImage(file: File) {
   return savePublicImage(file, "announcements");
+}
+
+export async function saveMarketplaceImage(file: File) {
+  return savePublicImage(file, "marketplace");
 }
 
 export async function deletePublicUpload(url: string | null | undefined) {

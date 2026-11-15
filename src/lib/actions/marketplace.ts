@@ -19,6 +19,7 @@ import {
   daysAgo,
   formatUntilLabel,
 } from "@/lib/board-ttl";
+import { deletePublicUpload, saveMarketplaceImage } from "@/lib/uploads";
 
 export type MarketInterestPerson = {
   id: string;
@@ -29,6 +30,7 @@ export type MarketItem = {
   id: string;
   title: string;
   description: string;
+  imageUrl?: string;
   author: string;
   authorId: string;
   timeLabel: string;
@@ -88,6 +90,7 @@ function mapItem(
     id: string;
     title: string;
     description: string;
+    imageUrl: string | null;
     type: MarketplaceType;
     priceLabel: string | null;
     location: string;
@@ -111,6 +114,7 @@ function mapItem(
     id: row.id,
     title: row.title,
     description: row.description,
+    imageUrl: row.imageUrl ?? undefined,
     author: `${row.author.firstName} ${row.author.lastName.charAt(0)}.`,
     authorId: row.authorId,
     timeLabel: formatRelative(row.createdAt),
@@ -159,12 +163,18 @@ async function expireDueMarket(residenceId: string) {
 
 /** Pas un fil social : les terminés ne restent pas indéfiniment en base. */
 async function purgeStaleMarket(residenceId: string) {
-  await prisma.marketplaceItem.deleteMany({
+  const stale = await prisma.marketplaceItem.findMany({
     where: {
       residenceId,
       status: { in: [MarketplaceStatus.GONE, MarketplaceStatus.EXPIRED] },
       updatedAt: { lt: daysAgo(MARKET_RETENTION_DAYS) },
     },
+    select: { id: true, imageUrl: true },
+  });
+  if (stale.length === 0) return;
+  await Promise.all(stale.map((row) => deletePublicUpload(row.imageUrl)));
+  await prisma.marketplaceItem.deleteMany({
+    where: { id: { in: stale.map((row) => row.id) } },
   });
 }
 
@@ -189,23 +199,21 @@ export async function listResidenceMarket(): Promise<MarketItem[]> {
   return rows.map((row) => mapItem(row, ctx.session.userId));
 }
 
-export async function createMarketItem(input: {
-  title: string;
-  description: string;
-  type: "don" | "vente";
-  priceLabel: string;
-  location: string;
-}): Promise<MarketActionResult> {
+export async function createMarketItem(
+  formData: FormData,
+): Promise<MarketActionResult> {
   const ctx = await getActiveStudentContext();
   if (!ctx) {
     return { ok: false, error: "Tu dois être un résident validé." };
   }
   if (!ctx.writable) return writeBlockedResult(ctx);
 
-  const title = input.title.trim();
-  const description = input.description.trim();
-  const location = input.location.trim();
-  const priceRaw = input.priceLabel.trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const location = String(formData.get("location") ?? "").trim();
+  const priceRaw = String(formData.get("priceLabel") ?? "").trim();
+  const typeRaw = String(formData.get("type") ?? "don");
+  const type: "don" | "vente" = typeRaw === "vente" ? "vente" : "don";
 
   if (!title) return { ok: false, error: "Donne un titre à l’annonce." };
   if (!description) {
@@ -216,7 +224,7 @@ export async function createMarketItem(input: {
   }
 
   let priceLabel: string | null = null;
-  if (input.type === "vente") {
+  if (type === "vente") {
     if (!priceRaw) {
       return { ok: false, error: "Indique un prix en euros (ex. 10)." };
     }
@@ -236,6 +244,14 @@ export async function createMarketItem(input: {
     priceLabel = `${euros} €`;
   }
 
+  const image = formData.get("image");
+  let imageUrl: string | null = null;
+  if (image instanceof File && image.size > 0) {
+    const saved = await saveMarketplaceImage(image);
+    if (!saved.ok) return saved;
+    imageUrl = saved.url;
+  }
+
   await housekeepingMarket(ctx.residenceId);
 
   const activeCount = await prisma.marketplaceItem.count({
@@ -253,25 +269,31 @@ export async function createMarketItem(input: {
     };
   }
 
-  const row = await prisma.marketplaceItem.create({
-    data: {
-      title,
-      description,
-      type: input.type === "don" ? MarketplaceType.DON : MarketplaceType.VENTE,
-      priceLabel,
-      location,
-      status: MarketplaceStatus.AVAILABLE,
-      expiresAt: addDays(new Date(), MARKET_TTL_DAYS),
-      residenceId: ctx.residenceId,
-      authorId: ctx.session.userId,
-    },
-    include: marketInclude,
-  });
+  try {
+    const row = await prisma.marketplaceItem.create({
+      data: {
+        title,
+        description,
+        imageUrl,
+        type: type === "don" ? MarketplaceType.DON : MarketplaceType.VENTE,
+        priceLabel,
+        location,
+        status: MarketplaceStatus.AVAILABLE,
+        expiresAt: addDays(new Date(), MARKET_TTL_DAYS),
+        residenceId: ctx.residenceId,
+        authorId: ctx.session.userId,
+      },
+      include: marketInclude,
+    });
 
-  revalidatePath("/recyclerie");
-  revalidatePath("/accueil");
+    revalidatePath("/recyclerie");
+    revalidatePath("/accueil");
 
-  return { ok: true, item: mapItem(row, ctx.session.userId) };
+    return { ok: true, item: mapItem(row, ctx.session.userId) };
+  } catch (error) {
+    await deletePublicUpload(imageUrl);
+    throw error;
+  }
 }
 
 export async function toggleMarketInterest(

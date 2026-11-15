@@ -2,8 +2,10 @@
 
 import {
   useMemo,
+  useRef,
   useState,
   useTransition,
+  type ChangeEvent,
   type FormEvent,
 } from "react";
 import { ContactAuthorLink } from "@/components/app/contact-author-link";
@@ -14,7 +16,12 @@ import {
 } from "@/components/ui/board-scope-filter";
 import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import { LoadMoreButton, useLoadMore } from "@/components/ui/load-more";
+import { ViewAnnouncementImage } from "@/components/ui/view-announcement-image";
 import { useLivePoll } from "@/hooks/use-live-poll";
+import {
+  prepareImageForUpload,
+  uploadTransportError,
+} from "@/lib/client-image";
 import {
   createMarketItem,
   listResidenceMarket,
@@ -93,6 +100,8 @@ export function MarketplaceBoard({
     {},
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [showGone, setShowGone] = useState(false);
   const [showExpired, setShowExpired] = useState(false);
   const [scope, setScope] = useState<BoardScope>("all");
@@ -149,6 +158,32 @@ export function MarketplaceBoard({
 
   function replaceItem(item: MarketItem) {
     setItems((prev) => prev.map((row) => (row.id === item.id ? item : row)));
+  }
+
+  function clearImage() {
+    setImageFile(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  async function onPickImage(e: ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.files?.[0] ?? null;
+    e.target.value = "";
+    if (!raw) {
+      setImageFile(null);
+      return;
+    }
+
+    setFormError(null);
+    const prepared = await prepareImageForUpload(raw, {
+      maxEdge: 1600,
+      maxBytes: 1.6 * 1024 * 1024,
+    });
+    if (!prepared.ok) {
+      setImageFile(null);
+      setFormError(prepared.error);
+      return;
+    }
+    setImageFile(prepared.file);
   }
 
   function onToggleInterest(id: string) {
@@ -213,18 +248,31 @@ export function MarketplaceBoard({
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
+    const formData = new FormData();
+    formData.set("title", form.title.trim());
+    formData.set("description", form.description.trim());
+    formData.set("type", form.type);
+    formData.set("location", form.location.trim());
+    formData.set("priceLabel", form.priceLabel.trim());
+    if (imageFile) formData.set("image", imageFile);
+
     setFormError(null);
     startTransition(async () => {
-      const result = await createMarketItem(form);
-      if (!result.ok) {
-        setFormError(result.error);
-        return;
+      try {
+        const result = await createMarketItem(formData);
+        if (!result.ok) {
+          setFormError(result.error);
+          return;
+        }
+        if (result.item) {
+          setItems((prev) => [result.item!, ...prev]);
+        }
+        setForm(EMPTY_FORM);
+        clearImage();
+        setMode("list");
+      } catch (err) {
+        setFormError(uploadTransportError(err));
       }
-      if (result.item) {
-        setItems((prev) => [result.item!, ...prev]);
-      }
-      setForm(EMPTY_FORM);
-      setMode("list");
     });
   }
 
@@ -234,7 +282,10 @@ export function MarketplaceBoard({
         <div className="animate-hero-rise">
           <button
             type="button"
-            onClick={() => setMode("list")}
+            onClick={() => {
+              clearImage();
+              setMode("list");
+            }}
             className="text-sm font-medium text-muted transition-colors hover:text-ink"
           >
             ← Retour à la recyclerie
@@ -369,6 +420,44 @@ export function MarketplaceBoard({
                 {errors.location}
               </p>
             ) : null}
+          </div>
+
+          <div>
+            <p className={labelClass}>Photo (optionnelle)</p>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/jpg,.jpg,.jpeg,.png,.webp"
+              className="hidden"
+              onChange={onPickImage}
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="inline-flex h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-wash"
+              >
+                {imageFile ? "Changer la photo" : "Joindre une photo"}
+              </button>
+              {imageFile ? (
+                <>
+                  <span className="max-w-[14rem] truncate text-sm text-muted">
+                    {imageFile.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearImage}
+                    className="text-sm font-semibold text-muted hover:text-ink"
+                  >
+                    Retirer
+                  </button>
+                </>
+              ) : null}
+            </div>
+            <p className="mt-1.5 text-xs text-muted">
+              JPG, PNG ou WebP. Photo téléphone compressée auto · pas de HEIC.
+              Les autres résidents l’ouvrent en grand au clic.
+            </p>
           </div>
 
           {formError ? (
@@ -581,17 +670,22 @@ function MarketRow({
         {item.title}
       </h3>
       <p className="mt-2 text-base leading-relaxed text-muted">{item.description}</p>
-      <p className="mt-3 text-sm text-ink">
-        {item.location}
-        <span className="font-normal text-muted">
-          {" "}
-          · {item.author} · {item.timeLabel}
-          {active ? ` · ${item.expiresLabel}` : ""}
-          {item.interests > 0
-            ? ` · ${item.interests} intéressé${item.interests > 1 ? "s" : ""}`
-            : ""}
-        </span>
-      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <p className="text-sm text-ink">
+          {item.location}
+          <span className="font-normal text-muted">
+            {" "}
+            · {item.author} · {item.timeLabel}
+            {active ? ` · ${item.expiresLabel}` : ""}
+            {item.interests > 0
+              ? ` · ${item.interests} intéressé${item.interests > 1 ? "s" : ""}`
+              : ""}
+          </span>
+        </p>
+        {item.imageUrl ? (
+          <ViewAnnouncementImage src={item.imageUrl} title={item.title} />
+        ) : null}
+      </div>
 
       {item.isMine && item.interested.length > 0 && !readOnly ? (
         <div className="mt-4 rounded-lg border border-line bg-wash/50 px-4 py-3">

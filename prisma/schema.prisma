@@ -298,6 +298,7 @@ model MarketplaceItem {
   id            String            @id @default(cuid())
   title         String
   description   String
+  imageUrl      String?
   type          MarketplaceType
   priceLabel    String?
   location      String
