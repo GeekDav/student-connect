@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { LogoutButton } from "@/components/ui/logout-button";
+import { StudentConnectLogo } from "@/components/ui/student-connect-logo";
 
 const NAV = [
   { href: "/gestionnaire", label: "Dashboard", short: "Accueil", exact: true },
@@ -62,12 +63,11 @@ export function ManagerShell({
         <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <Link
+              <StudentConnectLogo
                 href="/gestionnaire"
-                className="font-display text-sm font-semibold tracking-wide text-accent transition-opacity hover:opacity-70"
-              >
-                Student-Connect
-              </Link>
+                variant="accent"
+                showText="responsive"
+              />
               <p className="mt-0.5 text-xs font-medium text-muted">
                 Espace gestionnaire
               </p>

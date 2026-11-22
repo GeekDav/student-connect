@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { AnchorLink } from "./anchor-link";
+import { StudentConnectLogo } from "@/components/ui/student-connect-logo";
 import { Reveal } from "./reveal";
 import { ScrollToHash } from "./scroll-to-hash";
 
@@ -45,12 +46,7 @@ export function LandingPage() {
       <ScrollToHash />
       <header className="animate-nav absolute inset-x-0 top-0 z-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-          <Link
-            href="/"
-            className="font-display text-sm font-semibold tracking-wide text-white/90 transition-opacity hover:opacity-80"
-          >
-            Student-Connect
-          </Link>
+          <StudentConnectLogo href="/" variant="inverse" showText="responsive" />
           <div className="flex items-center gap-4">
             <AnchorLink
               hash="partenaires"
@@ -305,12 +301,7 @@ export function LandingPage() {
 
       <footer className="border-t border-line bg-background">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <Link
-            href="/"
-            className="font-display text-sm font-semibold text-ink transition-opacity hover:opacity-70"
-          >
-            Student-Connect
-          </Link>
+          <StudentConnectLogo href="/" showText="responsive" />
           <div className="flex flex-wrap gap-5 text-sm text-muted">
             <Link href="/nous-contacter" className="hover:text-ink">
               Nous contacter

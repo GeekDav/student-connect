@@ -11,6 +11,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { LogoutButton } from "@/components/ui/logout-button";
+import { StudentConnectLogo } from "@/components/ui/student-connect-logo";
 
 const NAV = [
   { href: "/accueil", label: "Accueil" },
@@ -85,12 +86,7 @@ export function AppShell({
         <header className="sticky top-0 z-20 border-b border-line/70 bg-background/80 backdrop-blur-md">
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
             <div className="min-w-0">
-              <Link
-                href={homeHref}
-                className="font-display text-sm font-semibold tracking-wide text-ink transition-opacity hover:opacity-70"
-              >
-                Student-Connect
-              </Link>
+              <StudentConnectLogo href={homeHref} showText="responsive" />
               <p className="mt-0.5 truncate text-xs text-muted">
                 {managerView
                   ? `Vue résidence · ${residenceName}`

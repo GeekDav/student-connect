@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { StudentConnectLogo } from "@/components/ui/student-connect-logo";
 
 export function AuthShell({
   title,
@@ -22,12 +23,7 @@ export function AuthShell({
       />
 
       <header className="relative z-10 mx-auto flex max-w-lg items-center justify-between px-5 py-6 sm:px-6">
-        <Link
-          href="/"
-          className="font-display text-sm font-semibold tracking-wide text-ink transition-opacity hover:opacity-70"
-        >
-          Student-Connect
-        </Link>
+        <StudentConnectLogo href="/" showText="responsive" />
         <Link
           href="/"
           className="text-sm text-muted transition-colors hover:text-ink"

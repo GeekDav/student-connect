@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { StudentConnectLogo } from "@/components/ui/student-connect-logo";
 
 export function LegalShell({
   title,
@@ -12,12 +13,7 @@ export function LegalShell({
     <div className="min-h-[100svh] bg-background">
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-5 sm:px-6">
-          <Link
-            href="/"
-            className="font-display text-sm font-semibold tracking-wide text-ink transition-opacity hover:opacity-70"
-          >
-            Student-Connect
-          </Link>
+          <StudentConnectLogo href="/" showText="responsive" />
           <Link
             href="/"
             className="text-sm text-muted transition-colors hover:text-ink"

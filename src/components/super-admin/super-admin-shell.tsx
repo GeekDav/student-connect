@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { LogoutButton } from "@/components/ui/logout-button";
+import { StudentConnectLogo } from "@/components/ui/student-connect-logo";
 
 const NAV = [
   { href: "/super-admin", label: "Vue d’ensemble", exact: true },
@@ -24,12 +25,11 @@ export function SuperAdminShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Link
+              <StudentConnectLogo
                 href="/super-admin"
-                className="font-display text-sm font-semibold tracking-wide text-accent transition-opacity hover:opacity-70"
-              >
-                Student-Connect
-              </Link>
+                variant="accent"
+                showText="responsive"
+              />
               <p className="mt-0.5 text-xs font-medium text-muted">Super-admin</p>
               <h1 className="mt-1 font-display text-lg font-semibold text-ink sm:text-xl">
                 Cockpit plateforme
