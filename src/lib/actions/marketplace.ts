@@ -48,7 +48,7 @@ export type MarketItem = {
 };
 
 export type MarketActionResult =
-  | { ok: true; item?: MarketItem }
+  | { ok: true; item?: MarketItem; deletedId?: string }
   | { ok: false; error: string };
 
 const ACTIVE_STATUSES: MarketplaceStatus[] = [
@@ -400,6 +400,40 @@ export async function markMarketGone(itemId: string): Promise<MarketActionResult
   revalidatePath("/accueil");
 
   return { ok: true, item: mapItem(refreshed, ctx.session.userId) };
+}
+
+/** Suppression définitive par l’auteur (don ou vente, tout statut). */
+export async function deleteMarketItem(
+  itemId: string,
+): Promise<MarketActionResult> {
+  const ctx = await getActiveStudentContext();
+  if (!ctx) {
+    return { ok: false, error: "Tu dois être un résident validé." };
+  }
+  if (!ctx.writable) return writeBlockedResult(ctx);
+
+  const item = await prisma.marketplaceItem.findFirst({
+    where: {
+      id: itemId,
+      residenceId: ctx.residenceId,
+      authorId: ctx.session.userId,
+    },
+  });
+
+  if (!item) {
+    return {
+      ok: false,
+      error: "Annonce introuvable ou tu n’en es pas l’auteur.",
+    };
+  }
+
+  await deletePublicUpload(item.imageUrl);
+  await prisma.marketplaceItem.delete({ where: { id: item.id } });
+
+  revalidatePath("/recyclerie");
+  revalidatePath("/accueil");
+
+  return { ok: true, deletedId: item.id };
 }
 
 export async function prolongMarketItem(

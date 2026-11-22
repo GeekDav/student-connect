@@ -24,6 +24,7 @@ import {
 } from "@/lib/client-image";
 import {
   createMarketItem,
+  deleteMarketItem,
   listResidenceMarket,
   markMarketGone,
   prolongMarketItem,
@@ -219,6 +220,18 @@ export function MarketplaceBoard({
         return;
       }
       if (result.item) replaceItem(result.item);
+    });
+  }
+
+  function onDelete(id: string) {
+    setFormError(null);
+    startTransition(async () => {
+      const result = await deleteMarketItem(id);
+      if (!result.ok) {
+        setFormError(result.error);
+        return;
+      }
+      setItems((prev) => prev.filter((row) => row.id !== id));
     });
   }
 
@@ -558,6 +571,7 @@ export function MarketplaceBoard({
               }
               onMarkGone={readOnly ? undefined : () => onMarkGone(item.id)}
               onProlong={readOnly ? undefined : () => onProlong(item.id)}
+              onDelete={readOnly ? undefined : () => onDelete(item.id)}
             />
           ))}
           {activeItems.length === 0 ? (
@@ -587,7 +601,13 @@ export function MarketplaceBoard({
           {showGone ? (
             <ul className="mt-2 divide-y divide-line border-y border-line opacity-75">
               {goneItems.map((item) => (
-                <MarketRow key={item.id} item={item} readOnly={readOnly} />
+                <MarketRow
+                  key={item.id}
+                  item={item}
+                  busy={isPending}
+                  readOnly={readOnly}
+                  onDelete={readOnly ? undefined : () => onDelete(item.id)}
+                />
               ))}
             </ul>
           ) : null}
@@ -614,6 +634,7 @@ export function MarketplaceBoard({
                   readOnly={readOnly}
                   onMarkGone={readOnly ? undefined : () => onMarkGone(item.id)}
                   onProlong={readOnly ? undefined : () => onProlong(item.id)}
+                  onDelete={readOnly ? undefined : () => onDelete(item.id)}
                 />
               ))}
             </ul>
@@ -632,6 +653,7 @@ function MarketRow({
   onInterest,
   onMarkGone,
   onProlong,
+  onDelete,
   readOnly = false,
 }: {
   item: MarketItem;
@@ -639,6 +661,7 @@ function MarketRow({
   onInterest?: () => void;
   onMarkGone?: () => void;
   onProlong?: () => void;
+  onDelete?: () => void;
   readOnly?: boolean;
 }) {
   const [interestedVisible, setInterestedVisible] =
@@ -764,6 +787,22 @@ function MarketRow({
               Prolonger (+14 j.)
             </button>
           ) : null}
+        </div>
+      ) : null}
+      {item.isMine && onDelete && !readOnly ? (
+        <div
+          className={
+            active || expired ? "mt-2" : "mt-4 flex flex-wrap gap-2"
+          }
+        >
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onDelete}
+            className="inline-flex h-11 items-center justify-center rounded-lg border border-red-200 bg-surface px-4 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:opacity-60"
+          >
+            Supprimer
+          </button>
         </div>
       ) : null}
       {!readOnly ? (

@@ -73,6 +73,7 @@ Titres de section : sticky + barre colorée (repère au scroll).
 - Photo **optionnelle** à la publication (même règles JPG/PNG/WebP que les annonces gestionnaire, lightbox « Voir l’image »).
 - Visible **30 jours** puis statut **expiré** (pas « parti » — parti = action auteur).
 - Auteur peut **marquer parti** à tout moment (y compris depuis expiré).
+- Auteur peut **supprimer** son annonce à tout moment (don ou vente) — retrait définitif + photo associée.
 - **Prolonger 1×** (+14 j.) ; depuis expiré, ça le remet en disponible.
 - Max **3** annonces actives / étudiant.
 - À la création : encadré d’info.
