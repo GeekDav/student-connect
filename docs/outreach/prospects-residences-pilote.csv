@@ -1,0 +1,96 @@
+priorite,region,ville,operateur,residence_nom,adresse,telephone,email,contact_nom,role,type_entree,priorite_visite_idf,url_fiche,notes,statut
+A,national,—,Nexity Studéa,— Siège / centrale réservation,—,0820830820;+33185551312,RESA-STUDEA@nexity.fr,—,Centrale / réservations,Siège groupe,oui,https://www.nexity-studea.com/locations-etudiantes/residences-etudiantes,72 résidences ~15000 lits; demander directeur sur site par ville,à_contacter
+A,national,—,Les Estudines (Réside Études),— Siège,32 rue Guersant 75017 Paris,0153234400,loc@estudines.fr;webmaster@estudines.fr,Philippe NICOLET,Directeur publication,Siège groupe,oui,https://www.estudines.com/ns-contacter.html,~40 résidences; formulaire par résidence,à_contacter
+A,national,Paris et IDF,Kenzia commercial IDF (Estudines),Région Paris Estudines,—,0769821547,kenza.laradji@reside-etudes.fr,Kenza LARADJI,Commercial / IDF,Contact nommé,oui,https://www.univ-paris8.fr/Residences-etudiantes-privees,Contact cité partenariat université,à_contacter
+A,national,—,Nomad Campus (ex Cardinal),— Siège Lyon,42 quai Rambaud 69002 Lyon,0437422000;0820200644,compta@nomadcampus.com,—,Siège,~50 résidences France+ES,Siège groupe,partiel,https://nomadcampus.com/,Audrey BIEL = commerciale (LinkedIn),à_contacter
+A,national,—,UXCO Student,— Siège,Montpellier,0411283700;0467271610,contact@uxco.com,—,Centrale,~52 résidences,Siège groupe,non,https://www.uxco.com/fr/contact/,Marque Suitétudes,à_contacter
+A,national,—,KLEY (The Boost Society),— Siège,38 rue Jacques Ibert 92300 Levallois-Perret,0185086030,communication@kley.fr,Tiphaine THEODON,Communication / rédaction,Siège groupe,oui,https://www.kley.fr/,10 résidences IDF; demander directeur de site via standard,à_contacter
+A,national,—,Student Factory,— Standard,—,0171250820,— (formulaire site),—,Centrale,Plusieurs métropoles,Siège groupe,oui,https://www.student-factory.com/fr/contact,Pas d’email public unique,à_contacter
+A,national,—,YouFirst Campus (ex Campuséa),— Siège,16 rue des Capucines 75002 Paris,0140406410,contactcampus@youfirst.co,—,Centrale,Paris Bordeaux Lille Marseille Lyon,Siège groupe,oui,https://campus.youfirst.co/fr,15+ résidences,à_contacter
+A,national,—,Neoresid Holding,— Siège,17 quai du Président Paul Doumer 92400 Courbevoie,0188405840,contact@neoresid.com,—,Centrale,21 résidences listées,Siège groupe,oui,https://www.neoresid.com/residences,Kaufman & Broad,à_contacter
+A,national,—,Les Belles Années (LBA),— Siège,94 quai Charles de Gaulle 69006 Lyon,0478171411;0970808085,contact@lesbellesannees.com,—,Centrale,+30 villes,Siège groupe,non,https://www.lesbellesannees.com/contact,Partenariats promoteurs,à_contacter
+A,national,—,Odalys Campus (Magora),— Siège,Aix-en-Provence,0670103423 (commercial),— (formulaire par résidence),—,Commercial groupes,~30 campus,Siège groupe,partiel,https://www.odalys-campus.com/contact,Demander contact résidence précise,à_contacter
+B,IDF,Paris 19,Nexity Studéa,Studéa Paris Riquet,56 rue Riquet 75019,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/paris/studea-paris-riquet-po0000322,Appeler centrale puis demander email directeur,à_contacter
+B,IDF,Massy,Nexity Studéa,Studéa Massy,8 rue Jean-François de La Pérouse 91300,0820830820;0169200827,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/massy/studea-massy-po0000267,Paris-Saclay angle,à_contacter
+B,IDF,Suresnes,Nexity Studéa,Studéa Suresnes,7 rue Benoît Malon 92150,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/suresnes/studea-suresnes-po0000320,Proche Paris visite,à_contacter
+B,IDF,Boulogne-Billancourt,Nexity Studéa,Studéa Boulogne Seguin,46 rue Marcel Bontemps 92100,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/boulogne-billancourt,—,à_contacter
+B,IDF,Courbevoie,Nexity Studéa,Studéa Grande Arche / Lilas,—,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/courbevoie,3 résidences Courbevoie,à_contacter
+B,IDF,Issy-les-Moulineaux,Nexity Studéa,Studéa Issy (x3),—,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/issy-les-moulineaux,—,à_contacter
+B,IDF,Clichy,Nexity Studéa,Studéa Clichy,—,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/clichy,—,à_contacter
+B,IDF,Asnières,Nexity Studéa,Studéa Asnières,—,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/asnieres-sur-seine,—,à_contacter
+B,IDF,Cachan,Nexity Studéa,Studéa Cachan,—,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/cachan,—,à_contacter
+B,IDF,Clamart,Nexity Studéa,Studéa Clamart / Newton,—,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/clamart,—,à_contacter
+B,IDF,Palaiseau,Nexity Studéa,Studéa Palaiseau Centre,13 route de Saclay 91120,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes,Paris-Saclay,à_contacter
+B,IDF,Saint-Ouen,Nexity Studéa,Studéa Saint-Ouen / Les Docks,—,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes,—,à_contacter
+B,IDF,Joinville-le-Pont,Nexity Studéa,Studéa Joinville Centre,40 rue de Paris 94340,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,oui,https://www.nexity-studea.com/locations-etudiantes/joinville-le-pont,—,à_contacter
+B,IDF,Cergy,Nexity Studéa,Studéa Cergy Université (x2),—,0820830820,—,Gestionnaire sur site,Direction résidence,Résidence,partiel,https://www.nexity-studea.com/locations-etudiantes/cergy,—,à_contacter
+B,IDF,Pantin,Les Estudines,Estudines Charles de Gaulle,139 av. Jean Lolive 93500,0141713987,—,Accueil résidence,Direction / accueil,Résidence,oui,https://www.estudines.com/,Contact résidence public,à_contacter
+B,IDF,Saint-Ouen,Les Estudines,Estudines du Landy,39/49 rue Emile Cordon 93400,0140111140,—,Accueil résidence,Direction / accueil,Résidence,oui,https://www.estudines.com/,—,à_contacter
+B,IDF,Villetaneuse,Les Estudines,Estudines André Desilles,21 rue Marguerite Yourcenar 93430,0148230303,—,Accueil résidence,Direction / accueil,Résidence,oui,https://www.estudines.com/,—,à_contacter
+B,IDF,Asnières,KLEY,KLEY Paris-Asnières,20 av. de la Paix 92600,0185086030,—,Équipe résidence,Résidence,oui,https://www.kley.fr/residence-etudiante/paris/kley-paris-asnieres/,Standard groupe puis directeur,à_contacter
+B,IDF,Bagneux,KLEY,KLEY Paris-Bagneux,—,0185086030,—,Équipe résidence,Résidence,oui,https://www.kley.fr/residence-etudiante/paris/,—,à_contacter
+B,IDF,Bagnolet,KLEY,KLEY Paris-Bagnolet,—,0185086030,—,Équipe résidence,Résidence,oui,https://www.kley.fr/residence-etudiante/paris/,—,à_contacter
+B,IDF,Gennevilliers,KLEY,KLEY Paris-Gennevilliers,—,0185086030,—,Équipe résidence,Résidence,oui,https://www.kley.fr/residence-etudiante/paris/,—,à_contacter
+B,IDF,Gentilly,KLEY,KLEY Paris-Gentilly,—,0185086030,—,Équipe résidence,Résidence,oui,https://www.kley.fr/residence-etudiante/paris/,—,à_contacter
+B,IDF,Ivry-sur-Seine,KLEY,KLEY Paris-Ivry,—,0185086030,—,Équipe résidence,Résidence,oui,https://www.kley.fr/residence-etudiante/paris/,—,à_contacter
+B,IDF,Créteil,KLEY,KLEY Paris-Créteil,—,0185086030,—,Équipe résidence,Résidence,oui,https://www.kley.fr/residence-etudiante/paris/,—,à_contacter
+B,IDF,Courbevoie,KLEY,KLEY Paris-Courbevois,—,0185086030,—,Équipe résidence,Résidence,oui,https://www.kley.fr/residence-etudiante/paris/,Proche Nanterre,à_contacter
+B,IDF,Clichy,KLEY,KLEY Paris-Clichy,—,0185086030,—,Équipe résidence,Résidence,oui,https://www.kley.fr/residence-etudiante/paris/,—,à_contacter
+B,IDF,Saint-Ouen,KLEY,KLEY Paris-Saint-Ouen,—,0185086030,—,Équipe résidence,Résidence,oui,https://www.kley.fr/residence-etudiante/paris/,—,à_contacter
+B,IDF,Paris,Neoresid,Paris VillaStreet,—,0188405840,contact@neoresid.com,—,Résidence / centrale,Résidence,oui,https://www.neoresid.com/residences,Fiche « complet » — quand même candidature pilote,à_contacter
+B,IDF,Gagny,Neoresid,Résidence Gagny,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,partiel,https://www.neoresid.com/,Ouverture récente,à_contacter
+B,IDF,Stains,Neoresid,Résidence Stains,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,partiel,https://www.neoresid.com/,Avec Industreet,à_contacter
+B,Auvergne-Rhône-Alpes,Lyon,Nexity Studéa,Studéa Université 1,16 rue de l’université 69007,0478960209,smidon@nexity.fr,—,Gestion logement,Résidence,non,https://www.associnterlyon3.fr/fr/residences/studea-universite-1,Email gestionnaire cite univ Lyon 3,à_contacter
+B,Auvergne-Rhône-Alpes,Lyon,Nexity Studéa,Studéa Saxe Gambetta,43 rue de la Thibaudière 69007,0950625488,miundt@nexity.fr,—,Gestion logement,Résidence,non,https://www.associnterlyon3.fr/fr/residences/studea-saxe-gambetta,—,à_contacter
+B,Auvergne-Rhône-Alpes,Lyon,Nexity Studéa,Studéa Préfecture,19 rue de la Victoire 69003,0618668628,jbouget@nexity.fr,—,Gestion logement,Résidence,non,https://www.associnterlyon3.fr/fr/residences/studea-prefecture,—,à_contacter
+B,Auvergne-Rhône-Alpes,Lyon,Nexity Studéa,Studéa Jean Macé,56 rue Victor Lagrange 69007,0437705468,elogut@nexity.fr,—,Gestion logement,Résidence,non,https://www.associnterlyon3.fr/fr/residences/studea-jean-mace,—,à_contacter
+B,Auvergne-Rhône-Alpes,Lyon,Assoc. / vie étudiante,Studéa Lyon (transversal),—,0659563218,activites@associnterlyon3.fr,Chantal ORTILLEZ,Vie étudiante (plusieurs Studéa),Contact multi-résidences,non,https://www.associnterlyon3.fr/,Piste pilote « animation » résidence,à_contacter
+B,Auvergne-Rhône-Alpes,Clermont-Ferrand,Nomad Campus,Canopée,41 rue du Ressort 63000,0437422000,Clermont@cardinalcampus.fr,—,Résidence,Résidence,non,https://www.residenceetudiante.fr,Email résidence public,à_contacter
+C,Provence-Alpes-Côte d'Azur,Marseille,Nexity Studéa,Ville Marseille (7 résidences),—,0820830820,—,—,Ville / portefeuille,Centrale ville,non,https://www.nexity-studea.com/locations-etudiantes/marseille,Timone Ferrari etc.,à_qualifier
+C,Occitanie,Toulouse,Nexity Studéa,Ville Toulouse,—,0820830820;0437912542,RESA-STUDEA@nexity.fr,—,Ville / portefeuille,Centrale ville,non,https://www.nexity-studea.com/locations-etudiantes/toulouse,—,à_qualifier
+C,Occitanie,Montpellier,Nexity Studéa,Ville Montpellier,—,0820830820,—,—,Ville / portefeuille,Centrale ville,non,https://www.nexity-studea.com/locations-etudiantes/montpellier,—,à_qualifier
+C,Nouvelle-Aquitaine,Bordeaux,Nexity Studéa,Ville Bordeaux (5+ résidences),—,0820830820,—,—,Ville / portefeuille,Centrale ville,non,https://www.nexity-studea.com/locations-etudiantes/bordeaux,—,à_qualifier
+C,Auvergne-Rhône-Alpes,Lyon,Nexity Studéa,Ville Lyon (12+ résidences),—,0820830820,—,—,Ville / portefeuille,Centrale ville,non,https://www.nexity-studea.com/locations-etudiantes/lyon,—,à_qualifier
+C,Hauts-de-France,Lille,Nexity Studéa,Ville Lille (4 résidences),—,0820830820,—,—,Ville / portefeuille,Centrale ville,non,https://www.nexity-studea.com/locations-etudiantes/lille,—,à_qualifier
+C,Grand Est,Strasbourg,Nexity Studéa,Ville Strasbourg,—,0820830820,—,—,Ville / portefeuille,Centrale ville,non,https://www.nexity-studea.com/locations-etudiantes/strasbourg,—,à_qualifier
+C,Grand Est,Reims,Neoresid,Reims du Parc / Port Colbert,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Grand Est,Reims,Neoresid,Résidence Reims (x2),—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Grand Est,Dijon,Neoresid,Le Clos Morlot,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Hauts-de-France,Lille,Neoresid,Lambret,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Hauts-de-France,Valenciennes,Neoresid,Nungesser,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Hauts-de-France,Douai,Neoresid,République,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Normandie,Rouen,Neoresid,Rouen Saint Sever / Saint Marc,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Normandie,Elbeuf,Neoresid,Cosy Diem Marignan,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Hauts-de-France,Amiens,Neoresid,Saint Germain,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Auvergne-Rhône-Alpes,Saint-Étienne,Neoresid,Tréfilerie / Bellevue,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Auvergne-Rhône-Alpes,Grenoble,Neoresid,Vigny Musset,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Auvergne-Rhône-Alpes,Valence,Neoresid,Le Valencey,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Bourgogne-Franche-Comté,Besançon,Neoresid,Cosy Diem Vauban,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Occitanie,Narbonne,Neoresid,Quai Vallière,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Occitanie,Le Cap d'Agde,Neoresid,Cosy Diem Cap d'Agde,—,0188405840,contact@neoresid.com,—,Résidence,Résidence,non,https://www.neoresid.com/residences,—,à_contacter
+C,Provence-Alpes-Côte d'Azur,Aix-en-Provence,Nexity Studéa,Ville Aix,—,0820830820,—,—,Ville / portefeuille,Centrale ville,non,https://www.nexity-studea.com/locations-etudiantes/aix-en-provence,—,à_qualifier
+C,Provence-Alpes-Côte d'Azur,Marseille,YouFirst Campus,Résidences Marseille,—,0140406410,contactcampus@youfirst.co,—,Ville,Centrale,non,https://campus.youfirst.co/fr,—,à_contacter
+C,Auvergne-Rhône-Alpes,Lyon,YouFirst Campus,Résidences Lyon,—,0140406410,contactcampus@youfirst.co,—,Ville,Centrale,non,https://campus.youfirst.co/fr,—,à_contacter
+C,Hauts-de-France,Lille,YouFirst Campus,Résidences Lille,—,0140406410,contactcampus@youfirst.co,—,Ville,Centrale,non,https://campus.youfirst.co/fr,—,à_contacter
+C,Nouvelle-Aquitaine,Bordeaux,YouFirst Campus,Résidences Bordeaux,—,0140406410,contactcampus@youfirst.co,—,Ville,Centrale,non,https://campus.youfirst.co/fr,—,à_contacter
+C,Bretagne,Rennes,Nexity Studéa,Studéa Atalante,6 av. du Bois de l'Abbé 35000,0820830820,—,—,Résidence,Résidence,non,https://www.nexity-studea.com/locations-etudiantes/rennes,—,à_contacter
+C,Centre-Val de Loire,Tours,Nexity Studéa,Studéa Gare / Varennes,—,0820830820,—,—,Résidence,Résidence,non,https://www.nexity-studea.com/locations-etudiantes/tours,—,à_contacter
+C,Nouvelle-Aquitaine,Talence,Nexity Studéa,Studéa Talence,34 rue Peydavant 33400,0820830820,—,—,Résidence,Résidence,non,https://www.nexity-studea.com/locations-etudiantes/talence,—,à_contacter
+C,Nouvelle-Aquitaine,Mérignac,Nexity Studéa,Studéa Bordeaux Ouest,—,0820830820,—,—,Résidence,Résidence,non,https://www.nexity-studea.com/locations-etudiantes/merignac,—,à_contacter
+C,Auvergne-Rhône-Alpes,Grenoble,Nexity Studéa,Ville Grenoble (4 résidences),—,0820830820,—,—,Ville / portefeuille,Centrale ville,non,https://www.nexity-studea.com/locations-etudiantes/grenoble,—,à_qualifier
+C,Auvergne-Rhône-Alpes,Clermont-Ferrand,Nexity Studéa,Ville Clermont (2),—,0820830820,—,—,Ville / portefeuille,Centrale ville,non,https://www.nexity-studea.com/locations-etudiantes/clermont-ferrand,—,à_qualifier
+C,Hauts-de-France,Amiens,Nexity Studéa,Studéa Amiens Centre,—,0820830820,—,—,Résidence,Résidence,non,https://www.nexity-studea.com/locations-etudiantes/amiens,—,à_contacter
+C,Hauts-de-France,Douai,Nexity Studéa,Studéa Douai,—,0820830820,—,—,Résidence,Résidence,non,https://www.nexity-studea.com/locations-etudiantes/douai,—,à_contacter
+C,Pays de la Loire,Angers,Nexity Studéa,Studéa Saint Serge,—,0820830820,—,—,Résidence,Résidence,non,https://www.nexity-studea.com/locations-etudiantes/angers,—,à_contacter
+C,Grand Est,Metz,Odalys Campus,Campus Metz Manufacture,—,0670103423,—,—,Résidence,Résidence,non,https://www.odalys-campus.com/contact,—,à_contacter
+C,Auvergne-Rhône-Alpes,Lyon,Odalys Campus,Campus Confluence,—,0670103423,—,—,Résidence,Résidence,non,https://www.odalys-campus.com/contact,—,à_contacter
+C,IDF,Levallois,Odalys Campus,City Campus Paris Levallois,—,0670103423,—,—,Résidence,Résidence,oui,https://www.odalys-campus.com/contact,IDF,à_contacter
+C,Occitanie,Montpellier,UXCO Student,Résidences UXCO Montpellier,—,0411283700,contact@uxco.com,—,Ville,Centrale ville,non,https://www.uxco.com/fr/residences,—,à_contacter
+C,Auvergne-Rhône-Alpes,Lyon,UXCO Student,Résidences UXCO Lyon,—,0411283700,contact@uxco.com,—,Ville,Centrale ville,non,https://www.uxco.com/fr/residences,—,à_contacter
+C,Provence-Alpes-Côte d'Azur,Nice,Les Belles Années,Nissa Campus,—,0478171411,contact@lesbellesannees.com,—,Résidence,Résidence,non,https://groupe.lesbellesannees.com/,—,à_contacter
+C,Grand Est,Troyes,Les Belles Années,Le Wood,—,0478171411,contact@lesbellesannees.com,—,Résidence,Résidence,non,https://groupe.lesbellesannees.com/,—,à_contacter
+C,Provence-Alpes-Côte d'Azur,Marseille,Les Belles Années,The Hive,—,0478171411,contact@lesbellesannees.com,—,Résidence,Résidence,non,https://groupe.lesbellesannees.com/,—,à_contacter
+C,Bourgogne-Franche-Comté,Dijon,Les Belles Années,Campus Kare,—,0478171411,contact@lesbellesannees.com,—,Résidence,Résidence,non,https://groupe.lesbellesannees.com/,—,à_contacter
+C,Bretagne,Brest / Pays de Cornouaille,Les Belles Années,Campus Tevenn (Roubaix cité sur site — vérifier),—,0472698111,contact@lesbellesannees.com,—,Résidence,Résidence,non,https://groupe.lesbellesannees.com/,Vérifier ville sur fiche Brest/Roubaix,à_qualifier
+D,—,—,CROUS (réseau national),— Résidences universitaires publiques,—,—,—,—,Réseau public,Plusieurs centaines,—,https://www.crous.fr/,Cycles longs; pas priorité pilote 1–5,plus_tard
+D,—,—,Fac-Habitat / SMERRA,— Logifac,—,—,—,—,Mutuelle / gestionnaire,Grand réseau,—,https://logement.smerra.fr/fac-habitat/,B2B lourd,plus_tard
