@@ -1,5 +1,6 @@
 "use server";
 
+import { getPublicContactEmail } from "@/lib/contact-email";
 import { sendEmail } from "@/lib/mail/mailer";
 import { pilotContactEmail } from "@/lib/mail/templates";
 
@@ -8,12 +9,13 @@ export type ContactActionResult =
   | { ok: false; error: string };
 
 function getContactInbox() {
-  return (
-    process.env.CONTACT_EMAIL?.trim().toLowerCase() ||
+  const fromContact = process.env.CONTACT_EMAIL?.trim().toLowerCase();
+  if (fromContact?.includes("@")) return fromContact;
+  const fromEmailFrom =
     process.env.EMAIL_FROM?.match(/<([^>]+)>/)?.[1]?.trim().toLowerCase() ||
-    process.env.EMAIL_FROM?.trim().toLowerCase() ||
-    null
-  );
+    process.env.EMAIL_FROM?.trim().toLowerCase();
+  if (fromEmailFrom?.includes("@")) return fromEmailFrom;
+  return getPublicContactEmail();
 }
 
 export async function submitPilotContact(input: {

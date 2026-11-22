@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ContactForm } from "@/components/landing/contact-form";
+import { getPublicContactEmail } from "@/lib/contact-email";
 
 export const metadata: Metadata = {
   title: "Nous contacter — Student-Connect",
@@ -9,6 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
+  const contactEmail = getPublicContactEmail();
+
   return (
     <div className="min-h-[100svh] bg-background">
       <div className="mx-auto max-w-lg px-5 py-12 sm:px-8 sm:py-16">
@@ -22,7 +25,15 @@ export default function ContactPage() {
         </h1>
         <p className="mt-3 text-base leading-relaxed text-muted">
           Phase pilote gratuite : dis-nous qui tu es. On ouvre les espaces au
-          fil de l’eau — tu n’es pas inscrit automatiquement.
+          fil de l’eau — tu n’es pas inscrit automatiquement. Tu peux aussi nous
+          écrire directement à{" "}
+          <a
+            href={`mailto:${contactEmail}`}
+            className="font-semibold text-accent transition-colors hover:text-accent-hover"
+          >
+            {contactEmail}
+          </a>
+          .
         </p>
         <div className="mt-8">
           <ContactForm />

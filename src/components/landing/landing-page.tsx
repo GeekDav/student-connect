@@ -5,6 +5,7 @@ import { AnchorLink } from "./anchor-link";
 import { StudentConnectLogo } from "@/components/ui/student-connect-logo";
 import { Reveal } from "./reveal";
 import { ScrollToHash } from "./scroll-to-hash";
+import { getPublicContactEmail } from "@/lib/contact-email";
 
 const features = [
   {
@@ -41,6 +42,7 @@ const managerSteps = [
 ];
 
 export function LandingPage() {
+  const contactEmail = getPublicContactEmail();
   return (
     <div className="bg-background text-foreground">
       <ScrollToHash />
@@ -301,7 +303,17 @@ export function LandingPage() {
 
       <footer className="border-t border-line bg-background">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <StudentConnectLogo href="/" showText="responsive" />
+          <div className="flex flex-col gap-2">
+            <StudentConnectLogo href="/" showText="responsive" />
+            <p className="text-sm text-muted">
+              <a
+                href={`mailto:${contactEmail}`}
+                className="font-medium text-accent transition-colors hover:text-accent-hover"
+              >
+                {contactEmail}
+              </a>
+            </p>
+          </div>
           <div className="flex flex-wrap gap-5 text-sm text-muted">
             <Link href="/nous-contacter" className="hover:text-ink">
               Nous contacter

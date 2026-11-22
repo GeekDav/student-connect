@@ -1,4 +1,21 @@
+import { getPublicContactEmail } from "@/lib/contact-email";
 import { getAppUrl } from "@/lib/mail/mailer";
+
+function mailSignatureText() {
+  const email = getPublicContactEmail();
+  const url = getAppUrl();
+  return `\n—\nStudent-Connect\n${url}\n${email}`;
+}
+
+function mailSignatureHtml() {
+  const email = getPublicContactEmail();
+  const url = getAppUrl();
+  const host = url.replace(/^https?:\/\//, "");
+  return `<p style="margin:0;padding-top:20px;border-top:1px solid #e5ecef;font-size:13px;line-height:1.55;color:#5a6b75;">
+    Student-Connect · <a href="${url}" style="color:#0c6b5c;text-decoration:none;">${host}</a><br/>
+    <a href="mailto:${email}" style="color:#0c6b5c;">${email}</a>
+  </p>`;
+}
 
 function wrapHtml(title: string, bodyHtml: string) {
   return `<!doctype html>
@@ -14,11 +31,16 @@ function wrapHtml(title: string, bodyHtml: string) {
     <tr>
       <td style="padding:8px 28px 28px;font-size:15px;line-height:1.6;color:#5a6b75;">
         ${bodyHtml}
+        ${mailSignatureHtml()}
       </td>
     </tr>
   </table>
 </body>
 </html>`;
+}
+
+function withTextSignature(body: string) {
+  return body + mailSignatureText();
 }
 
 export function residenceActivatedEmail(input: {
@@ -29,20 +51,22 @@ export function residenceActivatedEmail(input: {
 }) {
   const loginUrl = `${getAppUrl()}/connexion`;
   const subject = `Ta résidence « ${input.residenceName} » est active`;
-  const text = [
-    `Bonjour ${input.managerName},`,
-    ``,
-    `La résidence « ${input.residenceName} » est maintenant active sur Student-Connect.`,
-    `Connexion : ${loginUrl}`,
-    `E-mail : ${input.managerEmail}`,
-    input.temporaryPassword
-      ? `Mot de passe temporaire : ${input.temporaryPassword}`
-      : null,
-    ``,
-    `Tu peux ensuite inviter tes étudiants depuis l’espace gestionnaire.`,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const text = withTextSignature(
+    [
+      `Bonjour ${input.managerName},`,
+      ``,
+      `La résidence « ${input.residenceName} » est maintenant active sur Student-Connect.`,
+      `Connexion : ${loginUrl}`,
+      `E-mail : ${input.managerEmail}`,
+      input.temporaryPassword
+        ? `Mot de passe temporaire : ${input.temporaryPassword}`
+        : null,
+      ``,
+      `Tu peux ensuite inviter tes étudiants depuis l’espace gestionnaire.`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
 
   const html = wrapHtml(
     "Résidence active",
@@ -65,18 +89,20 @@ export function residencePausedEmail(input: {
   retainUntilLabel?: string | null;
 }) {
   const subject = `Espace en pause — ${input.residenceName}`;
-  const text = [
-    `Bonjour ${input.managerName},`,
-    ``,
-    `L’espace Student-Connect de « ${input.residenceName} » est passé en pause.`,
-    `Les étudiants restent en lecture seule.`,
-    input.retainUntilLabel
-      ? `Données conservées jusqu’au ${input.retainUntilLabel}.`
-      : null,
-    `Contacte le support pour réactiver, ou renouvelle l’abonnement quand disponible.`,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const text = withTextSignature(
+    [
+      `Bonjour ${input.managerName},`,
+      ``,
+      `L’espace Student-Connect de « ${input.residenceName} » est passé en pause.`,
+      `Les étudiants restent en lecture seule.`,
+      input.retainUntilLabel
+        ? `Données conservées jusqu’au ${input.retainUntilLabel}.`
+        : null,
+      `Contacte le support pour réactiver, ou renouvelle l’abonnement quand disponible.`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
 
   const html = wrapHtml(
     "Espace en pause",
@@ -99,13 +125,15 @@ export function residenceReactivatedEmail(input: {
 }) {
   const loginUrl = `${getAppUrl()}/connexion`;
   const subject = `Espace réactivé — ${input.residenceName}`;
-  const text = [
-    `Bonjour ${input.managerName},`,
-    ``,
-    `Bonne nouvelle : « ${input.residenceName} » est de nouveau active.`,
-    `Les étudiants peuvent à nouveau publier et messager.`,
-    `Connexion : ${loginUrl}`,
-  ].join("\n");
+  const text = withTextSignature(
+    [
+      `Bonjour ${input.managerName},`,
+      ``,
+      `Bonne nouvelle : « ${input.residenceName} » est de nouveau active.`,
+      `Les étudiants peuvent à nouveau publier et messager.`,
+      `Connexion : ${loginUrl}`,
+    ].join("\n"),
+  );
 
   const html = wrapHtml(
     "Espace réactivé",
@@ -123,14 +151,16 @@ export function studentInviteEmail(input: {
   code: string;
 }) {
   const subject = `Invitation — rejoins ${input.residenceName} sur Student-Connect`;
-  const text = [
-    `Tu es invité(e) à rejoindre « ${input.residenceName} » sur Student-Connect.`,
-    ``,
-    `Ouvre ce lien : ${input.inviteUrl}`,
-    `Ou utilise le code : ${input.code}`,
-    ``,
-    `Avec l’invitation, ton accès s’ouvre immédiatement après inscription.`,
-  ].join("\n");
+  const text = withTextSignature(
+    [
+      `Tu es invité(e) à rejoindre « ${input.residenceName} » sur Student-Connect.`,
+      ``,
+      `Ouvre ce lien : ${input.inviteUrl}`,
+      `Ou utilise le code : ${input.code}`,
+      ``,
+      `Avec l’invitation, ton accès s’ouvre immédiatement après inscription.`,
+    ].join("\n"),
+  );
 
   const html = wrapHtml(
     "Invitation résidence",
@@ -148,17 +178,19 @@ export function weeklyPausedReminderEmail(input: {
   retainUntilLabel?: string | null;
 }) {
   const subject = `Rappel hebdo — ${input.residenceName} est encore en pause`;
-  const text = [
-    `Bonjour ${input.managerName},`,
-    ``,
-    `Rappel : l’espace « ${input.residenceName} » est toujours en pause.`,
-    input.retainUntilLabel
-      ? `Données conservées jusqu’au ${input.retainUntilLabel}.`
-      : null,
-    `Réactive l’espace dès que possible pour que tes étudiants retrouvent toutes les fonctions.`,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const text = withTextSignature(
+    [
+      `Bonjour ${input.managerName},`,
+      ``,
+      `Rappel : l’espace « ${input.residenceName} » est toujours en pause.`,
+      input.retainUntilLabel
+        ? `Données conservées jusqu’au ${input.retainUntilLabel}.`
+        : null,
+      `Réactive l’espace dès que possible pour que tes étudiants retrouvent toutes les fonctions.`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
 
   const html = wrapHtml(
     "Rappel — résidence en pause",
@@ -183,17 +215,19 @@ export function pilotContactEmail(input: {
   message: string;
 }) {
   const subject = `Candidature pilote — ${input.residenceName} (${input.city})`;
-  const text = [
-    `Nouvelle candidature phase pilote`,
-    ``,
-    `Nom : ${input.name}`,
-    `Résidence : ${input.residenceName}`,
-    `Ville : ${input.city}`,
-    `E-mail : ${input.email}`,
-    ``,
-    `Message :`,
-    input.message,
-  ].join("\n");
+  const text = withTextSignature(
+    [
+      `Nouvelle candidature phase pilote`,
+      ``,
+      `Nom : ${input.name}`,
+      `Résidence : ${input.residenceName}`,
+      `Ville : ${input.city}`,
+      `E-mail : ${input.email}`,
+      ``,
+      `Message :`,
+      input.message,
+    ].join("\n"),
+  );
 
   const html = wrapHtml(
     "Candidature pilote",

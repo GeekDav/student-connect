@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalSection, LegalShell } from "@/components/legal/legal-shell";
+import { getPublicContactEmail } from "@/lib/contact-email";
 
 export const metadata: Metadata = {
   title: "Mentions légales — Student-Connect",
@@ -7,6 +8,8 @@ export const metadata: Metadata = {
 };
 
 export default function MentionsLegalesPage() {
+  const contactEmail = getPublicContactEmail();
+
   return (
     <LegalShell title="Mentions légales">
       <p className="text-sm text-muted">
@@ -27,8 +30,12 @@ export default function MentionsLegalesPage() {
           [Forme juridique, capital, RCS / SIREN à compléter]
           <br />
           E-mail de contact :{" "}
-          <span className="text-ink">contact@student-connect.fr</span>{" "}
-          (placeholder)
+          <a
+            href={`mailto:${contactEmail}`}
+            className="font-medium text-ink underline decoration-line underline-offset-2 hover:text-accent"
+          >
+            {contactEmail}
+          </a>
         </p>
       </LegalSection>
 
@@ -65,8 +72,13 @@ export default function MentionsLegalesPage() {
       <LegalSection title="Contact">
         <p>
           Pour toute question relative au service :{" "}
-          <span className="text-ink">contact@student-connect.fr</span>{" "}
-          (placeholder à remplacer).
+          <a
+            href={`mailto:${contactEmail}`}
+            className="font-medium text-ink underline decoration-line underline-offset-2 hover:text-accent"
+          >
+            {contactEmail}
+          </a>
+          .
         </p>
       </LegalSection>
     </LegalShell>
