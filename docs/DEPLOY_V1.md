@@ -26,22 +26,14 @@ npm run dev
 Compte seed : `admin@student-connect.local` / `Admin123!`  
 (Pas de résidence préchargée — tu les crées via `/super-admin`.)
 
-### Vider la prod après des tests (garder le super-admin)
-
-Ne pas utiliser `db:reset` sur Neon (casse l’historique des migrations). À la place :
+### Remise à zéro prod (un seul admin)
 
 ```bash
-CONFIRM_WIPE=yes DATABASE_URL="postgresql://…" DIRECT_URL="postgresql://…" npm run db:wipe-alpha
+CONFIRM_WIPE=yes DATABASE_URL="…" DIRECT_URL="…" npm run db:wipe-alpha
 ```
 
-- Supprime résidences, étudiants, gestionnaires, messages, logs e-mail, etc.
-- **Garde** tous les comptes `SUPER_ADMIN` existants.
-- **Recrée / met à jour** `admin@student-connect.local` (mot de passe : `Admin123!` ou `SEED_ADMIN_PASSWORD`).
-
-Pour ne garder qu’un seul e-mail admin :  
-`KEEP_SUPER_ADMIN_EMAIL="admin@student-connect.local" CONFIRM_WIPE=yes … npm run db:wipe-alpha`
-
-Les fichiers **Vercel Blob** ne sont pas effacés (avatars de test éventuels) — nettoyage manuel si besoin.
+Tout supprimé sauf `admin@student-connect.local` (ou `KEEP_ADMIN_EMAIL=ton@email.fr`).
+Mot de passe : `Admin123!` sauf si `SEED_ADMIN_PASSWORD` est défini.
 
 ## 2. Postgres prod
 
